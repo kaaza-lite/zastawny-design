@@ -57,14 +57,23 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
         <span class="title-text">{title}</span>
         {href && (
           <>
-            <span class="title-ghost title-ghost--a" aria-hidden="true">{title}</span>
-            <span class="title-ghost title-ghost--b" aria-hidden="true">{title}</span>
+            <span class="ghost ghost--a" aria-hidden="true">{title}</span>
+            <span class="ghost ghost--b" aria-hidden="true">{title}</span>
           </>
         )}
       </h2>
       {soon && <Tag tone="soon">soon</Tag>}
     </div>
-    <p class="meta">{meta}</p>
+    <p class="meta">
+      <span class="meta-text">{meta}</span>
+      {href && (
+        <>
+          <span class="meta-scramble" aria-hidden="true"></span>
+          <span class="ghost ghost--a" aria-hidden="true">{meta}</span>
+          <span class="ghost ghost--b" aria-hidden="true">{meta}</span>
+        </>
+      )}
+    </p>
   </div>
 </Tagname>
 
@@ -80,10 +89,29 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
   const AFTERSHOCK = 220;     // small glitches while the pointer stays
   const AFTERSHOCK_GAP = [1300, 2600];
 
+  // Category scramble: characters swapped in while it glitches
+  const CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789#&/<>_+=';
+  const randomChar = () => CHARS[Math.floor(Math.random() * CHARS.length)];
+
+  // t: 0 to 1 through the glitch. A full burst resolves left to right;
+  // an aftershock only swaps a few characters.
+  function scrambled(text: string, t: number, full: boolean) {
+    const resolved = full ? Math.floor(text.length * Math.min(1, t / 0.85)) : text.length;
+    return [...text]
+      .map((ch, i) => {
+        if (ch === ' ') return ' ';
+        if (i < resolved) return !full && Math.random() < 0.22 ? randomChar() : ch;
+        return randomChar();
+      })
+      .join('');
+  }
+
   for (const card of document.querySelectorAll<HTMLElement>('[data-glitch-card]')) {
     const thumb = card.querySelector<HTMLElement>('.thumb')!;
     const shown = card.querySelector<HTMLImageElement>('.thumb-img')!;
     const cnv = card.querySelector<HTMLCanvasElement>('.glitch')!;
+    const metaScramble = card.querySelector<HTMLElement>('.meta-scramble');
+    const metaText = card.querySelector<HTMLElement>('.meta-text')?.textContent ?? '';
     const ctx = cnv.getContext('2d');
     const ramp = palettes[card.dataset.glitchCard as PaletteName] ?? palettes.neutral;
     if (!ctx) continue;
@@ -126,19 +154,21 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const start = performance.now();
       let lastFrame = -Infinity;
-      card.classList.add('is-glitching');
+      card.classList.add('is-glitching', 'is-scrambling');
       cnv.classList.add('is-on');
 
       const tick = (now: number) => {
         const t = (now - start) / duration;
         if (t >= 1) {
           cnv.classList.remove('is-on');
+          card.classList.remove('is-scrambling');
           card.classList.remove('is-glitching');
           return;
         }
         if (now - lastFrame >= 1000 / GLITCH_FPS) {
           const k = peak * (t < 0.12 ? t / 0.12 : 1 - ((t - 0.12) / 0.88) ** 1.6);
           drawFrame(ctx, prepared!, ramp, k, dpr);
+          if (metaScramble) metaScramble.textContent = scrambled(metaText, t, peak > 0.8);
           lastFrame = now;
         }
         raf = requestAnimationFrame(tick);
@@ -250,14 +280,18 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
   }
 
   .meta {
+    position: relative;
     font-size: var(--text-card-meta);
     line-height: var(--leading-card-meta);
     letter-spacing: var(--tracking-card-meta);
     color: var(--color-text-muted);
   }
 
-  /* Title glitch: two ghost copies in the ramp colours jump around while the image glitches */
-  .title-ghost {
+  /*
+    Text glitch on the title and the category line: two ghost copies in the
+    ramp colours jump around while the image glitches.
+  */
+  .ghost {
     position: absolute;
     top: 0;
     left: 0;
@@ -265,38 +299,64 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
     opacity: 0;
     pointer-events: none;
   }
-  .title-ghost--a {
+  .ghost--a {
     color: var(--g4);
     clip-path: inset(0 0 52% 0);
   }
-  .title-ghost--b {
+  .ghost--b {
     color: var(--g3);
     clip-path: inset(48% 0 0 0);
   }
-  .card.is-glitching .title-ghost--a {
+  .card.is-glitching .ghost--a {
     animation: ghost-a 280ms steps(1, end) infinite;
   }
-  .card.is-glitching .title-ghost--b {
+  .card.is-glitching .ghost--b {
     animation: ghost-b 280ms steps(1, end) infinite;
+  }
+  /* The category line is small, so its ghosts move less */
+  .meta .ghost {
+    --shift: 0.5;
   }
 
   @keyframes ghost-a {
-    0% { opacity: 1; transform: translateX(-6px); }
-    25% { transform: translateX(4px); }
+    0% { opacity: 1; transform: translateX(calc(-6px * var(--shift, 1))); }
+    25% { transform: translateX(calc(4px * var(--shift, 1))); }
     50% { opacity: 0; }
-    75% { opacity: 1; transform: translateX(-2px); }
+    75% { opacity: 1; transform: translateX(calc(-2px * var(--shift, 1))); }
   }
   @keyframes ghost-b {
-    0% { opacity: 1; transform: translateX(5px); }
+    0% { opacity: 1; transform: translateX(calc(5px * var(--shift, 1))); }
     25% { opacity: 0; }
-    50% { opacity: 1; transform: translateX(-4px); }
-    75% { transform: translateX(2px); }
+    50% { opacity: 1; transform: translateX(calc(-4px * var(--shift, 1))); }
+    75% { transform: translateX(calc(2px * var(--shift, 1))); }
+  }
+
+  /* Category scramble: random characters that resolve back to the real text.
+     The real text stays in place (transparent) for screen readers. */
+  .meta-scramble {
+    position: absolute;
+    top: 0;
+    left: 0;
+    white-space: nowrap;
+    color: var(--g5);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .card.is-scrambling .meta-scramble {
+    opacity: 1;
+  }
+  .card.is-scrambling .meta-text {
+    opacity: 0;
   }
 
   @media (prefers-reduced-motion: reduce) {
     .glitch,
-    .title-ghost {
+    .ghost,
+    .meta-scramble {
       display: none;
+    }
+    .meta-text {
+      opacity: 1 !important;
     }
   }
 </style>
