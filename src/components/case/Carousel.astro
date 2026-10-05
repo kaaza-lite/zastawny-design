@@ -1,0 +1,197 @@
+---
+// Image carousel (Figma: "calas slider"), at the 962px media width.
+// Each slide can have a caption; it shows under the image, on the left of the arrow buttons,
+// and changes with the slide. Without slides it shows grey placeholders.
+// Swipe or scroll sideways, use the arrow buttons, or the arrow keys. Dots show the position.
+import { Image, getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  slides?: { src: ImageMetadata; alt: string; caption?: string }[];
+  placeholders?: number;
+}
+
+const { slides = [], placeholders = 5 } = Astro.props;
+const count = slides.length || placeholders;
+
+// Frame shape: the tallest slide's proportions, so every image shows whole (none are cropped)
+const ratio = slides.length ? Math.min(...slides.map((s) => s.src.width / s.src.height)) : 748 / 437;
+
+// Large version of each slide for the full-size preview (Lightbox.astro)
+const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: Math.min(s.src.width, 2400), format: 'webp' })));
+---
+
+<div class="case-wide carousel" data-carousel>
+  <div class="track" tabindex="0" style={`--ratio: ${ratio}`}>
+    {slides.length
+      ? slides.map((s, i) => (
+          <div class="slide" data-caption={s.caption ?? ''}>
+            <div class="slide-frame" style={`--r: ${s.src.width / s.src.height}`}>
+              <Image src={s.src} alt={s.alt} widths={[600, 962, 1300, 1924]} sizes="(max-width: 799.98px) calc(100vw - 24px), (max-width: 1279.98px) 650px, 962px" />
+              <button
+                type="button"
+                class="icon-button tip-host zoom"
+                data-zoom-src={fulls[i].src}
+                data-zoom-alt={s.alt}
+                aria-label="enlarge image"
+                aria-haspopup="dialog"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+                  <circle cx="10.5" cy="10.5" r="6.5"></circle>
+                  <path d="M15.5 15.5 20 20"></path>
+                </svg>
+                <span class="tip tip--left" aria-hidden="true">enlarge image</span>
+              </button>
+            </div>
+          </div>
+        ))
+      : Array.from({ length: count }, () => <div class="slide slide--placeholder" aria-hidden="true" />)}
+  </div>
+  <div class="controls">
+    <p class="caption" aria-live="polite">{slides[0]?.caption ?? ''}</p>
+    <div class="dots" aria-hidden="true">
+      {Array.from({ length: count }, (_, i) => <span class:list={['dot', { 'is-active': i === 0 }]} />)}
+    </div>
+    <div class="arrows">
+      <button type="button" class="icon-button tip-host arrow" data-dir="-1" aria-label="previous image">↫<span class="tip tip--below" aria-hidden="true">previous image</span></button>
+      <button type="button" class="icon-button tip-host arrow" data-dir="1" aria-label="next image">↬<span class="tip tip--below tip--end" aria-hidden="true">next image</span></button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-carousel]')) {
+    const track = root.querySelector<HTMLElement>('.track')!;
+    const slides = [...root.querySelectorAll<HTMLElement>('.slide')];
+    const dots = [...root.querySelectorAll<HTMLElement>('.dot')];
+    const caption = root.querySelector<HTMLElement>('.caption');
+    const count = dots.length;
+    const current = () => Math.round(track.scrollLeft / track.clientWidth);
+
+    const show = (i: number) => {
+      const index = (i + count) % count; // wrap around at the ends
+      track.scrollTo({ left: index * track.clientWidth, behavior: reduce.matches ? 'auto' : 'smooth' });
+    };
+
+    for (const btn of root.querySelectorAll<HTMLButtonElement>('.arrow')) {
+      btn.addEventListener('click', () => show(current() + Number(btn.dataset.dir)));
+    }
+
+    track.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); show(current() + 1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); show(current() - 1); }
+    });
+
+    // Keep the dots and the caption in step with swipes and scrolling
+    let shown = 0;
+    track.addEventListener('scroll', () => {
+      const i = current();
+      if (i === shown) return;
+      shown = i;
+      dots.forEach((d, n) => d.classList.toggle('is-active', n === i));
+      if (caption) caption.textContent = slides[i]?.dataset.caption ?? '';
+    }, { passive: true });
+  }
+</script>
+
+<style>
+  .carousel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .track {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .track::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Each slide shows its image whole, centred, with 8px corners */
+  .slide {
+    display: grid;
+    place-items: center;
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    aspect-ratio: var(--ratio);
+    container-type: size;
+  }
+  /* The image's own box inside the slide, so the enlarge button sits on the image's corner */
+  .slide-frame {
+    position: relative;
+    width: min(100cqw, 100cqh * var(--r));
+    aspect-ratio: var(--r);
+  }
+  .slide-frame :global(img) {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-card);
+  }
+  .zoom {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+  }
+  .slide--placeholder {
+    background: #d9d9d9;
+  }
+
+  /* Caption on the left, dots in the middle, arrows on the right, all vertically centred */
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 24px;
+    min-height: 44px;
+  }
+
+  .caption {
+    color: var(--color-text-muted);
+  }
+
+  .dots {
+    display: flex;
+    gap: 4px;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 48px;
+    background: #ffffff;
+  }
+  .dot.is-active {
+    width: 24px;
+    background: var(--theme-accent, var(--color-accent-3));
+  }
+
+  .arrows {
+    display: flex;
+    justify-self: end;
+    gap: 16px;
+  }
+  .arrow {
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+  }
+
+  /* Mobile: caption on its own line above the dots and arrows */
+  @media (max-width: 799.98px) {
+    .controls {
+      grid-template-columns: 1fr auto;
+      row-gap: 12px;
+    }
+    .caption {
+      grid-column: 1 / -1;
+    }
+    .caption:empty {
+      display: none;
+    }
+  }
+</style>

@@ -103,7 +103,7 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
     align-items: center;
     gap: 40px;
     height: 56px;
-    padding: 0 6px 0 24px;
+    padding: 0 6px 0 8px;
     background:
       linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
       var(--glass-tint);
@@ -115,8 +115,9 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
       inset 0 0 16px rgb(255 255 255 / 0.04),
       0 14px 36px rgb(0 0 0 / 0.5),
       0 2px 8px rgb(0 0 0 / 0.35);
-    -webkit-backdrop-filter: blur(18px) saturate(180%);
-    backdrop-filter: blur(18px) saturate(180%);
+    /* heavy blur plus a slight darkening of whatever is behind keeps the labels readable */
+    -webkit-backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
+    backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
     font-family: var(--font-display);
     font-size: var(--text-nav);
     line-height: normal;
@@ -132,6 +133,11 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
     color: inherit;
     text-decoration: none;
     border-radius: var(--radius-pill);
+  }
+
+  /* 16px either side so the keyboard focus ring has room around the name */
+  .logo {
+    padding: 0 16px;
   }
 
   .logo-short {
@@ -207,8 +213,8 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
       top: 16px;
     }
     .nav {
-      gap: 20px;
-      padding-left: 18px;
+      gap: 8px;
+      padding-left: 4px;
     }
     .links a {
       padding: 0 10px;

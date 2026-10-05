@@ -1,0 +1,16 @@
+---
+// A case study section: big title, then the content (paragraphs, ### sub-headings,
+// lists, images). Sections after the first get a dashed divider on top.
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<section class="case-section">
+  <h2>{title}</h2>
+  <div class="case-prose">
+    <slot />
+  </div>
+</section>

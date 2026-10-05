@@ -1,5 +1,6 @@
 ---
-// Short full-screen glitch when a page loads, in the page's monochrome ramp.
+// Short full-screen glitch when a page loads, in the page's monochrome ramp,
+// and when leaving a page through an internal link, in the next page's ramp.
 // Anything marked data-scramble (the page title) scrambles and resolves at the same time.
 // Skipped entirely with reduced motion.
 import { palettes, type PaletteName } from '../data/palettes';
@@ -15,18 +16,44 @@ const { palette = 'neutral' } = Astro.props;
 
 <script>
   import { drawOverlay, scrambled, GLITCH_FPS } from '../scripts/glitch';
+  import { palettes, type PaletteName } from '../data/palettes';
 
-  const DURATION = 360; // ms, kept very short on purpose
+  const ENTER = 360; // ms, page load: glitch breaks apart, kept very short on purpose
+  const EXIT = 240;  // ms, leaving a page: glitch builds up in the next page's colours
 
-  const canvas = document.querySelector<HTMLCanvasElement>('.page-glitch');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const unit = Math.min(window.devicePixelRatio || 1, 1.5);
 
-  if (canvas && !reduce) {
-    const ramp: string[] = JSON.parse(canvas.dataset.ramp ?? '[]');
-    const ctx = canvas.getContext('2d');
-    const unit = Math.min(window.devicePixelRatio || 1, 1.5);
+  // Full-screen canvas, drawn at the given intensity curve for the given time
+  function play(ramp: readonly string[], duration: number, intensity: (t: number) => number, frame?: (t: number) => void, done?: () => void, existing?: HTMLCanvasElement) {
+    const canvas = existing ?? document.body.appendChild(Object.assign(document.createElement('canvas'), { className: 'page-glitch' }));
+    canvas.setAttribute('aria-hidden', 'true');
     canvas.width = Math.round(window.innerWidth * unit);
     canvas.height = Math.round(window.innerHeight * unit);
+    const ctx = canvas.getContext('2d');
+    const start = performance.now();
+    let last = -Infinity;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      if (ctx && now - last >= 1000 / GLITCH_FPS) {
+        drawOverlay(ctx, canvas.width, canvas.height, ramp, intensity(t), unit);
+        frame?.(t);
+        last = now;
+      }
+      if (t >= 1) return done?.(canvas);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    return canvas;
+  }
+
+  // ---------- Page load ----------
+  // Only right at the start of a page load: if the script runs late (slow network, dev server)
+  // the page is already on screen, and a glitch over settled content would just be noise.
+  const LATE = 500; // ms since the navigation started
+  const initial = document.querySelector<HTMLCanvasElement>('.page-glitch');
+  if (initial && !reduce && performance.now() < LATE) {
+    const ramp: string[] = JSON.parse(initial.dataset.ramp ?? '[]');
 
     // Scramble layers over each data-scramble element; the real text stays for screen readers
     const scrambles = [...document.querySelectorAll<HTMLElement>('[data-scramble]')].map((el) => {
@@ -38,33 +65,52 @@ const { palette = 'neutral' } = Astro.props;
       return { el, layer, text: el.textContent?.trim() ?? '' };
     });
 
-    const start = performance.now();
-    let last = -Infinity;
-    const tick = (now: number) => {
-      const t = (now - start) / DURATION;
-      if (t >= 1 || !ctx) {
+    play(
+      ramp,
+      ENTER,
+      (t) => 1 - t ** 1.4,
+      (t) => { for (const s of scrambles) s.layer.textContent = scrambled(s.text, t, true); },
+      (canvas) => {
         canvas.remove();
         for (const s of scrambles) {
           s.layer.remove();
           s.el.classList.remove('is-scrambling');
         }
-        return;
-      }
-      if (now - last >= 1000 / GLITCH_FPS) {
-        drawOverlay(ctx, canvas.width, canvas.height, ramp, 1 - t ** 1.4, unit);
-        for (const s of scrambles) s.layer.textContent = scrambled(s.text, t, true);
-        last = now;
-      }
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
+      },
+      initial,
+    );
   } else {
-    canvas?.remove();
+    initial?.remove();
+  }
+
+  // ---------- Leaving a page ----------
+  // Which ramp the destination page uses
+  const rampFor = (path: string) => {
+    const slug = path.split('/').filter(Boolean).pop() as PaletteName;
+    return palettes[slug] ?? palettes.neutral;
+  };
+
+  if (!reduce) {
+    document.addEventListener('click', (e) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const link = (e.target as Element).closest?.('a');
+      if (!link || link.target === '_blank' || link.hasAttribute('download')) return;
+      const url = new URL(link.href, location.href);
+      if (url.origin !== location.origin) return;
+      if (url.pathname === location.pathname && url.hash) return; // same-page anchor
+      e.preventDefault();
+      play(rampFor(url.pathname), EXIT, (t) => t ** 0.7, undefined, () => { location.href = url.href; });
+    });
+
+    // Coming back with the Back button can restore the page mid-glitch: clear it
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) document.querySelectorAll('.page-glitch').forEach((c) => c.remove());
+    });
   }
 </script>
 
 <style>
-  .page-glitch {
+  :global(.page-glitch) {
     position: fixed;
     inset: 0;
     z-index: 100;

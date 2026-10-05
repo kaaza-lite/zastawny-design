@@ -28,7 +28,7 @@ const { dot = false, tone = 'default' } = Astro.props;
     font-style: italic;
     font-weight: 400;
     font-size: var(--text-tag);
-    line-height: 19px; /* Figma "auto" for this font, gives the 28px pill */
+    line-height: 1.19; /* Figma "auto" line height for this font */
     letter-spacing: 0.01em;
     color: var(--color-text-muted);
     white-space: nowrap;
@@ -55,7 +55,7 @@ const { dot = false, tone = 'default' } = Astro.props;
     flex: none;
     width: 6px;
     height: 6px;
-    margin-top: 3px; /* optical centre against the italic x-height */
+    margin-top: 0.2em; /* optical centre against the italic x-height */
     border-radius: 50%;
     background: var(--color-status);
   }

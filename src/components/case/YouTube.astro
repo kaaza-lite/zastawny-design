@@ -1,0 +1,32 @@
+---
+// YouTube video in a case study, at the wide media size with 8px corners.
+// Uses YouTube's privacy-enhanced domain (no tracking cookies until the video plays)
+// and only loads when it's about to scroll into view.
+interface Props {
+  id: string;     // the video id from the YouTube link (youtube.com/watch?v=<id>)
+  title: string;  // the video's title on YouTube, read out by screen readers
+}
+
+const { id, title } = Astro.props;
+---
+
+<iframe
+  class="case-wide youtube"
+  src={`https://www.youtube-nocookie.com/embed/${id}`}
+  title={title}
+  loading="lazy"
+  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+  referrerpolicy="strict-origin-when-cross-origin"
+  allowfullscreen
+></iframe>
+
+<style>
+  .youtube {
+    display: block;
+    aspect-ratio: 962 / 641; /* Figma embed size */
+    height: auto;
+    border: 0;
+    border-radius: var(--radius-card);
+    background: #000000;
+  }
+</style>
