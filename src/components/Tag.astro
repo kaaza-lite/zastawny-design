@@ -1,9 +1,10 @@
 ---
-// Small pill tag in Cormorant Garamond Italic: "open to work", "soon".
+// Small pill tag in Cormorant Garamond Italic: "open to work", "soon",
+// and the About page pills ("how i work" in purple, "tech skills" in green).
 // `dot` adds the green status dot in front of the label.
 interface Props {
   dot?: boolean;
-  tone?: 'default' | 'soon';
+  tone?: 'default' | 'soon' | 'work' | 'skill';
 }
 
 const { dot = false, tone = 'default' } = Astro.props;
@@ -36,6 +37,18 @@ const { dot = false, tone = 'default' } = Astro.props;
   .tag--soon {
     letter-spacing: -0.01em;
     color: var(--color-text-muted);
+  }
+
+  .tag--work {
+    background: var(--color-pill-work-bg);
+    border-color: var(--color-pill-work-border);
+    color: var(--color-text);
+  }
+
+  .tag--skill {
+    background: var(--color-pill-skill-bg);
+    border-color: var(--color-pill-skill-border);
+    color: var(--color-text);
   }
 
   .dot {

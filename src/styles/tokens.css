@@ -24,8 +24,20 @@
   --color-border-nav: #252525;      /* nav bar */
   --color-nav-bg: rgb(18 18 18 / 0.88);
   --color-status: #007323;          /* "open to work" dot */
+  --color-pill-work-bg: #140019;    /* About: "how i work" pills */
+  --color-pill-work-border: #6e5c82;
+  --color-pill-skill-bg: #001a15;   /* About: "tech skills" pills */
+  --color-pill-skill-border: #3c6e64;
   --color-accent-2: #ffffff;        /* Figma: Accent/Acent 2 */
   --color-accent-3: #002dbf;        /* Figma: Accent/Accent 3 */
+
+  /* Glass (nav dock) */
+  --glass-tint: rgb(18 18 18 / 0.45);
+  --glass-sheen-top: rgb(255 255 255 / 0.1);
+  --glass-sheen-bottom: rgb(255 255 255 / 0.02);
+  --glass-rim: rgb(255 255 255 / 0.1);
+  --glass-highlight: rgb(255 255 255 / 0.22);
+  --glass-active: rgb(255 255 255 / 0.12); /* active nav item fill */
 
   /* Font families */
   --font-display: 'CS Ariston Halfpixel', 'Google Sans Flex', system-ui, sans-serif;

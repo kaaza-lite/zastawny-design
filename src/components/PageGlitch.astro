@@ -1,0 +1,95 @@
+---
+// Short full-screen glitch when a page loads, in the page's monochrome ramp.
+// Anything marked data-scramble (the page title) scrambles and resolves at the same time.
+// Skipped entirely with reduced motion.
+import { palettes, type PaletteName } from '../data/palettes';
+
+interface Props {
+  palette?: PaletteName;
+}
+
+const { palette = 'neutral' } = Astro.props;
+---
+
+<canvas class="page-glitch" aria-hidden="true" data-ramp={JSON.stringify(palettes[palette])}></canvas>
+
+<script>
+  import { drawOverlay, scrambled, GLITCH_FPS } from '../scripts/glitch';
+
+  const DURATION = 360; // ms, kept very short on purpose
+
+  const canvas = document.querySelector<HTMLCanvasElement>('.page-glitch');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (canvas && !reduce) {
+    const ramp: string[] = JSON.parse(canvas.dataset.ramp ?? '[]');
+    const ctx = canvas.getContext('2d');
+    const unit = Math.min(window.devicePixelRatio || 1, 1.5);
+    canvas.width = Math.round(window.innerWidth * unit);
+    canvas.height = Math.round(window.innerHeight * unit);
+
+    // Scramble layers over each data-scramble element; the real text stays for screen readers
+    const scrambles = [...document.querySelectorAll<HTMLElement>('[data-scramble]')].map((el) => {
+      const layer = document.createElement('span');
+      layer.className = 'page-scramble';
+      layer.setAttribute('aria-hidden', 'true');
+      el.classList.add('is-scrambling');
+      el.append(layer);
+      return { el, layer, text: el.textContent?.trim() ?? '' };
+    });
+
+    const start = performance.now();
+    let last = -Infinity;
+    const tick = (now: number) => {
+      const t = (now - start) / DURATION;
+      if (t >= 1 || !ctx) {
+        canvas.remove();
+        for (const s of scrambles) {
+          s.layer.remove();
+          s.el.classList.remove('is-scrambling');
+        }
+        return;
+      }
+      if (now - last >= 1000 / GLITCH_FPS) {
+        drawOverlay(ctx, canvas.width, canvas.height, ramp, 1 - t ** 1.4, unit);
+        for (const s of scrambles) s.layer.textContent = scrambled(s.text, t, true);
+        last = now;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  } else {
+    canvas?.remove();
+  }
+</script>
+
+<style>
+  .page-glitch {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  /* Title scramble: the real text goes transparent, the scramble sits on top */
+  :global([data-scramble]) {
+    position: relative;
+  }
+  :global([data-scramble].is-scrambling) {
+    color: transparent;
+  }
+  /* Sized to its own text and centred on the title, so wider fallback symbols don't
+     force an extra line; it only wraps where the title itself would (small phones). */
+  :global(.page-scramble) {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: max-content;
+    max-width: calc(100vw - 40px);
+    transform: translateX(-50%);
+    color: var(--color-text);
+    text-align: center;
+  }
+</style>

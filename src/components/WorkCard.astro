@@ -79,7 +79,7 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
 </Tagname>
 
 <script>
-  import { prepare, drawFrame, GLITCH_FPS } from '../scripts/glitch';
+  import { prepare, drawFrame, scrambled, GLITCH_FPS } from '../scripts/glitch';
   import { palettes, type PaletteName } from '../data/palettes';
 
   const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
@@ -90,25 +90,6 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
   const AFTERSHOCK = 220;     // small glitches while the pointer stays
   const AFTERSHOCK_GAP = [1300, 2600];
 
-  // Category scramble: characters swapped in while it glitches
-  // The title font (CS Ariston Halfpixel) only has letters, so titles scramble with letters only
-  const LETTERS = 'abcdefghijklmnopqrstuvwxyz';
-  const CHARS = LETTERS + '0123456789#&/<>_+=';
-
-  // t: 0 to 1 through the glitch. A full burst resolves left to right;
-  // an aftershock only swaps a few characters.
-  function scrambled(text: string, t: number, full: boolean, set = CHARS) {
-    const randomChar = () => set[Math.floor(Math.random() * set.length)];
-    const resolved = full ? Math.floor(text.length * Math.min(1, t / 0.85)) : text.length;
-    return [...text]
-      .map((ch, i) => {
-        if (ch === ' ') return ' ';
-        if (i < resolved) return !full && Math.random() < 0.22 ? randomChar() : ch;
-        return randomChar();
-      })
-      .join('');
-  }
-
   for (const card of document.querySelectorAll<HTMLElement>('[data-glitch-card]')) {
     const thumb = card.querySelector<HTMLElement>('.thumb')!;
     const shown = card.querySelector<HTMLImageElement>('.thumb-img')!;
@@ -117,7 +98,6 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
     const scrambles = [...card.querySelectorAll<HTMLElement>('.scramble')].map((el) => ({
       el,
       text: el.parentElement?.querySelector('.scramble-source')?.textContent ?? '',
-      set: el.classList.contains('scramble--title') ? LETTERS : CHARS,
     }));
     const ctx = cnv.getContext('2d');
     const ramp = palettes[card.dataset.glitchCard as PaletteName] ?? palettes.neutral;
@@ -175,7 +155,7 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
         if (now - lastFrame >= 1000 / GLITCH_FPS) {
           const k = peak * (t < 0.12 ? t / 0.12 : 1 - ((t - 0.12) / 0.88) ** 1.6);
           drawFrame(ctx, prepared!, ramp, k, dpr);
-          for (const s of scrambles) s.el.textContent = scrambled(s.text, t, peak > 0.8, s.set);
+          for (const s of scrambles) s.el.textContent = scrambled(s.text, t, peak > 0.8);
           lastFrame = now;
         }
         raf = requestAnimationFrame(tick);
