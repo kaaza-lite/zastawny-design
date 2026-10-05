@@ -25,8 +25,8 @@ const count = slides.length || placeholders;
       : Array.from({ length: count }, () => <div class="slide slide--placeholder" aria-hidden="true" />)}
   </div>
   <div class="controls">
-    <div class="dots" aria-hidden="true">
-      {Array.from({ length: count }, (_, i) => <span class:list={['dot', { 'is-active': i === 0 }]} />)}
+    <div class="dots" aria-hidden="true" style={`--count: ${count}`}>
+      {Array.from({ length: count }, () => <span class="dot"><span class="dot-fill" /></span>)}
     </div>
     <div class="arrows">
       <button type="button" class="arrow" data-dir="-1" aria-label="previous image">↫<span class="tip" aria-hidden="true">previous image</span></button>
@@ -58,11 +58,25 @@ const count = slides.length || placeholders;
       if (e.key === 'ArrowLeft') { e.preventDefault(); show(current() - 1); }
     });
 
-    // Keep the dots in step with swipes and scrolling
-    track.addEventListener('scroll', () => {
-      const i = current();
-      dots.forEach((d, n) => d.classList.toggle('is-active', n === i));
-    }, { passive: true });
+    // Dots follow the scroll position continuously: the active line flows into the
+    // next dot as the slide moves (each dot's length and colour track how close it is).
+    const DOT = 8, LINE = 24, GAP = 4;
+    let frame = 0;
+    const paint = () => {
+      frame = 0;
+      const p = track.scrollLeft / (track.clientWidth || 1); // 0 .. count-1, fractional mid-swipe
+      let x = 0;
+      dots.forEach((dot, i) => {
+        const near = Math.max(0, 1 - Math.abs(p - i)); // 1 on the current slide, 0 two slides away
+        const w = DOT + (LINE - DOT) * near;
+        dot.style.transform = `translateX(${x}px)`;
+        dot.style.clipPath = `inset(0 ${LINE - w}px 0 0 round ${DOT / 2}px)`;
+        dot.style.setProperty('--near', String(near));
+        x += w + GAP;
+      });
+    };
+    track.addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(paint); }, { passive: true });
+    paint();
   }
 </script>
 
@@ -106,22 +120,29 @@ const count = slides.length || placeholders;
     min-height: 44px;
   }
 
+  /* Dots row: one 24px line and 8px dots with 4px gaps (positioned by the script) */
   .dots {
     position: absolute;
     left: 50%;
-    display: flex;
-    gap: 4px;
+    width: calc(24px + (var(--count) - 1) * 12px);
+    height: 8px;
     transform: translateX(-50%);
   }
   .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 48px;
-    background: #ffffff;
-  }
-  .dot.is-active {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 24px;
+    height: 8px;
+    background: #ffffff;
+    clip-path: inset(0 16px 0 0 round 4px);
+  }
+  /* Accent colour fades in as the dot becomes the active line */
+  .dot-fill {
+    position: absolute;
+    inset: 0;
     background: var(--theme-accent, var(--color-accent-3));
+    opacity: var(--near, 0);
   }
 
   .arrows {
