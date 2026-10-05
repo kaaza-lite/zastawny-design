@@ -1,0 +1,342 @@
+---
+// Case study page, one per MDX file in src/content/work/ (/calastone, /bamboo, /juicyway).
+// Layout from the Figma case study frames; the content comes from the MDX file.
+import { getCollection, getEntry, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import WorkCard from '../components/WorkCard.astro';
+
+export async function getStaticPaths() {
+  const studies = await getCollection('work');
+  return studies.map((study) => ({ params: { slug: study.id }, props: { study } }));
+}
+
+const { study } = Astro.props;
+const { Content } = await render(study);
+const d = study.data;
+const related = await Promise.all(d.related.map((slug) => getEntry('work', slug)));
+
+const heroVars = [
+  `--hero-pos-d: ${d.heroPosition.desktop}`,
+  `--hero-pos-t: ${d.heroPosition.tablet}`,
+  `--hero-pos-m: ${d.heroPosition.mobile}`,
+].join(';');
+---
+
+<BaseLayout title={d.title} theme={d.palette}>
+  <!-- Hero image behind the title, fading into the page colour -->
+  <div class:list={['hero-image', { 'hero-image--wide': d.heroWide }]} style={heroVars} aria-hidden="true">
+    <Image src={d.hero} alt="" widths={[640, 1280, 1920, 2560]} sizes="100vw" loading="eager" />
+  </div>
+
+  <main class="case">
+    <header class="case-header">
+      <h1 data-scramble>{d.title}</h1>
+      <p class="case-meta">{d.meta}</p>
+    </header>
+
+    <!-- Project details -->
+    <ul class="details">
+      {d.details.map((item) => (
+        <li class="detail">
+          <h2 class="detail-label">{item.label}</h2>
+          <ul class="detail-lines">
+            {item.lines.map((line) => <li>{line}</li>)}
+          </ul>
+        </li>
+      ))}
+    </ul>
+
+    <article class="case-body">
+      <Content />
+    </article>
+
+    <section class="others">
+      <h2>other projects</h2>
+      <div class="others-grid">
+        {related.map((r) => r && (
+          <WorkCard
+            href={`/${r.id}`}
+            title={r.data.title}
+            meta={r.data.meta}
+            image={r.data.thumbnail}
+            alt={`${r.data.title} thumbnail`}
+            palette={r.data.palette}
+            tint={r.data.thumbnailTint}
+          />
+        ))}
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>zastawny ©2026</p>
+    </footer>
+  </main>
+</BaseLayout>
+
+<style>
+  /* ---------- Hero image ---------- */
+  .hero-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 668px;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .hero-image :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: var(--hero-pos-d);
+  }
+  /* Bamboo: the image frame is 2060px wide, centred, wider than the screen */
+  .hero-image--wide :global(img) {
+    position: absolute;
+    left: 50%;
+    width: 2060px;
+    max-width: none;
+    transform: translateX(-50%);
+  }
+  .hero-image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, var(--color-bg), var(--theme-hero-fade));
+  }
+
+  /* ---------- Layout ---------- */
+  .case {
+    position: relative; /* above the hero image */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: var(--case-top);
+    --case-top: 196px;    /* space above the title */
+    --column: 760px;      /* text column */
+    --media: 962px;       /* wide images and videos */
+    --hero-gap: 104px;    /* title to details */
+    --section-gap: 80px;  /* details to content, content to other projects */
+  }
+
+  .case-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 0 var(--gutter);
+    text-align: center;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: var(--text-hero);
+    line-height: var(--leading-display-auto);
+    letter-spacing: 0;
+    color: var(--color-text);
+  }
+  .case-meta {
+    color: var(--color-text);
+  }
+
+  /* ---------- Details cards ---------- */
+  .details {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    width: min(968px, calc(100% - 2 * var(--gutter)));
+    margin: var(--hero-gap) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .detail {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 0 0 calc((100% - 24px) / 3);
+    padding: 16px;
+    background: var(--theme-card);
+    border: 1px solid var(--theme-surface-border);
+    border-radius: var(--radius-card);
+  }
+  .detail-label {
+    font-family: var(--font-display);
+    font-size: 16px;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    color: var(--color-text-paragraph);
+  }
+  .detail-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding-left: 1.1em; /* bullets, as in Figma */
+    list-style: disc;
+    color: var(--color-text-muted);
+  }
+
+  /* ---------- Content ---------- */
+  .case-body {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    width: min(var(--column), calc(100% - 2 * var(--content-gutter)));
+    margin-top: var(--section-gap);
+  }
+
+  .case-body :global(.case-section) {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding: 60px 0;
+    border-top: 1px dashed var(--color-divider);
+  }
+  .case-body :global(.case-section:first-child) {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .case-body :global(h2),
+  .others h2 {
+    font-family: var(--font-display);
+    font-size: var(--text-section);
+    line-height: 0.9;
+    letter-spacing: 0;
+    color: var(--color-text-paragraph);
+  }
+
+  /* Prose inside a section: paragraphs, sub-headings, lists and media */
+  .case-body :global(.case-prose) {
+    display: flex;
+    flex-direction: column;
+    color: var(--color-text-muted);
+    font-size: var(--text-case-body);
+    line-height: var(--leading-case-body);
+    letter-spacing: var(--tracking-case-body);
+  }
+  .case-body :global(.case-prose > * + *) {
+    margin-top: 28px;
+  }
+  .case-body :global(.case-prose h3) {
+    font-family: var(--font-display);
+    font-size: var(--text-case-h3);
+    line-height: 1;
+    letter-spacing: -0.01em;
+    color: var(--color-text-paragraph);
+  }
+  .case-body :global(.case-prose > * + h3) {
+    margin-top: 40px;
+  }
+  .case-body :global(.case-prose h4) {
+    font-family: var(--font-display);
+    font-size: 26px;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    color: var(--color-text-paragraph);
+  }
+  .case-body :global(.case-prose > * + h4) {
+    margin-top: 32px;
+  }
+  .case-body :global(.case-prose h3 + *),
+  .case-body :global(.case-prose h4 + *) {
+    margin-top: 24px;
+  }
+  .case-body :global(.case-prose ul),
+  .case-body :global(.case-prose ol) {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 0;
+    padding-left: 24px;
+  }
+  .case-body :global(.case-prose li > p) {
+    margin: 0;
+  }
+  /* Media is wider than the text column, centred on it */
+  .case-body :global(.case-wide) {
+    width: var(--media);
+    max-width: calc(100vw - 2 * var(--content-gutter));
+    margin-left: calc((100% - min(var(--media), 100vw - 2 * var(--content-gutter))) / 2);
+  }
+  .case-body :global(.case-prose > .case-wide),
+  .case-body :global(.case-prose > * + .case-wide),
+  .case-body :global(.case-prose > .case-wide + *) {
+    margin-top: 40px;
+  }
+  .case-body :global(.case-prose > .case-wide:first-child) {
+    margin-top: 0;
+  }
+
+  /* ---------- Other projects ---------- */
+  .others {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    width: min(1160px, calc(100% - 2 * var(--gutter)));
+    margin-top: var(--section-gap);
+    padding-top: 60px;
+    border-top: 1px dashed var(--color-divider);
+    text-align: center;
+    --color-surface: var(--theme-tile);
+  }
+  .others-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    text-align: left;
+  }
+
+  .footer {
+    padding: var(--section-gap) 0 60px;
+    font-size: var(--text-caption);
+    text-align: center;
+    color: var(--color-text-muted);
+  }
+
+  /* ---------- Tablet ---------- */
+  @media (max-width: 1279.98px) {
+    .hero-image :global(img) {
+      object-position: var(--hero-pos-t);
+    }
+    .case {
+      --case-top: 174px;
+      --column: 496px;
+      --media: 650px;
+      --hero-gap: 110px;
+      --section-gap: 60px;
+    }
+    .details {
+      width: min(690px, calc(100% - 2 * var(--gutter)));
+    }
+  }
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 799.98px) {
+    .hero-image :global(img) {
+      object-position: var(--hero-pos-m);
+    }
+    .hero-image--wide :global(img) {
+      width: 832px;
+    }
+    .case {
+      --column: 496px;
+      --media: 496px;
+      --hero-gap: 60px;
+    }
+    .details {
+      width: min(496px, calc(100% - 2 * var(--content-gutter)));
+    }
+    .detail {
+      flex-basis: 100%;
+    }
+    .others {
+      width: min(496px, calc(100% - 2 * var(--content-gutter)));
+    }
+    .others-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+  }
+</style>

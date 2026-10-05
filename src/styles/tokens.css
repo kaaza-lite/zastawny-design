@@ -61,6 +61,12 @@
   --leading-card-meta: 1.4;
   --tracking-card-meta: -0.01em;
   --text-caption: 12px;
+
+  /* Type: case study body (16px at every size, unified from Bamboo and Juicyway) and sub-headings */
+  --text-case-body: 16px;
+  --leading-case-body: 1.4;
+  --tracking-case-body: -0.01em;
+  --text-case-h3: 36px;
   --leading-body: 1.4;
   --tracking-body: -0.01em;
 
@@ -104,8 +110,44 @@
     --text-section: 52px;
     --text-job-title: 32px;
     --tracking-card-meta: -0.005em;
+    --text-case-h3: 32px;
     --page-top: 200px;
     --gutter: 20px;
     --content-gutter: 12px;
   }
+}
+
+/*
+  Case study themes. Set with data-theme on <body>.
+  Each page is #121212 with a 20% tint of its Figma colour.
+*/
+[data-theme] {
+  --theme-surface-border: var(--color-border-tag);
+}
+[data-theme='calastone'] {
+  --color-bg: #0e0f1a;                     /* #121212 + #00053a at 20% */
+  --theme-hero-fade: rgb(14 15 26 / 0.53); /* top of the hero gradient */
+  --theme-card: rgb(14 15 26 / 0.8);       /* details cards */
+  --theme-surface-border: #181a2a;
+  --theme-tile: #090a16;                   /* "other projects" cards */
+  --theme-accent: #002dbf;                 /* carousel controls */
+  --glass-tint: rgb(14 15 26 / 0.55);
+}
+[data-theme='bamboo'] {
+  --color-bg: #0e1410;                     /* #121212 + #001c0c at 20% */
+  --theme-hero-fade: rgb(0 28 12 / 0.85);
+  --theme-card: rgb(0 28 12 / 0.8);
+  --theme-surface-border: #00240f;
+  --theme-tile: #090f0b;
+  --theme-accent: #026338;
+  --glass-tint: rgb(0 28 12 / 0.55);
+}
+[data-theme='juicyway'] {
+  --color-bg: #140e13;                     /* #121212 + #1c0017 at 20% */
+  --theme-hero-fade: rgb(28 0 23 / 0.8);
+  --theme-card: rgb(28 0 23 / 0.8);
+  --theme-surface-border: #272727;
+  --theme-tile: #100b0f;
+  --theme-accent: #812872;
+  --glass-tint: rgb(28 0 23 / 0.55);
 }

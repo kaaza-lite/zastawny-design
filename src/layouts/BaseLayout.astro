@@ -9,9 +9,11 @@ interface Props {
   title: string;
   description?: string;
   palette?: PaletteName; // colours of the page-load glitch
+  theme?: 'calastone' | 'bamboo' | 'juicyway'; // case study tint (also sets the glitch colours)
 }
 
-const { title, description, palette = 'neutral' } = Astro.props;
+const { title, description, theme } = Astro.props;
+const palette: PaletteName = Astro.props.palette ?? theme ?? 'neutral';
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
@@ -29,7 +31,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <link rel="preload" href="/fonts/google-sans-flex-300-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/cormorant-garamond-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
   </head>
-  <body>
+  <body data-theme={theme}>
     <Nav />
     <slot />
     <PageGlitch palette={palette} />
