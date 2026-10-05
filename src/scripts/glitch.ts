@@ -170,3 +170,94 @@ export function drawFrame(ctx: CanvasRenderingContext2D, p: Prepared, ramp: Ramp
 
 /** Frames per second for the glitch: stepped, not smooth, on purpose. */
 export const GLITCH_FPS = 14;
+
+// ---------- Text scramble ----------
+
+/** Characters swapped in while text glitches (letters, digits and symbols). */
+export const SCRAMBLE_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789#&/<>_+=';
+
+/**
+ * The text at moment t (0 to 1) of a glitch. A full glitch resolves left to right;
+ * a light one keeps the text and swaps a few characters.
+ */
+export function scrambled(text: string, t: number, full: boolean) {
+  const randomChar = () => SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+  const resolved = full ? Math.floor(text.length * Math.min(1, t / 0.85)) : text.length;
+  return [...text]
+    .map((ch, i) => {
+      if (ch === ' ') return ' ';
+      if (i < resolved) return !full && Math.random() < 0.22 ? randomChar() : ch;
+      return randomChar();
+    })
+    .join('');
+}
+
+// ---------- Full-screen overlay (page load and page transitions) ----------
+
+/**
+ * Draw one frame of the full-screen glitch over a transparent canvas: flat ramp
+ * panels, dark masks, thin bands, scanline patches and the tracking overlay.
+ * The page shows through between the blocks.
+ */
+export function drawOverlay(ctx: CanvasRenderingContext2D, w: number, h: number, ramp: Ramp, k: number, unit = 1) {
+  ctx.clearRect(0, 0, w, h);
+  if (k <= 0) return;
+
+  const blocks = Math.round(6 + 18 * k);
+  for (let n = 0; n < blocks; n++) {
+    const r = Math.random();
+    const bw = rand(0.06, 0.5) * w;
+    const bh = rand(0.02, 0.22) * h;
+    const x = rand(-0.05, 0.95) * w;
+    const y = rand(0, 0.98) * h;
+
+    if (r < 0.5) {
+      // flat ramp panel
+      ctx.globalAlpha = rand(0.75, 1);
+      ctx.fillStyle = pick(ramp.slice(1));
+      ctx.fillRect(x, y, bw, bh);
+    } else if (r < 0.65) {
+      // dark mask
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = ramp[0];
+      ctx.fillRect(x, y, bw, bh);
+    } else if (r < 0.85) {
+      // thin band across most of the screen
+      ctx.globalAlpha = rand(0.6, 1);
+      ctx.fillStyle = pick(ramp);
+      ctx.fillRect(rand(-0.1, 0.3) * w, y, rand(0.5, 1.1) * w, rand(1, 6) * unit);
+    } else {
+      // scanline patch
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = pick(ramp.slice(2));
+      for (let ly = y; ly < y + bh; ly += 3 * unit) ctx.fillRect(x, ly, bw, unit);
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // Tracking overlay
+  ctx.lineWidth = Math.max(1, unit);
+  const points: [number, number][] = [];
+  for (let n = 0; n < Math.round(2 + 4 * k); n++) {
+    const bw = rand(0.08, 0.3) * w;
+    const bh = rand(0.12, 0.45) * h;
+    const x = rand(0, 1) * (w - bw);
+    const y = rand(0, 1) * (h - bh);
+    ctx.strokeStyle = ramp[5];
+    ctx.globalAlpha = 0.85;
+    ctx.strokeRect(Math.round(x) + 0.5, Math.round(y) + 0.5, Math.round(bw), Math.round(bh));
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = pick([ramp[3], ramp[4], ramp[5]]);
+    ctx.fillRect(x, y - 8 * unit, rand(18, 40) * unit, 7 * unit);
+    points.push([x + bw * rand(0.2, 0.8), y + bh * rand(0.1, 0.6)]);
+  }
+  ctx.strokeStyle = ramp[5];
+  ctx.globalAlpha = 0.6;
+  ctx.beginPath();
+  for (let n = 1; n < points.length; n++) {
+    ctx.moveTo(points[n - 1][0], points[n - 1][1]);
+    ctx.lineTo(points[n][0], points[n][1]);
+  }
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}

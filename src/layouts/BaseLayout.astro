@@ -2,13 +2,16 @@
 // Shared page shell: <head>, fonts, global styles and the floating nav.
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
+import PageGlitch from '../components/PageGlitch.astro';
+import type { PaletteName } from '../data/palettes';
 
 interface Props {
   title: string;
   description?: string;
+  palette?: PaletteName; // colours of the page-load glitch
 }
 
-const { title, description } = Astro.props;
+const { title, description, palette = 'neutral' } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
@@ -29,5 +32,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   <body>
     <Nav />
     <slot />
+    <PageGlitch palette={palette} />
   </body>
 </html>

@@ -17,7 +17,7 @@ import juicywayThumb from '../assets/work/juicyway-thumb.png';
     <!-- Hero -->
     <section class="hero">
       <div class="name">
-        <h1>tomasz zastawny</h1>
+        <h1 data-scramble>tomasz zastawny</h1>
         <p class="role">senior product designer</p>
       </div>
       <div class="intro">
@@ -350,9 +350,17 @@ import juicywayThumb from '../assets/work/juicyway-thumb.png';
 
   /* ---------- Mobile ---------- */
   @media (max-width: 799.98px) {
+    /* Cards and experience stay in a 496px column, so wide phones keep side gutters */
     .work {
       grid-template-columns: minmax(0, 1fr);
       gap: 12px;
+      max-width: calc(496px + 2 * var(--gutter));
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .experience {
+      width: min(496px, calc(100% - 2 * var(--content-gutter)));
     }
 
     .jobs {
