@@ -32,12 +32,12 @@
   --color-accent-3: #002dbf;        /* Figma: Accent/Accent 3 */
 
   /* Glass (nav dock) */
-  --glass-tint: rgb(18 18 18 / 0.45);
-  --glass-sheen-top: rgb(255 255 255 / 0.1);
+  --glass-tint: rgb(18 18 18 / 0.86);   /* dark enough to stay legible over bright images */
+  --glass-sheen-top: rgb(255 255 255 / 0.08);
   --glass-sheen-bottom: rgb(255 255 255 / 0.02);
   --glass-rim: rgb(255 255 255 / 0.1);
   --glass-highlight: rgb(255 255 255 / 0.22);
-  --glass-active: rgb(255 255 255 / 0.12); /* active nav item fill */
+  --glass-active: rgb(255 255 255 / 0.1); /* active nav item fill */
 
   /* Font families */
   --font-display: 'CS Ariston Halfpixel', 'Google Sans Flex', system-ui, sans-serif;
@@ -131,7 +131,7 @@
   --theme-surface-border: #181a2a;
   --theme-tile: #090a16;                   /* "other projects" cards */
   --theme-accent: #002dbf;                 /* carousel controls */
-  --glass-tint: rgb(14 15 26 / 0.55);
+  --glass-tint: rgb(14 15 26 / 0.86);
 }
 [data-theme='bamboo'] {
   --color-bg: #0e1410;                     /* #121212 + #001c0c at 20% */
@@ -140,7 +140,7 @@
   --theme-surface-border: #00240f;
   --theme-tile: #090f0b;
   --theme-accent: #026338;
-  --glass-tint: rgb(0 28 12 / 0.55);
+  --glass-tint: rgb(0 28 12 / 0.86);
 }
 [data-theme='juicyway'] {
   --color-bg: #140e13;                     /* #121212 + #1c0017 at 20% */
@@ -149,5 +149,5 @@
   --theme-surface-border: #272727;
   --theme-tile: #100b0f;
   --theme-accent: #812872;
-  --glass-tint: rgb(28 0 23 / 0.55);
+  --glass-tint: rgb(28 0 23 / 0.86);
 }

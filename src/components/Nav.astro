@@ -115,8 +115,9 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
       inset 0 0 16px rgb(255 255 255 / 0.04),
       0 14px 36px rgb(0 0 0 / 0.5),
       0 2px 8px rgb(0 0 0 / 0.35);
-    -webkit-backdrop-filter: blur(18px) saturate(180%);
-    backdrop-filter: blur(18px) saturate(180%);
+    /* heavy blur plus a slight darkening of whatever is behind keeps the labels readable */
+    -webkit-backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
+    backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
     font-family: var(--font-display);
     font-size: var(--text-nav);
     line-height: normal;

@@ -48,8 +48,11 @@ const { palette = 'neutral' } = Astro.props;
   }
 
   // ---------- Page load ----------
+  // Only right at the start of a page load: if the script runs late (slow network, dev server)
+  // the page is already on screen, and a glitch over settled content would just be noise.
+  const LATE = 500; // ms since the navigation started
   const initial = document.querySelector<HTMLCanvasElement>('.page-glitch');
-  if (initial && !reduce) {
+  if (initial && !reduce && performance.now() < LATE) {
     const ramp: string[] = JSON.parse(initial.dataset.ramp ?? '[]');
 
     // Scramble layers over each data-scramble element; the real text stays for screen readers
