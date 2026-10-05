@@ -1,9 +1,6 @@
 ---
-// Floating pill navigation. Same items and labels as the Figma nav.
-//
-// REVIEW ONLY: three layout variants (a, b, c) share this markup and differ in CSS.
-// Switch with ?nav=a|b|c in the URL. Once one is picked, delete the other two
-// variant blocks and the switcher script.
+// Floating pill navigation: one compact pill, centred at the top.
+// Same items and labels as the Figma nav. "works" is the Home page.
 //
 // The active item gets a highlight that slides from the previous page's item
 // to the current one on page load. It's drawn with clip-path, so only
@@ -11,23 +8,11 @@
 
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 const caseStudies = ['/calastone', '/bamboo', '/juicyway'];
+// Home and the case studies highlight "works"; About highlights "about"
 const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '/about' ? 'about' : null;
 ---
 
-<header class="site-nav" data-variant="a">
-  <script is:inline>
-    // Review switcher: apply ?nav=a|b|c before first paint and remember it for this visit.
-    (function () {
-      var el = document.currentScript.parentElement;
-      var v = null;
-      try {
-        v = new URLSearchParams(location.search).get('nav');
-        if (v) sessionStorage.setItem('nav-variant', v);
-        else v = sessionStorage.getItem('nav-variant');
-      } catch (e) {}
-      if (v === 'a' || v === 'b' || v === 'c') el.setAttribute('data-variant', v);
-    })();
-  </script>
+<header class="site-nav">
   <nav class="nav">
     <a class="logo" href="/">
       <span class="logo-full">zastawny</span>
@@ -99,34 +84,34 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
 </script>
 
 <style>
-  /* ---------- Shared ---------- */
   .site-nav {
     position: fixed;
     z-index: 10;
     top: 24px;
     left: 50%;
     transform: translateX(-50%);
-    width: min(1216px, calc(100% - 64px));
-    pointer-events: none; /* only the visible pill catches clicks */
+    width: max-content;
+    max-width: calc(100% - 32px);
   }
 
+  /* The pill: translucent, blurred, hairline border, soft shadow */
   .nav {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 12px;
     height: 52px;
+    padding: 0 4px 0 22px;
+    background: var(--color-nav-bg);
+    border: 1px solid var(--color-border-nav);
+    border-radius: var(--radius-pill);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
     font-family: var(--font-display);
     font-size: var(--text-nav);
     line-height: normal;
     letter-spacing: 0;
     color: var(--color-text);
-  }
-
-  /* The pill surface: translucent, blurred, hairline border, soft shadow */
-  .nav,
-  .logo,
-  .links {
-    pointer-events: auto;
   }
 
   .logo,
@@ -153,7 +138,7 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
   .links a {
     position: relative;
     z-index: 1;
-    padding: 0 12px;
+    padding: 0 14px;
   }
 
   .external-label {
@@ -203,10 +188,17 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
     background: var(--color-border-nav);
   }
 
+  /* Mobile: "z" as the logo, as in Figma */
   @media (max-width: 799.98px) {
     .site-nav {
       top: 16px;
-      width: calc(100% - 32px);
+    }
+    .nav {
+      gap: 4px;
+      padding-left: 18px;
+    }
+    .links a {
+      padding: 0 10px;
     }
     .logo-full {
       position: absolute;
@@ -218,113 +210,6 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
     }
     .logo-short {
       display: inline;
-    }
-  }
-
-  /* ---------- Variant A: full-width pill bar (closest to Figma) ---------- */
-  .site-nav[data-variant='a'] .nav {
-    padding: 0 39px 0 51px;
-    background: var(--color-nav-bg);
-    border: 1px solid var(--color-border-nav);
-    border-radius: var(--radius-pill);
-    box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
-  }
-  .site-nav[data-variant='a'] .links {
-    gap: 28px;
-  }
-
-  @media (max-width: 1279.98px) {
-    .site-nav[data-variant='a'] {
-      width: min(736px, calc(100% - 64px));
-    }
-    .site-nav[data-variant='a'] .nav {
-      padding: 0 19px 0 31px;
-    }
-    .site-nav[data-variant='a'] .links {
-      gap: 8px;
-    }
-  }
-
-  @media (max-width: 799.98px) {
-    .site-nav[data-variant='a'] {
-      width: min(736px, calc(100% - 32px));
-    }
-    .site-nav[data-variant='a'] .nav {
-      padding: 0 6px 0 15px;
-    }
-    .site-nav[data-variant='a'] .links {
-      gap: 0;
-    }
-    .site-nav[data-variant='a'] .links a {
-      padding: 0 8px;
-    }
-  }
-
-  /* ---------- Variant B: compact centred pill ---------- */
-  .site-nav[data-variant='b'] {
-    width: max-content;
-    max-width: calc(100% - 32px);
-  }
-  .site-nav[data-variant='b'] .nav {
-    gap: 12px;
-    padding: 0 4px 0 22px;
-    background: var(--color-nav-bg);
-    border: 1px solid var(--color-border-nav);
-    border-radius: var(--radius-pill);
-    box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
-  }
-  .site-nav[data-variant='b'] .links a {
-    padding: 0 14px;
-  }
-
-  @media (max-width: 799.98px) {
-    .site-nav[data-variant='b'] .nav {
-      gap: 4px;
-      padding-left: 18px;
-    }
-    .site-nav[data-variant='b'] .links a {
-      padding: 0 10px;
-    }
-  }
-
-  /* ---------- Variant C: split pills, outlined active state ---------- */
-  .site-nav[data-variant='c'] .logo,
-  .site-nav[data-variant='c'] .links {
-    height: 52px;
-    background: var(--color-nav-bg);
-    border: 1px solid var(--color-border-nav);
-    border-radius: var(--radius-pill);
-    box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
-  }
-  .site-nav[data-variant='c'] .logo {
-    padding: 0 24px;
-  }
-  .site-nav[data-variant='c'] .links {
-    padding: 0 4px;
-  }
-  .site-nav[data-variant='c'] .links a {
-    padding: 0 16px;
-  }
-  /* Brighter active fill than A and B */
-  .site-nav[data-variant='c'] .highlight,
-  .site-nav[data-variant='c'] .links:not(.js-ready) a[aria-current='page'] {
-    background: var(--color-divider);
-  }
-
-  @media (max-width: 799.98px) {
-    .site-nav[data-variant='c'] .logo {
-      justify-content: center;
-      width: 52px;
-      padding: 0;
-    }
-    .site-nav[data-variant='c'] .links a {
-      padding: 0 10px;
     }
   }
 </style>

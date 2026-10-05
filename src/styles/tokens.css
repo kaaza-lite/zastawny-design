@@ -15,11 +15,10 @@
 
   /* Color */
   --color-bg: #121212;              /* page background */
-  --color-surface: #0d0d0d;         /* case study cards (black on mobile in Figma) */
+  --color-surface: #0d0d0d;         /* case study cards */
   --color-text: #bfbfbf;            /* Figma: Color */
   --color-text-muted: #808080;      /* Figma: Text 1 */
   --color-text-paragraph: #c9c9c9;  /* Figma: Text/Paragraph 1 */
-  --color-tag-soon: #808080;        /* "soon" tag (#929292 on tablet and mobile in Figma) */
   --color-divider: #383838;         /* Figma: Divders/Divider 1 */
   --color-border-tag: #353535;      /* pill tags */
   --color-border-nav: #252525;      /* nav bar */
@@ -83,7 +82,6 @@
     --text-card-title: 40px;
     --text-card-meta: 15px;
     --leading-card-meta: 1.35;
-    --color-tag-soon: #929292;
     --page-top: 178px;
   }
 }
@@ -91,7 +89,6 @@
 /* Mobile */
 @media (max-width: 799.98px) {
   :root {
-    --color-surface: #000000;
     --text-section: 52px;
     --text-job-title: 32px;
     --tracking-card-meta: -0.005em;

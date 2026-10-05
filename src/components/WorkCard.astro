@@ -64,7 +64,7 @@ const Tagname = href ? 'a' : 'div';
     object-fit: cover;
   }
 
-  /* Dark overlay on the Bamboo image (green tinted on mobile, as in Figma) */
+  /* Dark overlay on the Bamboo image */
   .thumb--tint::after {
     content: '';
     position: absolute;
@@ -102,12 +102,6 @@ const Tagname = href ? 'a' : 'div';
     line-height: var(--leading-card-meta);
     letter-spacing: var(--tracking-card-meta);
     color: var(--color-text-muted);
-  }
-
-  @media (max-width: 799.98px) {
-    .thumb--tint::after {
-      background: rgb(0 28 12 / 0.2);
-    }
   }
 
   /*
