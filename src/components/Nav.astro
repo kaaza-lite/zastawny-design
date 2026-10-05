@@ -73,7 +73,13 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
     }
 
     // Keep it aligned when fonts load or the window resizes
+    // (skip the observer's first call, which fires on page load and would cut the slide short)
+    let observed = false;
     new ResizeObserver(() => {
+      if (!observed) {
+        observed = true;
+        return;
+      }
       highlight.classList.remove('is-animated');
       clipTo(current);
     }).observe(links);

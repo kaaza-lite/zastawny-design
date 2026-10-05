@@ -24,6 +24,10 @@
   --color-border-nav: #252525;      /* nav bar */
   --color-nav-bg: rgb(18 18 18 / 0.88);
   --color-status: #007323;          /* "open to work" dot */
+  --color-pill-work-bg: #140019;    /* About: "how i work" pills */
+  --color-pill-work-border: #6e5c82;
+  --color-pill-skill-bg: #001a15;   /* About: "tech skills" pills */
+  --color-pill-skill-border: #3c6e64;
   --color-accent-2: #ffffff;        /* Figma: Accent/Acent 2 */
   --color-accent-3: #002dbf;        /* Figma: Accent/Accent 3 */
 
