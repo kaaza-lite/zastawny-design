@@ -23,7 +23,6 @@ related: [bamboo, juicyway]
 
 import Section from '../../components/case/Section.astro';
 import Media from '../../components/case/Media.astro';
-import VideoSlot from '../../components/case/VideoSlot.astro';
 import Carousel from '../../components/case/Carousel.astro';
 import problem from './images/calastone/problem.png';
 import etfServicing from './images/calastone/etf-servicing.png';
@@ -61,7 +60,6 @@ Four brand tenants run live on it today, mostly on the US public-sector side: Fe
 
 Both products are designed from one shared design system.
 
-<VideoSlot />
 
 </Section>
 
@@ -75,7 +73,6 @@ When Money Market Services started in 2024 I came in as one of three designers. 
 
 Both products carry the full corporate stakeholder tree: PMs, delivery leads, product owners, product directors. The design decisions have been mine to own on ETF Servicing since 2022, and shared with clear scope on Money Market Services.
 
-<VideoSlot />
 
 </Section>
 
@@ -91,7 +88,7 @@ The design system rebuild came out of Money Market Services specifically. The DO
 
 The pool clients on Money Market Services are exactly the entities the regulation targeted, and the design system as it stood could not meet AA without a real rebuild. It was a Figma library at v1.4 that had grown up around ETF Servicing, and it showed.
 
-<Carousel slides={[{ src: problem1, alt: "" }, { src: problem2, alt: "" }]} />
+<Carousel slides={[{ src: problem1, alt: "", caption: "lorem ipsum dolor sit amet" }, { src: problem2, alt: "", caption: "lorem ipsum dolor sit amet" }]} />
 
 </Section>
 
@@ -101,7 +98,7 @@ The pool clients on Money Market Services are exactly the entities the regulatio
 
 Most of ETF Servicing's real work happens on a single screen. From it an operator can amend charges, adjust the prefunding date and amount, change settlement dates, and read a complete change log of everything that touched the order. It's the surface the whole product hangs off. It also had to do three things at once: stay dense enough for expert users, stay legible enough that nothing gets missed, and stay forgiving enough that a wrong click can be undone. Holding that balance was the craft problem I came back to for most of my time on the product.
 
-<Carousel slides={[{ src: orderDetail1, alt: "" }, { src: orderDetail2, alt: "" }, { src: orderDetail3, alt: "" }]} />
+<Carousel slides={[{ src: orderDetail1, alt: "", caption: "lorem ipsum dolor sit amet" }, { src: orderDetail2, alt: "", caption: "lorem ipsum dolor sit amet" }, { src: orderDetail3, alt: "", caption: "lorem ipsum dolor sit amet" }]} />
 
 ### four-eyes approval
 
@@ -125,7 +122,7 @@ The result is a library, currently at v1.7.X, that every brand tenant is designe
 
 We ran it as tight iteration cycles between designers and engineers. Frequent syncs, design QA on every junior-designer component before it went to dev, and close collaboration with the WCAG-specialist frontend engineer through implementation. Once a component landed we tested it end to end together: keyboard navigation, WAVE audit, NVDA screen reader walkthroughs, pixel checks. Slow per component, fast overall. The WCAG work compounded instead of stacking up as backlog.
 
-<Carousel slides={[{ src: designSystem1, alt: "" }, { src: designSystem2, alt: "" }]} />
+<Carousel slides={[{ src: designSystem1, alt: "", caption: "lorem ipsum dolor sit amet" }, { src: designSystem2, alt: "", caption: "lorem ipsum dolor sit amet" }]} />
 
 ### multi-trading and the scoping tradeoff
 
@@ -148,6 +145,5 @@ Happy to walk through specific flows or screens in more detail.
 
 All screens show public data.
 
-<VideoSlot />
 
 </Section>
