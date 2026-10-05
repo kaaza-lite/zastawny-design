@@ -1,0 +1,374 @@
+---
+// Case study card on Home: thumbnail, title, one-line description.
+// With `href` the whole card is a link and gets the glitch hover, coloured
+// with that case study's monochrome ramp (see src/data/palettes.ts).
+// Without it (FinX), the card is static and the image is dimmed.
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import Tag from './Tag.astro';
+import { palettes, type PaletteName } from '../data/palettes';
+
+interface Props {
+  title: string;
+  meta: string;
+  image: ImageMetadata;
+  alt: string;
+  href?: string;
+  palette?: PaletteName;
+  soon?: boolean;
+  tint?: boolean;   // the dark overlay Figma puts on the Bamboo image
+  eager?: boolean;  // load immediately (cards in the first row)
+}
+
+const { title, meta, image, alt, href, palette = 'neutral', soon = false, tint = false, eager = false } = Astro.props;
+const Tagname = href ? 'a' : 'div';
+const ramp = palettes[palette];
+
+const img = await getImage({ src: image, widths: [320, 480, 640, 800, 1120], format: 'webp' });
+const sizes = '(max-width: 799.98px) calc(100vw - 80px), (max-width: 1279.98px) calc(50vw - 82px), 558px';
+
+// Ramp colours as CSS variables, for the title glitch
+const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
+---
+
+<Tagname
+  class:list={['card', { 'card--link': href, 'card--soon': soon }]}
+  href={href}
+  data-glitch-card={href ? palette : undefined}
+  style={href ? rampVars : undefined}
+>
+  <div class:list={['thumb', { 'thumb--tint': tint }]}>
+    <img
+      class="thumb-img"
+      src={img.src}
+      srcset={img.srcSet.attribute}
+      sizes={sizes}
+      width={image.width}
+      height={image.height}
+      alt={alt}
+      decoding="async"
+      loading={eager ? 'eager' : 'lazy'}
+    />
+    {href && <canvas class="glitch" aria-hidden="true"></canvas>}
+  </div>
+  <div class="text">
+    <div class="title-row">
+      <h2 class="title">
+        <span class="title-text scramble-source">{title}</span>
+        {href && (
+          <>
+            <span class="scramble scramble--title" aria-hidden="true"></span>
+            <span class="ghost ghost--a" aria-hidden="true">{title}</span>
+            <span class="ghost ghost--b" aria-hidden="true">{title}</span>
+          </>
+        )}
+      </h2>
+      {soon && <Tag tone="soon">soon</Tag>}
+    </div>
+    <p class="meta">
+      <span class="scramble-source">{meta}</span>
+      {href && (
+        <>
+          <span class="scramble scramble--meta" aria-hidden="true"></span>
+          <span class="ghost ghost--a" aria-hidden="true">{meta}</span>
+          <span class="ghost ghost--b" aria-hidden="true">{meta}</span>
+        </>
+      )}
+    </p>
+  </div>
+</Tagname>
+
+<script>
+  import { prepare, drawFrame, GLITCH_FPS } from '../scripts/glitch';
+  import { palettes, type PaletteName } from '../data/palettes';
+
+  const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  // Timing (ms)
+  const BURST = 650;          // the big glitch when the pointer arrives
+  const AFTERSHOCK = 220;     // small glitches while the pointer stays
+  const AFTERSHOCK_GAP = [1300, 2600];
+
+  // Category scramble: characters swapped in while it glitches
+  // The title font (CS Ariston Halfpixel) only has letters, so titles scramble with letters only
+  const LETTERS = 'abcdefghijklmnopqrstuvwxyz';
+  const CHARS = LETTERS + '0123456789#&/<>_+=';
+
+  // t: 0 to 1 through the glitch. A full burst resolves left to right;
+  // an aftershock only swaps a few characters.
+  function scrambled(text: string, t: number, full: boolean, set = CHARS) {
+    const randomChar = () => set[Math.floor(Math.random() * set.length)];
+    const resolved = full ? Math.floor(text.length * Math.min(1, t / 0.85)) : text.length;
+    return [...text]
+      .map((ch, i) => {
+        if (ch === ' ') return ' ';
+        if (i < resolved) return !full && Math.random() < 0.22 ? randomChar() : ch;
+        return randomChar();
+      })
+      .join('');
+  }
+
+  for (const card of document.querySelectorAll<HTMLElement>('[data-glitch-card]')) {
+    const thumb = card.querySelector<HTMLElement>('.thumb')!;
+    const shown = card.querySelector<HTMLImageElement>('.thumb-img')!;
+    const cnv = card.querySelector<HTMLCanvasElement>('.glitch')!;
+    // Scramble layers for the title and the category line, each with its real text
+    const scrambles = [...card.querySelectorAll<HTMLElement>('.scramble')].map((el) => ({
+      el,
+      text: el.parentElement?.querySelector('.scramble-source')?.textContent ?? '',
+      set: el.classList.contains('scramble--title') ? LETTERS : CHARS,
+    }));
+    const ctx = cnv.getContext('2d');
+    const ramp = palettes[card.dataset.glitchCard as PaletteName] ?? palettes.neutral;
+    if (!ctx) continue;
+
+    let prepared: ReturnType<typeof prepare> = null;
+    let preparedFor = '';
+    let raf = 0;
+    let timer = 0;
+    let hovering = false;
+
+    // With srcset, naturalWidth is scaled by pixel density, so use a plain
+    // copy of the chosen file (already cached) to get its real pixels.
+    const source = new Image();
+    const sync = () => {
+      if (shown.currentSrc && source.src !== shown.currentSrc) source.src = shown.currentSrc;
+    };
+    if (shown.complete) sync();
+    else shown.addEventListener('load', sync, { once: true });
+
+    const ready = () => {
+      sync();
+      if (!source.complete || !source.naturalWidth) return false;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = Math.round(thumb.clientWidth * dpr);
+      const h = Math.round(thumb.clientHeight * dpr);
+      const key = `${source.src}|${w}x${h}`;
+      if (key !== preparedFor) {
+        prepared = prepare(source, w, h, ramp);
+        preparedFor = key;
+        cnv.width = w;
+        cnv.height = h;
+      }
+      return !!prepared;
+    };
+
+    // Play a glitch: intensity rises fast, then decays to a clean frame
+    const play = (duration: number, peak: number) => {
+      if (!ready() || !prepared) return;
+      cancelAnimationFrame(raf);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const start = performance.now();
+      let lastFrame = -Infinity;
+      card.classList.add('is-glitching', 'is-scrambling');
+      cnv.classList.add('is-on');
+
+      const tick = (now: number) => {
+        const t = (now - start) / duration;
+        if (t >= 1) {
+          cnv.classList.remove('is-on');
+          card.classList.remove('is-scrambling');
+          card.classList.remove('is-glitching');
+          return;
+        }
+        if (now - lastFrame >= 1000 / GLITCH_FPS) {
+          const k = peak * (t < 0.12 ? t / 0.12 : 1 - ((t - 0.12) / 0.88) ** 1.6);
+          drawFrame(ctx, prepared!, ramp, k, dpr);
+          for (const s of scrambles) s.el.textContent = scrambled(s.text, t, peak > 0.8, s.set);
+          lastFrame = now;
+        }
+        raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    };
+
+    const scheduleAftershock = () => {
+      clearTimeout(timer);
+      const gap = AFTERSHOCK_GAP[0] + Math.random() * (AFTERSHOCK_GAP[1] - AFTERSHOCK_GAP[0]);
+      timer = window.setTimeout(() => {
+        if (!hovering) return;
+        play(AFTERSHOCK, 0.55);
+        scheduleAftershock();
+      }, gap);
+    };
+
+    const enter = () => {
+      if (reduce.matches) return;
+      hovering = true;
+      play(BURST, 1);
+      scheduleAftershock();
+    };
+    const leave = () => {
+      hovering = false;
+      clearTimeout(timer);
+    };
+
+    card.addEventListener('pointerenter', (e) => {
+      if (e.pointerType === 'mouse' && fine.matches) enter();
+    });
+    card.addEventListener('pointerleave', leave);
+    card.addEventListener('focus', () => {
+      if (card.matches(':focus-visible')) enter();
+    });
+    card.addEventListener('blur', leave);
+  }
+</script>
+
+<style>
+  .card {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+    padding: 20px;
+    background: var(--color-surface);
+    border-radius: var(--radius-card);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .thumb {
+    position: relative;
+    height: 266px;
+    overflow: hidden;
+  }
+
+  .thumb-img,
+  .glitch {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Glitch canvas sits over the image, hidden except while a glitch plays */
+  .glitch {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .glitch.is-on {
+    opacity: 1;
+  }
+
+  /* Dark overlay on the Bamboo image */
+  .thumb--tint::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgb(0 0 0 / 0.2);
+    pointer-events: none;
+  }
+
+  .card--soon .thumb {
+    opacity: 0.25;
+  }
+
+  .text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .title {
+    position: relative;
+    font-family: var(--font-display);
+    font-size: var(--text-card-title);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    color: var(--color-text);
+  }
+
+  .meta {
+    position: relative;
+    font-size: var(--text-card-meta);
+    line-height: var(--leading-card-meta);
+    letter-spacing: var(--tracking-card-meta);
+    color: var(--color-text-muted);
+  }
+
+  /*
+    Text glitch on the title and the category line: two ghost copies in the
+    ramp colours jump around while the image glitches.
+  */
+  .ghost {
+    position: absolute;
+    top: 0;
+    left: 0;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .ghost--a {
+    color: var(--g4);
+    clip-path: inset(0 0 52% 0);
+  }
+  .ghost--b {
+    color: var(--g3);
+    clip-path: inset(48% 0 0 0);
+  }
+  .card.is-glitching .ghost--a {
+    animation: ghost-a 280ms steps(1, end) infinite;
+  }
+  .card.is-glitching .ghost--b {
+    animation: ghost-b 280ms steps(1, end) infinite;
+  }
+  /* The category line is small, so its ghosts move less */
+  .meta .ghost {
+    --shift: 0.5;
+  }
+
+  @keyframes ghost-a {
+    0% { opacity: 1; transform: translateX(calc(-6px * var(--shift, 1))); }
+    25% { transform: translateX(calc(4px * var(--shift, 1))); }
+    50% { opacity: 0; }
+    75% { opacity: 1; transform: translateX(calc(-2px * var(--shift, 1))); }
+  }
+  @keyframes ghost-b {
+    0% { opacity: 1; transform: translateX(calc(5px * var(--shift, 1))); }
+    25% { opacity: 0; }
+    50% { opacity: 1; transform: translateX(calc(-4px * var(--shift, 1))); }
+    75% { transform: translateX(calc(2px * var(--shift, 1))); }
+  }
+
+  /* Scramble on the title and the category line: random characters that resolve
+     back to the real text. The real text stays in place (transparent) for screen readers. */
+  .scramble {
+    position: absolute;
+    top: 0;
+    left: 0;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .scramble--title {
+    color: var(--g5);
+  }
+  .scramble--meta {
+    color: var(--g5);
+  }
+  .card.is-scrambling .scramble {
+    opacity: 1;
+  }
+  .card.is-scrambling .scramble-source {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glitch,
+    .ghost,
+    .scramble {
+      display: none;
+    }
+    .scramble-source {
+      opacity: 1 !important;
+    }
+  }
+</style>

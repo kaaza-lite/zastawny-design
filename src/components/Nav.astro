@@ -1,0 +1,215 @@
+---
+// Floating pill navigation: one compact pill, centred at the top.
+// Same items and labels as the Figma nav. "works" is the Home page.
+//
+// The active item gets a highlight that slides from the previous page's item
+// to the current one on page load. It's drawn with clip-path, so only
+// clip-path animates.
+
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const caseStudies = ['/calastone', '/bamboo', '/juicyway'];
+// Home and the case studies highlight "works"; About highlights "about"
+const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '/about' ? 'about' : null;
+---
+
+<header class="site-nav">
+  <nav class="nav">
+    <a class="logo" href="/">
+      <span class="logo-full">zastawny</span>
+      <span class="logo-short" aria-hidden="true">z</span>
+    </a>
+    <div class="links">
+      <span class="highlight" aria-hidden="true"></span>
+      <a href="/" data-key="works" aria-current={active === 'works' ? 'page' : undefined}>works</a>
+      <a href="/about" data-key="about" aria-current={active === 'about' ? 'page' : undefined}>about</a>
+      <a href="https://www.linkedin.com/in/zastawny/" target="_blank" rel="noopener" class="external">
+        <span class="external-label">linkedin</span><span class="external-arrow" aria-hidden="true">⇗</span>
+      </a>
+    </div>
+  </nav>
+</header>
+
+<script>
+  // Slide the highlight from the item that was active on the previous page.
+  const STORAGE_KEY = 'nav-active';
+
+  function setup() {
+    const links = document.querySelector<HTMLElement>('.site-nav .links');
+    const highlight = links?.querySelector<HTMLElement>('.highlight');
+    if (!links || !highlight) return;
+
+    const current = links.querySelector<HTMLElement>('a[aria-current="page"]');
+    if (!current) {
+      highlight.hidden = true;
+      return;
+    }
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Clip the full-width highlight down to one link
+    const clipTo = (link: HTMLElement) => {
+      const left = link.offsetLeft - highlight.offsetLeft;
+      const right = highlight.offsetLeft + highlight.offsetWidth - (link.offsetLeft + link.offsetWidth);
+      highlight.style.clipPath = `inset(0 ${right}px 0 ${left}px round 999px)`;
+    };
+
+    let previous: HTMLElement | null = null;
+    try {
+      const key = sessionStorage.getItem(STORAGE_KEY);
+      if (key && key !== current.dataset.key) {
+        previous = links.querySelector<HTMLElement>(`a[data-key="${key}"]`);
+      }
+      sessionStorage.setItem(STORAGE_KEY, current.dataset.key ?? '');
+    } catch {}
+
+    // Start where the previous page left off, then slide to the current item
+    highlight.classList.remove('is-animated');
+    clipTo(previous && !reduceMotion ? previous : current);
+    links.classList.add('js-ready');
+    if (previous && !reduceMotion) {
+      highlight.getBoundingClientRect(); // commit the start position
+      highlight.classList.add('is-animated');
+      clipTo(current);
+    }
+
+    // Keep it aligned when fonts load or the window resizes
+    new ResizeObserver(() => {
+      highlight.classList.remove('is-animated');
+      clipTo(current);
+    }).observe(links);
+    document.fonts?.ready.then(() => clipTo(current));
+  }
+
+  setup();
+</script>
+
+<style>
+  .site-nav {
+    position: fixed;
+    z-index: 10;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: calc(100% - 32px);
+  }
+
+  /* The pill: translucent, blurred, hairline border, soft shadow */
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 52px;
+    padding: 0 4px 0 22px;
+    background: var(--color-nav-bg);
+    border: 1px solid var(--color-border-nav);
+    border-radius: var(--radius-pill);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    font-family: var(--font-display);
+    font-size: var(--text-nav);
+    line-height: normal;
+    letter-spacing: 0;
+    color: var(--color-text);
+  }
+
+  .logo,
+  .links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: inherit;
+    text-decoration: none;
+    border-radius: var(--radius-pill);
+  }
+
+  .logo-short {
+    display: none;
+  }
+
+  .links {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
+
+  .links a {
+    position: relative;
+    z-index: 1;
+    padding: 0 14px;
+  }
+
+  .external-label {
+    text-decoration: underline;
+    text-decoration-thickness: from-font;
+    text-underline-position: from-font;
+  }
+
+  .external-arrow {
+    margin-left: 0.3em;
+    font-size: 11px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .logo:hover,
+    .links a:hover {
+      color: var(--color-accent-2);
+    }
+  }
+
+  .logo:focus-visible,
+  .links a:focus-visible {
+    color: var(--color-accent-2);
+    outline-offset: -2px;
+  }
+
+  /* Active highlight, clipped to the current link by the script */
+  .highlight {
+    position: absolute;
+    inset: 4px 0;
+    border-radius: var(--radius-pill);
+    background: var(--color-border-nav);
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+
+  .links.js-ready .highlight {
+    opacity: 1;
+  }
+
+  .highlight.is-animated {
+    transition: clip-path var(--dur-base) var(--ease-in-out);
+  }
+
+  /* Without JavaScript, mark the active link directly */
+  .links:not(.js-ready) a[aria-current='page'] {
+    background: var(--color-border-nav);
+  }
+
+  /* Mobile: "z" as the logo, as in Figma */
+  @media (max-width: 799.98px) {
+    .site-nav {
+      top: 16px;
+    }
+    .nav {
+      gap: 4px;
+      padding-left: 18px;
+    }
+    .links a {
+      padding: 0 10px;
+    }
+    .logo-full {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .logo-short {
+      display: inline;
+    }
+  }
+</style>

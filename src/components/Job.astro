@@ -1,0 +1,86 @@
+---
+// One entry in the Experience list: title and meta lines on the left,
+// summary and bullet points (the slot) on the right. Stacks on tablet and mobile.
+// Pass the title as a list to keep an intentional line break: ['line one,', 'line two'].
+interface Props {
+  title: string | string[];
+  meta: string[];
+}
+
+const { title, meta } = Astro.props;
+const titleLines = Array.isArray(title) ? title : [title];
+---
+
+<article class="job">
+  <div class="heading">
+    <h3 class="title">
+      {titleLines.map((line, i) => <>{i > 0 && <br />}{line}</>)}
+    </h3>
+    <div class="meta">
+      {meta.map((line) => <p>{line}</p>)}
+    </div>
+  </div>
+  <div class="body">
+    <slot />
+  </div>
+</article>
+
+<style>
+  .job {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    align-items: flex-start;
+  }
+
+  .heading {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 0 0 400px;
+    min-width: 220px;
+  }
+
+  .title {
+    font-family: var(--font-display);
+    font-size: var(--text-job-title);
+    line-height: 1;
+    letter-spacing: -0.01em;
+    color: var(--color-text);
+  }
+
+  .meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    color: var(--color-text-muted);
+  }
+
+  .body {
+    flex: 1 1 0;
+    min-width: 1px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    color: var(--color-text-muted);
+  }
+
+  .body :global(ul) {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-left: 24px;
+  }
+
+  @media (max-width: 1279.98px) {
+    .job {
+      flex-direction: column;
+      gap: 24px;
+    }
+    .heading,
+    .body {
+      flex: none;
+      width: 100%;
+    }
+  }
+</style>

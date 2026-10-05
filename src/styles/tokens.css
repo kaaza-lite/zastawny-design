@@ -1,13 +1,18 @@
 /*
-  Design tokens, taken from the Figma variables and styles.
-  Figma letter spacing is in %, so -1 becomes -0.01em here.
+  Design tokens, taken from the Figma variables, styles and the resolved
+  values on each frame. Figma letter spacing is in %, so -1 becomes -0.01em.
 
   Breakpoints (CSS variables can't be used in media queries, so they're listed here):
-    desktop  1280 px frame  default styles
+    desktop  1280 px frame  default values
     tablet    800 px frame  @media (max-width: 1279.98px)
     mobile    320 px frame  @media (max-width: 799.98px)
+
+  Tokens that change per breakpoint are redefined in the media queries at the bottom,
+  so components can use one variable at every size.
 */
 :root {
+  color-scheme: dark;
+
   /* Color */
   --color-bg: #121212;              /* page background */
   --color-surface: #0d0d0d;         /* case study cards */
@@ -18,6 +23,7 @@
   --color-border-tag: #353535;      /* pill tags */
   --color-border-nav: #252525;      /* nav bar */
   --color-nav-bg: rgb(18 18 18 / 0.88);
+  --color-status: #007323;          /* "open to work" dot */
   --color-accent-2: #ffffff;        /* Figma: Accent/Acent 2 */
   --color-accent-3: #002dbf;        /* Figma: Accent/Accent 3 */
 
@@ -26,33 +32,39 @@
   --font-body: 'Google Sans Flex', system-ui, sans-serif;
   --font-tag: 'Cormorant Garamond', Georgia, serif;
 
-  /* Type scale: display (CS Ariston Halfpixel, weight 400) */
-  --text-h1: 96px;         --leading-h1: 0.9;        --tracking-h1: 0.02em;
-  --text-h2: 60px;         --leading-h2: 0.9;        --tracking-h2: 0.02em;
-  --text-heading-2: 44px;  --leading-heading-2: 1.3; --tracking-heading-2: -0.01em;
-  --text-h3: 36px;         --leading-h3: 1;          --tracking-h3: 0.02em;
-  --text-heading-3: 18px;  --leading-heading-3: 1.3; --tracking-heading-3: -0.005em;
-  --text-h5: 16px;         --leading-h5: 1;          --tracking-h5: 0.02em;
+  /* Figma's "auto" line height for CS Ariston Halfpixel */
+  --leading-display-auto: 1.09;
 
-  /* Type scale: body (Google Sans Flex Light, weight 300) */
-  --text-body: 16px;       /* Figma: paragraph */
-  --text-body-sm: 15px;    /* Figma: Paragraph */
+  /* Type: display (CS Ariston Halfpixel, weight 400) */
+  --text-hero: 96px;          /* home name */
+  --text-section: 60px;       /* "experience" */
+  --text-card-title: 44px;    /* case study card titles */
+  --text-job-title: 36px;     /* experience job titles */
+  --text-link-large: 32px;    /* "LinkedIn" under experience */
+  --text-nav: 18px;
+
+  /* Type: body (Google Sans Flex Light, weight 300) */
+  --text-body: 16px;
+  --text-card-meta: 16px;
+  --leading-card-meta: 1.4;
+  --tracking-card-meta: -0.01em;
   --text-caption: 12px;
   --leading-body: 1.4;
   --tracking-body: -0.01em;
 
   /* Type: pill tags (Cormorant Garamond Italic) */
   --text-tag: 16px;
-  --tracking-tag: 0.01em;
 
   /* Layout */
   --page-width: 1280px;
-  --page-gutter: 32px;
+  --page-top: 196px;          /* space above the hero, under the floating nav */
+  --gutter: 32px;             /* hero and cards side padding */
+  --content-gutter: 32px;     /* experience side padding */
 
   /* Radii */
   --radius-card: 8px;
   --radius-nav: 20px;
-  --radius-pill: 96px;
+  --radius-pill: 999px;
 
   /* Motion (from the brief) */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -61,4 +73,27 @@
   --dur-base: 240ms;
   --dur-page: 350ms;
   --dur-hero: 1200ms;
+}
+
+/* Tablet */
+@media (max-width: 1279.98px) {
+  :root {
+    --text-hero: 68px;
+    --text-card-title: 40px;
+    --text-card-meta: 15px;
+    --leading-card-meta: 1.35;
+    --page-top: 178px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 799.98px) {
+  :root {
+    --text-section: 52px;
+    --text-job-title: 32px;
+    --tracking-card-meta: -0.005em;
+    --page-top: 200px;
+    --gutter: 20px;
+    --content-gutter: 12px;
+  }
 }
