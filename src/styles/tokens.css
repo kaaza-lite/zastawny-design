@@ -37,7 +37,7 @@
   --glass-sheen-bottom: rgb(255 255 255 / 0.02);
   --glass-rim: rgb(255 255 255 / 0.1);
   --glass-highlight: rgb(255 255 255 / 0.22);
-  --dock-space: calc(56px + 24px + env(safe-area-inset-bottom)); /* dock height + its offset, so the footer stays clear */
+  --glass-active: rgb(255 255 255 / 0.12); /* active nav item fill */
 
   /* Font families */
   --font-display: 'CS Ariston Halfpixel', 'Google Sans Flex', system-ui, sans-serif;
