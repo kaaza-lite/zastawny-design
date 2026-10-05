@@ -54,9 +54,10 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
   <div class="text">
     <div class="title-row">
       <h2 class="title">
-        <span class="title-text">{title}</span>
+        <span class="title-text scramble-source">{title}</span>
         {href && (
           <>
+            <span class="scramble scramble--title" aria-hidden="true"></span>
             <span class="ghost ghost--a" aria-hidden="true">{title}</span>
             <span class="ghost ghost--b" aria-hidden="true">{title}</span>
           </>
@@ -65,10 +66,10 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
       {soon && <Tag tone="soon">soon</Tag>}
     </div>
     <p class="meta">
-      <span class="meta-text">{meta}</span>
+      <span class="scramble-source">{meta}</span>
       {href && (
         <>
-          <span class="meta-scramble" aria-hidden="true"></span>
+          <span class="scramble scramble--meta" aria-hidden="true"></span>
           <span class="ghost ghost--a" aria-hidden="true">{meta}</span>
           <span class="ghost ghost--b" aria-hidden="true">{meta}</span>
         </>
@@ -90,12 +91,14 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
   const AFTERSHOCK_GAP = [1300, 2600];
 
   // Category scramble: characters swapped in while it glitches
-  const CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789#&/<>_+=';
-  const randomChar = () => CHARS[Math.floor(Math.random() * CHARS.length)];
+  // The title font (CS Ariston Halfpixel) only has letters, so titles scramble with letters only
+  const LETTERS = 'abcdefghijklmnopqrstuvwxyz';
+  const CHARS = LETTERS + '0123456789#&/<>_+=';
 
   // t: 0 to 1 through the glitch. A full burst resolves left to right;
   // an aftershock only swaps a few characters.
-  function scrambled(text: string, t: number, full: boolean) {
+  function scrambled(text: string, t: number, full: boolean, set = CHARS) {
+    const randomChar = () => set[Math.floor(Math.random() * set.length)];
     const resolved = full ? Math.floor(text.length * Math.min(1, t / 0.85)) : text.length;
     return [...text]
       .map((ch, i) => {
@@ -110,8 +113,12 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
     const thumb = card.querySelector<HTMLElement>('.thumb')!;
     const shown = card.querySelector<HTMLImageElement>('.thumb-img')!;
     const cnv = card.querySelector<HTMLCanvasElement>('.glitch')!;
-    const metaScramble = card.querySelector<HTMLElement>('.meta-scramble');
-    const metaText = card.querySelector<HTMLElement>('.meta-text')?.textContent ?? '';
+    // Scramble layers for the title and the category line, each with its real text
+    const scrambles = [...card.querySelectorAll<HTMLElement>('.scramble')].map((el) => ({
+      el,
+      text: el.parentElement?.querySelector('.scramble-source')?.textContent ?? '',
+      set: el.classList.contains('scramble--title') ? LETTERS : CHARS,
+    }));
     const ctx = cnv.getContext('2d');
     const ramp = palettes[card.dataset.glitchCard as PaletteName] ?? palettes.neutral;
     if (!ctx) continue;
@@ -168,7 +175,7 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
         if (now - lastFrame >= 1000 / GLITCH_FPS) {
           const k = peak * (t < 0.12 ? t / 0.12 : 1 - ((t - 0.12) / 0.88) ** 1.6);
           drawFrame(ctx, prepared!, ramp, k, dpr);
-          if (metaScramble) metaScramble.textContent = scrambled(metaText, t, peak > 0.8);
+          for (const s of scrambles) s.el.textContent = scrambled(s.text, t, peak > 0.8, s.set);
           lastFrame = now;
         }
         raf = requestAnimationFrame(tick);
@@ -331,31 +338,36 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
     75% { transform: translateX(calc(2px * var(--shift, 1))); }
   }
 
-  /* Category scramble: random characters that resolve back to the real text.
-     The real text stays in place (transparent) for screen readers. */
-  .meta-scramble {
+  /* Scramble on the title and the category line: random characters that resolve
+     back to the real text. The real text stays in place (transparent) for screen readers. */
+  .scramble {
     position: absolute;
     top: 0;
     left: 0;
     white-space: nowrap;
-    color: var(--g5);
     opacity: 0;
     pointer-events: none;
   }
-  .card.is-scrambling .meta-scramble {
+  .scramble--title {
+    color: var(--g5);
+  }
+  .scramble--meta {
+    color: var(--g5);
+  }
+  .card.is-scrambling .scramble {
     opacity: 1;
   }
-  .card.is-scrambling .meta-text {
+  .card.is-scrambling .scramble-source {
     opacity: 0;
   }
 
   @media (prefers-reduced-motion: reduce) {
     .glitch,
     .ghost,
-    .meta-scramble {
+    .scramble {
       display: none;
     }
-    .meta-text {
+    .scramble-source {
       opacity: 1 !important;
     }
   }
