@@ -26,6 +26,18 @@ import Media from '../../components/case/Media.astro';
 import VideoSlot from '../../components/case/VideoSlot.astro';
 import Carousel from '../../components/case/Carousel.astro';
 import problem from './images/calastone/problem.png';
+import etfServicing from './images/calastone/etf-servicing.png';
+import moneyMarketServices from './images/calastone/money-market-services.png';
+import problem1 from './images/calastone/problem-1.png';
+import problem2 from './images/calastone/problem-2.png';
+import orderDetail1 from './images/calastone/order-detail-1.png';
+import orderDetail2 from './images/calastone/order-detail-2.png';
+import orderDetail3 from './images/calastone/order-detail-3.png';
+import fourEyesApproval from './images/calastone/four-eyes-approval.png';
+import idpLogin from './images/calastone/idp-login.png';
+import designSystem1 from './images/calastone/design-system-1.png';
+import designSystem2 from './images/calastone/design-system-2.png';
+import multiTrading from './images/calastone/multi-trading.jpg';
 
 <Section title="the project">
 
@@ -37,11 +49,15 @@ Runs the primary ETF market, the machinery where authorised participants and iss
 
 HSBC uses it to trade funds and share classes across their management entities in Europe, Hong Kong, Singapore, and the wider Asia region, integrating with industry rails like TA2000.
 
+<Media src={etfServicing} alt="" rounded />
+
 ### money market services
 
 It's a newer product in the same family, a digital connectivity layer for money market fund investing. It routes trades from treasury systems into fund providers, instructs banks to settle, delivers fund data back, and auto-invests surplus cash.
 
 Four brand tenants run live on it today, mostly on the US public-sector side: Federated Hermes' pools (Invest PA, MMDT, TexPool) and Allspring.
+
+<Media src={moneyMarketServices} alt="" rounded />
 
 Both products are designed from one shared design system.
 
@@ -75,6 +91,8 @@ The design system rebuild came out of Money Market Services specifically. The DO
 
 The pool clients on Money Market Services are exactly the entities the regulation targeted, and the design system as it stood could not meet AA without a real rebuild. It was a Figma library at v1.4 that had grown up around ETF Servicing, and it showed.
 
+<Carousel slides={[{ src: problem1, alt: "" }, { src: problem2, alt: "" }]} />
+
 </Section>
 
 <Section title="the work">
@@ -83,19 +101,19 @@ The pool clients on Money Market Services are exactly the entities the regulatio
 
 Most of ETF Servicing's real work happens on a single screen. From it an operator can amend charges, adjust the prefunding date and amount, change settlement dates, and read a complete change log of everything that touched the order. It's the surface the whole product hangs off. It also had to do three things at once: stay dense enough for expert users, stay legible enough that nothing gets missed, and stay forgiving enough that a wrong click can be undone. Holding that balance was the craft problem I came back to for most of my time on the product.
 
-<Carousel />
+<Carousel slides={[{ src: orderDetail1, alt: "" }, { src: orderDetail2, alt: "" }, { src: orderDetail3, alt: "" }]} />
 
 ### four-eyes approval
 
 In institutional fund ops, a second operator has to sign off on a first operator's action before it goes live. That much is standard practice. What varies is the mechanics, and every firm has its own quirks. Designing it well meant sitting with client operations teams and walking through how approvals actually moved on their side, then sketching states and iterating the review flow until it matched. The client signed off on the final process, and it still shapes how approvals move through the product.
 
-<Carousel />
+<Media src={fourEyesApproval} alt="" rounded />
 
 ### the IDP login
 
 Money Market Services runs on Angular, but its login flow is built separately in vanilla JavaScript because it hooks into an identity provider sitting outside the main app stack. A login screen sounds like a minor surface. It isn't. For an institutional product it's where a client first sees the brand tenant they signed up for, and where a lot of the product's trust posture either lands or doesn't. Designing it meant handling brand variability, session and error states, and the specific handshake with the provider, none of it treated as boilerplate.
 
-<Carousel />
+<Media src={idpLogin} alt="" rounded />
 
 ### the design system rebuild
 
@@ -107,7 +125,7 @@ The result is a library, currently at v1.7.X, that every brand tenant is designe
 
 We ran it as tight iteration cycles between designers and engineers. Frequent syncs, design QA on every junior-designer component before it went to dev, and close collaboration with the WCAG-specialist frontend engineer through implementation. Once a component landed we tested it end to end together: keyboard navigation, WAVE audit, NVDA screen reader walkthroughs, pixel checks. Slow per component, fast overall. The WCAG work compounded instead of stacking up as backlog.
 
-<Carousel />
+<Carousel slides={[{ src: designSystem1, alt: "" }, { src: designSystem2, alt: "" }]} />
 
 ### multi-trading and the scoping tradeoff
 
@@ -115,7 +133,7 @@ Money Market Services' bulk order screen is an inline form inside a table, where
 
 Keyboard navigation, ARIA on non-table interactive elements, colour contrast, and font scale all met the standard. The screen reader semantics for a table of inline forms did not. We could have shipped something that looked like a solution. Instead we shipped the practical wins, documented the gap, and put the semantic work on the roadmap.
 
-<Carousel />
+<Media src={multiTrading} alt="" rounded />
 
 </Section>
 
