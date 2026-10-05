@@ -1,0 +1,12 @@
+# build output and dependencies
+node_modules/
+dist/
+.astro/
+.vercel/
+.env*
+
+# personal working files kept in this folder, not part of the site
+CV/
+Juicyway/
+Portfolio strona/
+about-page-final.md
