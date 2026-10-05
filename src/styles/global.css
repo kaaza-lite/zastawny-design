@@ -25,6 +25,7 @@ body {
   letter-spacing: var(--tracking-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  padding-bottom: var(--dock-space); /* the nav dock floats over the bottom of the page */
 }
 
 h1, h2, h3, h4, h5, h6, p, ul, ol, figure {

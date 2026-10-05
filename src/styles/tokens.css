@@ -31,6 +31,14 @@
   --color-accent-2: #ffffff;        /* Figma: Accent/Acent 2 */
   --color-accent-3: #002dbf;        /* Figma: Accent/Accent 3 */
 
+  /* Glass (nav dock) */
+  --glass-tint: rgb(18 18 18 / 0.45);
+  --glass-sheen-top: rgb(255 255 255 / 0.1);
+  --glass-sheen-bottom: rgb(255 255 255 / 0.02);
+  --glass-rim: rgb(255 255 255 / 0.1);
+  --glass-highlight: rgb(255 255 255 / 0.22);
+  --dock-space: calc(56px + 24px + env(safe-area-inset-bottom)); /* dock height + its offset, so the footer stays clear */
+
   /* Font families */
   --font-display: 'CS Ariston Halfpixel', 'Google Sans Flex', system-ui, sans-serif;
   --font-body: 'Google Sans Flex', system-ui, sans-serif;
