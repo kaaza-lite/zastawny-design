@@ -40,7 +40,7 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
                   <circle cx="10.5" cy="10.5" r="6.5"></circle>
                   <path d="M15.5 15.5 20 20"></path>
                 </svg>
-                <span class="tip tip--end" aria-hidden="true">enlarge image</span>
+                <span class="tip tip--left" aria-hidden="true">enlarge image</span>
               </button>
             </div>
           </div>
@@ -53,8 +53,8 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
       {Array.from({ length: count }, (_, i) => <span class:list={['dot', { 'is-active': i === 0 }]} />)}
     </div>
     <div class="arrows">
-      <button type="button" class="icon-button tip-host arrow" data-dir="-1" aria-label="previous image">↫<span class="tip" aria-hidden="true">previous image</span></button>
-      <button type="button" class="icon-button tip-host arrow" data-dir="1" aria-label="next image">↬<span class="tip tip--end" aria-hidden="true">next image</span></button>
+      <button type="button" class="icon-button tip-host arrow" data-dir="-1" aria-label="previous image">↫<span class="tip tip--below" aria-hidden="true">previous image</span></button>
+      <button type="button" class="icon-button tip-host arrow" data-dir="1" aria-label="next image">↬<span class="tip tip--below tip--end" aria-hidden="true">next image</span></button>
     </div>
   </div>
 </div>

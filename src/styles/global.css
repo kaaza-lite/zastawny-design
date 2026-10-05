@@ -117,6 +117,22 @@ a {
   opacity: 1;
   transform: translate(var(--tip-x), 0);
 }
+/* .tip--left: to the left of the button, vertically centred on it */
+.tip--left {
+  top: 50%;
+  bottom: auto;
+  left: auto;
+  right: calc(100% + 8px);
+  transform: translate(4px, -50%);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tip-host:hover > .tip--left {
+    transform: translate(0, -50%);
+  }
+}
+.tip-host:focus-visible > .tip--left {
+  transform: translate(0, -50%);
+}
 @media (prefers-reduced-motion: reduce) {
   .tip {
     transition: opacity var(--dur-fast) linear;
