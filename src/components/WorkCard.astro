@@ -2,7 +2,11 @@
 // Case study card on Home: thumbnail, title, one-line description.
 // With `href` the whole card is a link and gets the hover effect.
 // Without it (FinX), the card is static and the image is dimmed.
-import { Image } from 'astro:assets';
+//
+// REVIEW ONLY: four hover effects, switched with ?hover=1|2|3|4 (see index.astro).
+//   1 negative scan   2 spotlight   3 slice glitch   4 pixel rez
+// Once one is picked, delete the other effects' markup, CSS and script.
+import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import Tag from './Tag.astro';
 
@@ -19,26 +23,182 @@ interface Props {
 
 const { title, meta, image, alt, href, soon = false, tint = false, eager = false } = Astro.props;
 const Tagname = href ? 'a' : 'div';
+
+// One optimised image, reused by the base layer and the effect layers (one download)
+const img = await getImage({ src: image, widths: [320, 480, 640, 800, 1120], format: 'webp' });
+const sizes = '(max-width: 799.98px) calc(100vw - 80px), (max-width: 1279.98px) calc(50vw - 82px), 558px';
+const imgAttrs = {
+  src: img.src,
+  srcset: img.srcSet.attribute,
+  sizes,
+  width: image.width,
+  height: image.height,
+  decoding: 'async' as const,
+  loading: eager ? ('eager' as const) : ('lazy' as const),
+};
+
+// Slice glitch: sideways offsets (px) for each strip at three moments
+const slices = [
+  [-18, 10, -4], [24, -12, 6], [-8, 20, -10], [30, -6, 3], [-26, 14, -6], [12, -22, 8],
+];
 ---
 
-<Tagname class:list={['card', { 'card--link': href, 'card--soon': soon }]} href={href}>
+<Tagname class:list={['card', { 'card--link': href, 'card--soon': soon }]} href={href} data-card={href ? '' : undefined}>
   <div class:list={['thumb', { 'thumb--tint': tint }]}>
-    <Image
-      src={image}
-      alt={alt}
-      widths={[320, 480, 640, 800, 1120]}
-      sizes="(max-width: 799.98px) calc(100vw - 80px), (max-width: 1279.98px) calc(50vw - 82px), 558px"
-      loading={eager ? 'eager' : 'lazy'}
-    />
+    <img class="thumb-img" alt={alt} {...imgAttrs} />
+
+    {href && (
+      <>
+        {/* 1 negative scan */}
+        <img class="fx fx-negative" alt="" aria-hidden="true" {...imgAttrs} loading="lazy" />
+        <span class="fx-scanline" aria-hidden="true"></span>
+
+        {/* 2 spotlight */}
+        <img class="fx fx-spot" alt="" aria-hidden="true" {...imgAttrs} loading="lazy" />
+        <span class="fx-ring" aria-hidden="true"></span>
+
+        {/* 3 slice glitch */}
+        <span class="fx-slices" aria-hidden="true">
+          {slices.map(([a, b, c], i) => (
+            <img class="fx" alt="" {...imgAttrs} loading="lazy" style={`--i:${i};--a:${a}px;--b:${b}px;--c:${c}px`} />
+          ))}
+        </span>
+
+        {/* 4 pixel rez */}
+        <canvas class="fx-pixel" aria-hidden="true"></canvas>
+      </>
+    )}
   </div>
   <div class="text">
     <div class="title-row">
-      <h2 class="title">{title}</h2>
+      <h2 class="title">
+        <span class="title-text">{title}</span>
+        {href && (
+          <>
+            <span class="title-fx title-fx--a" aria-hidden="true">{title}</span>
+            <span class="title-fx title-fx--b" aria-hidden="true">{title}</span>
+          </>
+        )}
+      </h2>
       {soon && <Tag tone="soon">soon</Tag>}
     </div>
     <p class="meta">{meta}</p>
   </div>
 </Tagname>
+
+<script>
+  // Effects 2 (spotlight) and 4 (pixel rez) need the pointer position or a canvas.
+  const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const effect = () => document.querySelector<HTMLElement>('.work')?.dataset.hover ?? '1';
+
+  // With srcset, naturalWidth is scaled by pixel density, so read the file's real size
+  // from a plain copy of the chosen source (already cached, no new download).
+  const sources = new WeakMap<HTMLElement, HTMLImageElement>();
+  function sourceFor(thumb: HTMLElement): HTMLImageElement | null {
+    const shown = thumb.querySelector<HTMLImageElement>('.thumb-img');
+    if (!shown || !shown.complete || !shown.currentSrc) return null;
+    let src = sources.get(thumb);
+    if (!src || src.src !== shown.currentSrc) {
+      src = new Image();
+      src.src = shown.currentSrc;
+      sources.set(thumb, src);
+    }
+    return src.complete && src.naturalWidth ? src : null;
+  }
+
+  // Pixel rez: draw the image as coarse blocks, stepping down to sharp
+  function pixelRez(thumb: HTMLElement) {
+    const img = sourceFor(thumb);
+    const canvas = thumb.querySelector<HTMLCanvasElement>('.fx-pixel');
+    if (!img || !canvas) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cw = Math.round(thumb.clientWidth * dpr);
+    const ch = Math.round(thumb.clientHeight * dpr);
+    canvas.width = cw;
+    canvas.height = ch;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // object-fit: cover crop
+    const scale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
+    const sw = cw / scale;
+    const sh = ch / scale;
+    const sx = (img.naturalWidth - sw) / 2;
+    const sy = (img.naturalHeight - sh) / 2;
+
+    const off = document.createElement('canvas');
+    const octx = off.getContext('2d');
+    if (!octx) return;
+
+    const blocks = [40, 28, 18, 11, 6, 3];
+    const frame = 55; // ms per step
+    let i = 0;
+    let last = 0;
+    const run = String(Number(thumb.dataset.rezRun ?? 0) + 1);
+    thumb.dataset.rezRun = run; // a newer hover cancels this one
+    thumb.classList.add('is-rezzing');
+
+    const draw = (t: number) => {
+      if (thumb.dataset.rezRun !== run) return;
+      if (t - last >= frame || i === 0) {
+        if (i >= blocks.length) {
+          thumb.classList.remove('is-rezzing');
+          return;
+        }
+        const b = blocks[i] * dpr;
+        const w = Math.max(1, Math.ceil(cw / b));
+        const h = Math.max(1, Math.ceil(ch / b));
+        off.width = w;
+        off.height = h;
+        octx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+        ctx.imageSmoothingEnabled = false;
+        ctx.clearRect(0, 0, cw, ch);
+        ctx.drawImage(off, 0, 0, w, h, 0, 0, cw, ch);
+        last = t;
+        i++;
+      }
+      requestAnimationFrame(draw);
+    };
+    requestAnimationFrame(draw);
+  }
+
+  for (const card of document.querySelectorAll<HTMLElement>('[data-card]')) {
+    const thumb = card.querySelector<HTMLElement>('.thumb');
+    if (!thumb) continue;
+
+    // Spotlight follows the pointer (rest of the work is done in CSS)
+    const moveTo = (x: number, y: number) => {
+      thumb.style.setProperty('--x', `${x}px`);
+      thumb.style.setProperty('--y', `${y}px`);
+    };
+    const centre = () => moveTo(thumb.clientWidth / 2, thumb.clientHeight / 2);
+    centre();
+
+    card.addEventListener('pointermove', (e) => {
+      if (effect() !== '2' || !fine.matches) return;
+      const r = thumb.getBoundingClientRect();
+      moveTo(e.clientX - r.left, e.clientY - r.top);
+    });
+    card.addEventListener('pointerleave', centre);
+    card.addEventListener('focus', centre);
+
+    // Pixel rez on hover and on keyboard focus (prepare the source copy as soon as the image loads)
+    const shown = thumb.querySelector<HTMLImageElement>('.thumb-img');
+    if (shown?.complete) sourceFor(thumb);
+    else shown?.addEventListener('load', () => sourceFor(thumb), { once: true });
+    const rez = () => {
+      if (effect() === '4' && !reduce.matches) pixelRez(thumb);
+    };
+    card.addEventListener('pointerenter', (e) => {
+      if (e.pointerType === 'mouse' && fine.matches) rez();
+    });
+    card.addEventListener('focus', () => {
+      if (card.matches(':focus-visible')) rez();
+    });
+  }
+</script>
 
 <style>
   .card {
@@ -55,10 +215,11 @@ const Tagname = href ? 'a' : 'div';
   .thumb {
     position: relative;
     height: 266px;
-    overflow: hidden; /* keeps the hover zoom inside the frame */
+    overflow: hidden;
+    container-type: inline-size; /* lets the scan line travel 100cqw */
   }
 
-  .thumb :global(img) {
+  .thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -69,6 +230,7 @@ const Tagname = href ? 'a' : 'div';
     content: '';
     position: absolute;
     inset: 0;
+    z-index: 5;
     background: rgb(0 0 0 / 0.2);
     pointer-events: none;
   }
@@ -90,6 +252,7 @@ const Tagname = href ? 'a' : 'div';
   }
 
   .title {
+    position: relative;
     font-family: var(--font-display);
     font-size: var(--text-card-title);
     line-height: 1.3;
@@ -104,36 +267,251 @@ const Tagname = href ? 'a' : 'div';
     color: var(--color-text-muted);
   }
 
+  /* ---------- Effect layers: hidden at rest, so the card matches Figma ---------- */
+  .fx,
+  .fx-scanline,
+  .fx-ring,
+  .fx-slices,
+  .fx-pixel,
+  .title-fx {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  .fx,
+  .fx-slices,
+  .fx-pixel {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .title-fx {
+    top: 0;
+    left: 0;
+    white-space: nowrap;
+  }
+
   /*
-    Hover highlight: the image zooms slightly inside its frame and the
-    title nudges right. Mouse and trackpad only; keyboard focus gets the same.
+    Each effect is defined twice: for mouse hover, and for keyboard focus.
+    `.on` below is shorthand in comments only; the selectors are spelled out.
   */
-  .thumb :global(img),
-  .title {
-    transition: transform var(--dur-base) var(--ease-out);
+
+  /* ---------- 1 Negative scan ---------- */
+  :global(.work[data-hover='1']) .fx-negative {
+    opacity: 1;
+    filter: invert(1) contrast(1.15); /* static, never animated */
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 560ms steps(14, end);
+  }
+  :global(.work[data-hover='1']) .fx-scanline {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 2px;
+    background: var(--color-accent-2);
+    box-shadow: 0 0 14px 3px rgb(255 255 255 / 0.55);
+  }
+  :global(.work[data-hover='1']) .title-fx--a {
+    opacity: 1;
+    left: -8px;
+    padding: 0 8px;
+    background: var(--color-text);
+    color: var(--color-bg);
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 420ms steps(10, end) 80ms;
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .card--link:hover .thumb :global(img) {
-      transform: scale(1.03);
+    :global(.work[data-hover='1']) .card--link:hover .fx-negative,
+    :global(.work[data-hover='1']) .card--link:hover .title-fx--a {
+      clip-path: inset(0 0 0 0);
     }
-    .card--link:hover .title {
-      transform: translateX(4px);
+    :global(.work[data-hover='1']) .card--link:hover .fx-scanline {
+      animation: scan 560ms steps(14, end) forwards, scan-fade 560ms linear forwards;
     }
+  }
+  :global(.work[data-hover='1']) .card--link:focus-visible .fx-negative,
+  :global(.work[data-hover='1']) .card--link:focus-visible .title-fx--a {
+    clip-path: inset(0 0 0 0);
+  }
+  :global(.work[data-hover='1']) .card--link:focus-visible .fx-scanline {
+    animation: scan 560ms steps(14, end) forwards, scan-fade 560ms linear forwards;
   }
 
-  .card--link:focus-visible .thumb :global(img) {
-    transform: scale(1.03);
+  @keyframes scan {
+    from { transform: translateX(0); }
+    to { transform: translateX(100cqw); }
   }
-  .card--link:focus-visible .title {
-    transform: translateX(4px);
+  @keyframes scan-fade {
+    0%, 85% { opacity: 1; }
+    100% { opacity: 0; }
   }
 
+  /* ---------- 2 Spotlight ---------- */
+  :global(.work[data-hover='2']) .thumb-img {
+    transition: opacity 320ms var(--ease-out);
+  }
+  :global(.work[data-hover='2']) .fx-spot {
+    opacity: 1;
+    filter: contrast(1.3) brightness(1.15); /* static, never animated */
+    clip-path: circle(0px at var(--x, 50%) var(--y, 50%));
+    transition: clip-path 280ms var(--ease-out);
+  }
+  :global(.work[data-hover='2']) .fx-ring {
+    top: -120px;
+    left: -120px;
+    width: 240px;
+    height: 240px;
+    border: 1px solid rgb(255 255 255 / 0.35);
+    border-radius: 50%;
+    transform: translate(var(--x, 50%), var(--y, 50%)) scale(0.6);
+    transition: transform 280ms var(--ease-out), opacity 200ms var(--ease-out);
+  }
+  :global(.work[data-hover='2']) .title-text {
+    transition: opacity 200ms var(--ease-out);
+  }
+  :global(.work[data-hover='2']) .title-fx--a {
+    color: var(--color-accent-2);
+    transition: opacity 200ms var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    :global(.work[data-hover='2']) .card--link:hover .thumb-img {
+      opacity: 0.18;
+    }
+    :global(.work[data-hover='2']) .card--link:hover .fx-spot {
+      clip-path: circle(120px at var(--x, 50%) var(--y, 50%));
+    }
+    :global(.work[data-hover='2']) .card--link:hover .fx-ring {
+      opacity: 1;
+      transform: translate(var(--x, 50%), var(--y, 50%)) scale(1);
+    }
+    :global(.work[data-hover='2']) .card--link:hover .title-fx--a {
+      opacity: 1;
+    }
+    :global(.work[data-hover='2']) .card--link:hover .title-text {
+      opacity: 0;
+    }
+  }
+  :global(.work[data-hover='2']) .card--link:focus-visible .thumb-img {
+    opacity: 0.18;
+  }
+  :global(.work[data-hover='2']) .card--link:focus-visible .fx-spot {
+    clip-path: circle(120px at var(--x, 50%) var(--y, 50%));
+  }
+  :global(.work[data-hover='2']) .card--link:focus-visible .fx-ring {
+    opacity: 1;
+    transform: translate(var(--x, 50%), var(--y, 50%)) scale(1);
+  }
+  :global(.work[data-hover='2']) .card--link:focus-visible .title-fx--a {
+    opacity: 1;
+  }
+  :global(.work[data-hover='2']) .card--link:focus-visible .title-text {
+    opacity: 0;
+  }
+
+  /* ---------- 3 Slice glitch ---------- */
+  :global(.work[data-hover='3']) .fx-slices img {
+    opacity: 1;
+    /* six horizontal strips */
+    clip-path: inset(calc(var(--i) * 100% / 6) 0 calc((5 - var(--i)) * 100% / 6) 0);
+  }
+  :global(.work[data-hover='3']) .title-fx--a {
+    clip-path: inset(0 0 55% 0);
+  }
+  :global(.work[data-hover='3']) .title-fx--b {
+    clip-path: inset(45% 0 0 0);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    :global(.work[data-hover='3']) .card--link:hover .thumb-img {
+      opacity: 0;
+    }
+    :global(.work[data-hover='3']) .card--link:hover .fx-slices {
+      opacity: 1;
+    }
+    :global(.work[data-hover='3']) .card--link:hover .fx-slices img {
+      animation: tear 520ms steps(1, end) calc(var(--i) * 18ms) both;
+    }
+    :global(.work[data-hover='3']) .card--link:hover .title-fx--a {
+      animation: stutter-a 380ms steps(1, end) both;
+    }
+    :global(.work[data-hover='3']) .card--link:hover .title-fx--b {
+      animation: stutter-b 380ms steps(1, end) 40ms both;
+    }
+  }
+  :global(.work[data-hover='3']) .card--link:focus-visible .thumb-img {
+    opacity: 0;
+  }
+  :global(.work[data-hover='3']) .card--link:focus-visible .fx-slices {
+    opacity: 1;
+  }
+  :global(.work[data-hover='3']) .card--link:focus-visible .fx-slices img {
+    animation: tear 520ms steps(1, end) calc(var(--i) * 18ms) both;
+  }
+  :global(.work[data-hover='3']) .card--link:focus-visible .title-fx--a {
+    animation: stutter-a 380ms steps(1, end) both;
+  }
+  :global(.work[data-hover='3']) .card--link:focus-visible .title-fx--b {
+    animation: stutter-b 380ms steps(1, end) 40ms both;
+  }
+
+  @keyframes tear {
+    0% { transform: translateX(0); }
+    15% { transform: translateX(var(--a)); }
+    35% { transform: translateX(var(--b)); }
+    55% { transform: translateX(var(--c)); }
+    75% { transform: translateX(calc(var(--a) * -0.25)); }
+    90%, 100% { transform: translateX(0); }
+  }
+  @keyframes stutter-a {
+    0% { opacity: 1; transform: translateX(-7px); }
+    25% { transform: translateX(5px); }
+    50% { transform: translateX(-3px); }
+    75% { transform: translateX(2px); }
+    100% { opacity: 0; transform: translateX(0); }
+  }
+  @keyframes stutter-b {
+    0% { opacity: 1; transform: translateX(6px); }
+    25% { transform: translateX(-4px); }
+    50% { transform: translateX(3px); }
+    75% { transform: translateX(-1px); }
+    100% { opacity: 0; transform: translateX(0); }
+  }
+
+  /* ---------- 4 Pixel rez (canvas drawn by the script) ---------- */
+  :global(.work[data-hover='4']) .thumb.is-rezzing .fx-pixel {
+    opacity: 1;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    :global(.work[data-hover='4']) .card--link:hover .title-text {
+      animation: redraw 330ms steps(6, end) both;
+    }
+  }
+  :global(.work[data-hover='4']) .card--link:focus-visible .title-text {
+    animation: redraw 330ms steps(6, end) both;
+  }
+  @keyframes redraw {
+    from { clip-path: inset(0 100% 0 0); }
+    to { clip-path: inset(0 0 0 0); }
+  }
+
+  /* ---------- Reduced motion: no movement, cards stay as they are ---------- */
   @media (prefers-reduced-motion: reduce) {
-    .thumb :global(img),
-    .title {
-      transition: none;
-      transform: none !important;
+    .fx,
+    .fx-scanline,
+    .fx-ring,
+    .fx-slices,
+    .fx-pixel,
+    .title-fx {
+      display: none;
+    }
+    .thumb-img,
+    .title-text {
+      opacity: 1 !important;
+      animation: none !important;
     }
   }
 </style>

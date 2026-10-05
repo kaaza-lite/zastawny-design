@@ -30,7 +30,20 @@ import juicywayThumb from '../assets/work/juicyway-thumb.png';
     </section>
 
     <!-- Case studies -->
-    <section class="work">
+    <section class="work" data-hover="1">
+      <script is:inline>
+        // REVIEW ONLY: pick the card hover effect with ?hover=1|2|3|4 (remembered for this visit)
+        (function () {
+          var el = document.currentScript.parentElement;
+          var v = null;
+          try {
+            v = new URLSearchParams(location.search).get('hover');
+            if (v) sessionStorage.setItem('card-hover', v);
+            else v = sessionStorage.getItem('card-hover');
+          } catch (e) {}
+          if (/^[1-4]$/.test(v || '')) el.setAttribute('data-hover', v);
+        })();
+      </script>
       <WorkCard
         href="/calastone"
         title="calastone"
