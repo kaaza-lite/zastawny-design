@@ -29,8 +29,8 @@ const count = slides.length || placeholders;
       {Array.from({ length: count }, (_, i) => <span class:list={['dot', { 'is-active': i === 0 }]} />)}
     </div>
     <div class="arrows">
-      <button type="button" class="arrow" data-dir="-1" aria-label="Previous image">↫</button>
-      <button type="button" class="arrow" data-dir="1" aria-label="Next image">↬</button>
+      <button type="button" class="arrow" data-dir="-1" aria-label="previous image">↫<span class="tip" aria-hidden="true">previous image</span></button>
+      <button type="button" class="arrow" data-dir="1" aria-label="next image">↬<span class="tip" aria-hidden="true">next image</span></button>
     </div>
   </div>
 </div>
@@ -129,6 +129,7 @@ const count = slides.length || placeholders;
     gap: 16px;
   }
   .arrow {
+    position: relative;
     display: grid;
     place-items: center;
     width: 44px;
@@ -140,5 +141,58 @@ const count = slides.length || placeholders;
     font: inherit;
     color: var(--color-text-paragraph);
     cursor: pointer;
+  }
+
+  /* Tooltip above each arrow, on mouse hover and keyboard focus. Same type size as the body text. */
+  .tip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    padding: 6px 12px;
+    background: var(--glass-tint);
+    border: 1px solid var(--glass-rim);
+    border-radius: var(--radius-pill);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    backdrop-filter: blur(18px) saturate(180%);
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    letter-spacing: var(--tracking-body);
+    color: var(--color-text);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, 4px);
+    transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .arrow:hover .tip {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
+  .arrow:focus-visible .tip {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  /* The last arrow sits at the right edge: anchor its tooltip to the right so it never runs off screen */
+  .arrow:last-child .tip {
+    left: auto;
+    right: 0;
+    transform: translateY(4px);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .arrow:last-child:hover .tip {
+      transform: none;
+    }
+  }
+  .arrow:last-child:focus-visible .tip {
+    transform: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tip {
+      transition: opacity var(--dur-fast) linear;
+    }
   }
 </style>
