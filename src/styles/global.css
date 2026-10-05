@@ -86,8 +86,8 @@ a {
   font-family: var(--font-body);
   font-style: normal;
   font-weight: 300;
-  font-size: 16px; /* every tooltip on the site is 16px */
-  line-height: var(--leading-body);
+  font-size: 12px; /* every tooltip on the site is 12px */
+  line-height: 16px;
   letter-spacing: var(--tracking-body);
   color: var(--color-text);
   white-space: nowrap;
