@@ -8,4 +8,5 @@ export default defineConfig({
   site: 'https://zastawny.design',
   output: 'static',
   integrations: [mdx(), sitemap()],
+  devToolbar: { enabled: false },
 });
