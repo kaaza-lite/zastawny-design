@@ -1,33 +1,57 @@
 ---
 // A wide image in a case study: 962px on desktop, 650px on tablet, the column width on mobile.
-// `ratio` keeps the Figma frame's proportions (width / height); the image fills it like Figma's "Fill".
-import { Image } from 'astro:assets';
+// The round button in the bottom-right corner opens it full size (see Lightbox.astro).
+// `ratio` (width / height) forces a frame shape like Figma's "Fill"; leave it out to use the
+// image's own proportions.
+import { Image, getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 
 interface Props {
   src: ImageMetadata;
   alt: string;
-  ratio: number;
+  ratio?: number;
   rounded?: boolean;
 }
 
-const { src, alt, ratio, rounded = false } = Astro.props;
+const { src, alt, ratio = src.width / src.height, rounded = false } = Astro.props;
+
+// Large version for the full-size preview
+const full = await getImage({ src, width: Math.min(src.width, 2400), format: 'webp' });
 ---
 
 <figure class:list={['case-wide', 'media', { rounded }]} style={`aspect-ratio: ${ratio}`}>
   <Image src={src} alt={alt} widths={[600, 962, 1300, 1924]} sizes="(max-width: 799.98px) calc(100vw - 24px), (max-width: 1279.98px) 650px, 962px" />
+  <button
+    type="button"
+    class="icon-button tip-host zoom"
+    data-zoom-src={full.src}
+    data-zoom-alt={alt}
+    aria-label="enlarge image"
+    aria-haspopup="dialog"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+      <circle cx="10.5" cy="10.5" r="6.5"></circle>
+      <path d="M15.5 15.5 20 20"></path>
+    </svg>
+    <span class="tip tip--end" aria-hidden="true">enlarge image</span>
+  </button>
 </figure>
 
 <style>
   .media {
-    overflow: hidden;
+    position: relative;
   }
   .media :global(img) {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-  .rounded {
+  .rounded :global(img) {
     border-radius: var(--radius-card);
+  }
+  .zoom {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
   }
 </style>

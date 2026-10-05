@@ -1,0 +1,118 @@
+---
+// Full-size image preview, opened by the enlarge buttons on case study images.
+// A native <dialog>: keeps keyboard focus inside while open, closes on Escape,
+// and returns focus to the button that opened it. Clicking the dark scrim also closes it.
+---
+
+<dialog class="lightbox" aria-label="image preview">
+  <img class="lightbox-image" alt="" />
+  <button type="button" class="icon-button tip-host lightbox-close" aria-label="close">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+      <path d="M6 6l12 12M18 6 6 18"></path>
+    </svg>
+    <span class="tip tip--end tip--below" aria-hidden="true">close</span>
+  </button>
+</dialog>
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>('.lightbox');
+  const image = dialog?.querySelector<HTMLImageElement>('.lightbox-image');
+
+  if (dialog && image) {
+    const close = () => dialog.close();
+    let opener: HTMLButtonElement | null = null; // Safari doesn't focus clicked buttons, so remember it ourselves
+
+    document.addEventListener('click', (e) => {
+      const button = (e.target as Element).closest?.<HTMLButtonElement>('[data-zoom-src]');
+      if (!button) return;
+      opener = button;
+      image.src = button.dataset.zoomSrc ?? '';
+      image.alt = button.dataset.zoomAlt ?? '';
+      dialog.showModal();
+      document.documentElement.classList.add('is-previewing'); // stop the page scrolling behind
+    });
+
+    dialog.querySelector('.lightbox-close')?.addEventListener('click', close);
+
+    // A click that lands on the dialog itself (not the image or button) is a click on the scrim
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) close();
+    });
+
+    dialog.addEventListener('close', () => {
+      document.documentElement.classList.remove('is-previewing');
+      opener?.focus({ preventScroll: true }); // back to the enlarge button
+    });
+  }
+</script>
+
+<style>
+  .lightbox {
+    width: 100vw;
+    max-width: none;
+    height: 100vh;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: hidden;
+  }
+  .lightbox[open] {
+    display: grid;
+    place-items: center;
+  }
+
+  /* Dark scrim under the preview */
+  .lightbox::backdrop {
+    background: rgb(0 0 0 / 0.82);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+
+  .lightbox-image {
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 136px);
+    object-fit: contain;
+    border-radius: var(--radius-card);
+  }
+
+  .lightbox-close {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+  }
+
+  /* Opening: the scrim fades in, the image fades and grows in slightly from 0.96 */
+  .lightbox[open]::backdrop {
+    animation: scrim-in var(--dur-base) var(--ease-out);
+  }
+  .lightbox[open] .lightbox-image {
+    animation: preview-in var(--dur-base) var(--ease-out);
+  }
+  @keyframes scrim-in {
+    from { opacity: 0; }
+  }
+  @keyframes preview-in {
+    from { opacity: 0; transform: scale(0.96); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lightbox[open] .lightbox-image {
+      animation: scrim-in var(--dur-fast) linear;
+    }
+  }
+
+  :global(html.is-previewing) {
+    overflow: hidden;
+  }
+
+  @media (max-width: 799.98px) {
+    .lightbox-image {
+      max-width: calc(100vw - 24px);
+    }
+    .lightbox-close {
+      top: 16px;
+      right: 16px;
+    }
+  }
+</style>

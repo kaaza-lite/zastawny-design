@@ -63,3 +63,87 @@ a {
   white-space: nowrap;
   border: 0;
 }
+
+/*
+  Tooltips: a small glass pill shown on mouse hover and keyboard focus.
+  Put class="tip-host" on the button and <span class="tip" aria-hidden="true">label</span> inside it.
+  .tip--end anchors it to the button's right edge; .tip--below shows it under the button.
+*/
+.tip-host {
+  position: relative;
+}
+.tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 2;
+  padding: 6px 12px;
+  background: var(--glass-tint);
+  border: 1px solid var(--glass-rim);
+  border-radius: var(--radius-pill);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  font-family: var(--font-body);
+  font-style: normal;
+  font-weight: 300;
+  font-size: 16px; /* every tooltip on the site is 16px */
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+  color: var(--color-text);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  --tip-x: -50%;
+  transform: translate(var(--tip-x), 4px);
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.tip--end {
+  left: auto;
+  right: 0;
+  --tip-x: 0;
+}
+.tip--below {
+  top: calc(100% + 8px);
+  bottom: auto;
+  transform: translate(var(--tip-x), -4px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tip-host:hover > .tip {
+    opacity: 1;
+    transform: translate(var(--tip-x), 0);
+  }
+}
+.tip-host:focus-visible > .tip {
+  opacity: 1;
+  transform: translate(var(--tip-x), 0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tip {
+    transition: opacity var(--dur-fast) linear;
+  }
+}
+
+/* Round glass icon button (enlarge image, close preview) */
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--glass-rim);
+  border-radius: var(--radius-pill);
+  background: var(--glass-tint);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  color: var(--color-text);
+  cursor: pointer;
+}
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .icon-button:hover {
+    color: var(--color-accent-2);
+  }
+}
