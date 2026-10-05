@@ -1,6 +1,8 @@
 ---
 title: calastone
 meta: institutional fintech - fund services
+pageTitle: Calastone case study | Tomasz Zastawny
+description: ETF Servicing and Money Market Services at Calastone, the transaction network the global funds industry runs on, used by HSBC, Federated Hermes, and Allspring.
 palette: calastone
 hero: ./images/calastone/hero.png
 heroPosition: { desktop: '50% 100%', tablet: '95% 50%', mobile: '85% 50%' }
@@ -48,7 +50,7 @@ Runs the primary ETF market, the machinery where authorised participants and iss
 
 HSBC uses it to trade funds and share classes across their management entities in Europe, Hong Kong, Singapore, and the wider Asia region, integrating with industry rails like TA2000.
 
-<Media src={etfServicing} alt="" rounded />
+<Media src={etfServicing} alt={"ETF Servicing order list: order counts by status from pending to settled, above a table of ETF orders with trade and FX progress."} rounded />
 
 ### money market services
 
@@ -56,7 +58,7 @@ It's a newer product in the same family, a digital connectivity layer for money 
 
 Four brand tenants run live on it today, mostly on the US public-sector side: Federated Hermes' pools (Invest PA, MMDT, TexPool) and Allspring.
 
-<Media src={moneyMarketServices} alt="" rounded />
+<Media src={moneyMarketServices} alt={"Money Market Services transaction inquiry for a public-sector client: status totals above a table of purchases, redemptions and vendor payments."} rounded />
 
 Both products are designed from one shared design system.
 
@@ -78,7 +80,7 @@ Both products carry the full corporate stakeholder tree: PMs, delivery leads, pr
 
 <Section title="the problem">
 
-<Media src={problem} alt="" ratio={962 / 561} rounded />
+<Media src={problem} alt={"A University of Virginia Fortran program punch card."} ratio={962 / 561} rounded />
 
 Institutional fund operations still run on Excel, email, and phone calls in more places than they should. Trades sit in inboxes. Exceptions get resolved by hand. Settlement dates get renegotiated over chat. Calastone's bet across both products is the same: replace the manual layer with an automated network, and give operations teams a screen that shows the state of a trade in real time.
 
@@ -88,7 +90,7 @@ The design system rebuild came out of Money Market Services specifically. The DO
 
 The pool clients on Money Market Services are exactly the entities the regulation targeted, and the design system as it stood could not meet AA without a real rebuild. It was a Figma library at v1.4 that had grown up around ETF Servicing, and it showed.
 
-<Carousel slides={[{ src: problem1, alt: "", caption: "lorem ipsum dolor sit amet" }, { src: problem2, alt: "", caption: "lorem ipsum dolor sit amet" }]} />
+<Carousel slides={[{ src: problem1, alt: "ETF Servicing Create Order form, step one: dealing participant, share class search, and subscription details with estimated amounts.", caption: "lorem ipsum dolor sit amet" }, { src: problem2, alt: "Money Market Services trade entry, step one: account and pool selection, an approaching cutoff warning, and purchase details with bank settlement.", caption: "lorem ipsum dolor sit amet" }]} />
 
 </Section>
 
@@ -98,19 +100,19 @@ The pool clients on Money Market Services are exactly the entities the regulatio
 
 Most of ETF Servicing's real work happens on a single screen. From it an operator can amend charges, adjust the prefunding date and amount, change settlement dates, and read a complete change log of everything that touched the order. It's the surface the whole product hangs off. It also had to do three things at once: stay dense enough for expert users, stay legible enough that nothing gets missed, and stay forgiving enough that a wrong click can be undone. Holding that balance was the craft problem I came back to for most of my time on the product.
 
-<Carousel slides={[{ src: orderDetail1, alt: "", caption: "lorem ipsum dolor sit amet" }, { src: orderDetail2, alt: "", caption: "lorem ipsum dolor sit amet" }, { src: orderDetail3, alt: "", caption: "lorem ipsum dolor sit amet" }]} />
+<Carousel slides={[{ src: orderDetail1, alt: "ETF order detail view: order summary, fees, deviations and settlement amounts, mark up and settlement actions, and the trade monitoring table.", caption: "lorem ipsum dolor sit amet" }, { src: orderDetail2, alt: "The order detail summary in two states, Accepted and Priced, with the same fees, deviations and settlement actions.", caption: "lorem ipsum dolor sit amet" }, { src: orderDetail3, alt: "The order detail summary in Confirmed and Settled states, showing how the status, settlement amounts and available actions change.", caption: "lorem ipsum dolor sit amet" }]} />
 
 ### four-eyes approval
 
 In institutional fund ops, a second operator has to sign off on a first operator's action before it goes live. That much is standard practice. What varies is the mechanics, and every firm has its own quirks. Designing it well meant sitting with client operations teams and walking through how approvals actually moved on their side, then sketching states and iterating the review flow until it matched. The client signed off on the final process, and it still shapes how approvals move through the product.
 
-<Media src={fourEyesApproval} alt="" rounded />
+<Media src={fourEyesApproval} alt={"Pending approval transactions: an expanded exchange request with bank details and Reject and Approve buttons, above other transactions awaiting approval."} rounded />
 
 ### the IDP login
 
 Money Market Services runs on Angular, but its login flow is built separately in vanilla JavaScript because it hooks into an identity provider sitting outside the main app stack. A login screen sounds like a minor surface. It isn't. For an institutional product it's where a client first sees the brand tenant they signed up for, and where a lot of the product's trust posture either lands or doesn't. Designing it meant handling brand variability, session and error states, and the specific handshake with the provider, none of it treated as boilerplate.
 
-<Media src={idpLogin} alt="" rounded />
+<Media src={idpLogin} alt={"INVEST PA login screen: a photo of the Pennsylvania State Capitol beside the username and password form."} rounded />
 
 ### the design system rebuild
 
@@ -122,7 +124,7 @@ The result is a library, currently at v1.7.X, that every brand tenant is designe
 
 We ran it as tight iteration cycles between designers and engineers. Frequent syncs, design QA on every junior-designer component before it went to dev, and close collaboration with the WCAG-specialist frontend engineer through implementation. Once a component landed we tested it end to end together: keyboard navigation, WAVE audit, NVDA screen reader walkthroughs, pixel checks. Slow per component, fast overall. The WCAG work compounded instead of stacking up as backlog.
 
-<Carousel slides={[{ src: designSystem1, alt: "", caption: "lorem ipsum dolor sit amet" }, { src: designSystem2, alt: "", caption: "lorem ipsum dolor sit amet" }]} />
+<Carousel slides={[{ src: designSystem1, alt: "Figma file for the design system: a page per component for the WCAG 2.1 AA library updates, and a page per screen for the Money Market Services accessibility refactor.", caption: "lorem ipsum dolor sit amet" }, { src: designSystem2, alt: "Figma board from WCAG retesting: rounds of automated, keyboard, modal, validation, screen reader and responsive checks, with issues marked in red.", caption: "lorem ipsum dolor sit amet" }]} />
 
 ### multi-trading and the scoping tradeoff
 
@@ -130,7 +132,7 @@ Money Market Services' bulk order screen is an inline form inside a table, where
 
 Keyboard navigation, ARIA on non-table interactive elements, colour contrast, and font scale all met the standard. The screen reader semantics for a table of inline forms did not. We could have shipped something that looked like a solution. Instead we shipped the practical wins, documented the gap, and put the semantic work on the roadmap.
 
-<Media src={multiTrading} alt="" rounded />
+<Media src={multiTrading} alt={"Multiple Trades entry: several trades across two participant accounts, each with trade type, amount, date and settlement method, and approaching cutoff warnings."} rounded />
 
 </Section>
 

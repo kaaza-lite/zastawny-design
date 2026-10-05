@@ -10,6 +10,8 @@ const work = defineCollection({
     z.object({
       title: z.string(),
       meta: z.string(), // the one-line category under the title
+      pageTitle: z.string(), // browser tab and search result title
+      description: z.string(), // search result description
       palette: z.enum(['calastone', 'bamboo', 'juicyway']),
       hero: image(),
       // Where the hero image is anchored at each breakpoint (CSS object-position)

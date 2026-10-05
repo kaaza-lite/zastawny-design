@@ -24,7 +24,7 @@ const heroVars = [
 ].join(';');
 ---
 
-<BaseLayout title={d.title} theme={d.palette}>
+<BaseLayout title={d.pageTitle} description={d.description} theme={d.palette}>
   <!-- Hero image behind the title, fading into the page colour -->
   <div class:list={['hero-image', { 'hero-image--wide': d.heroWide }]} style={heroVars} aria-hidden="true">
     <Image src={d.hero} alt="" widths={[640, 1280, 1920, 2560]} sizes="100vw" loading="eager" />
@@ -61,7 +61,7 @@ const heroVars = [
             title={r.data.title}
             meta={r.data.meta}
             image={r.data.thumbnail}
-            alt={`${r.data.title} thumbnail`}
+            alt=""
             palette={r.data.palette}
             tint={r.data.thumbnailTint}
           />
