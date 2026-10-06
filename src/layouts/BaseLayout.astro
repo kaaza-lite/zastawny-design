@@ -26,6 +26,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical} />
 
+    <!-- Favicon: the "z" from the mobile nav, on the page background -->
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="icon" href="/favicon-512.png" sizes="512x512" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
     <!-- Preload the fonts used above the fold -->
     <link rel="preload" href="/fonts/cs-ariston-halfpixel.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/google-sans-flex-300-latin.woff2" as="font" type="font/woff2" crossorigin />
