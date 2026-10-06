@@ -30,6 +30,7 @@
   --color-pill-skill-border: #3c6e64;
   --color-accent-2: #ffffff;        /* Figma: Accent/Acent 2 */
   --color-accent-3: #002dbf;        /* Figma: Accent/Accent 3 */
+  --focus-ring: #e4e4e4;            /* keyboard focus, Home and About (neutral ramp) */
 
   /* Glass (nav dock) */
   --glass-tint: rgb(18 18 18 / 0.86);   /* dark enough to stay legible over bright images */
@@ -132,6 +133,7 @@
   --theme-tile: #090a16;                   /* "other projects" cards */
   --theme-accent: #002dbf;                 /* carousel controls */
   --glass-tint: rgb(14 15 26 / 0.86);
+  --focus-ring: #8ab0fe;                   /* keyboard focus (navy ramp) */
 }
 [data-theme='bamboo'] {
   --color-bg: #0e1410;                     /* #121212 + #001c0c at 20% */
@@ -141,6 +143,7 @@
   --theme-tile: #090f0b;
   --theme-accent: #026338;
   --glass-tint: rgb(0 28 12 / 0.86);
+  --focus-ring: #6bc891;                   /* keyboard focus (green ramp) */
 }
 [data-theme='juicyway'] {
   --color-bg: #140e13;                     /* #121212 + #1c0017 at 20% */
@@ -150,4 +153,5 @@
   --theme-tile: #100b0f;
   --theme-accent: #812872;
   --glass-tint: rgb(28 0 23 / 0.86);
+  --focus-ring: #e193cf;                   /* keyboard focus (purple ramp) */
 }

@@ -37,16 +37,18 @@ const heroVars = [
     </header>
 
     <!-- Project details -->
-    <ul class="details">
+    <dl class="details">
       {d.details.map((item) => (
-        <li class="detail">
-          <h2 class="detail-label">{item.label}</h2>
-          <ul class="detail-lines">
-            {item.lines.map((line) => <li>{line}</li>)}
-          </ul>
-        </li>
+        <div class="detail">
+          <dt class="detail-label">{item.label}</dt>
+          <dd>
+            <ul class="detail-lines">
+              {item.lines.map((line) => <li>{line}</li>)}
+            </ul>
+          </dd>
+        </div>
       ))}
-    </ul>
+    </dl>
 
     <article class="case-body">
       <Content />
@@ -64,6 +66,7 @@ const heroVars = [
             alt=""
             palette={r.data.palette}
             tint={r.data.thumbnailTint}
+            heading="h3"
           />
         ))}
       </div>
@@ -165,10 +168,14 @@ const heroVars = [
   }
   .detail-label {
     font-family: var(--font-display);
+    font-weight: 400;
     font-size: 16px;
     line-height: 1;
     letter-spacing: 0.02em;
     color: var(--color-text-paragraph);
+  }
+  .detail dd {
+    margin: 0;
   }
   .detail-lines {
     display: flex;
