@@ -18,10 +18,12 @@ interface Props {
   soon?: boolean;
   tint?: boolean;   // the dark overlay Figma puts on the Bamboo image
   eager?: boolean;  // load immediately (cards in the first row)
+  heading?: 'h2' | 'h3'; // title level: h2 on Home, h3 under "other projects"
 }
 
-const { title, meta, image, alt, href, palette = 'neutral', soon = false, tint = false, eager = false } = Astro.props;
+const { title, meta, image, alt, href, palette = 'neutral', soon = false, tint = false, eager = false, heading = 'h2' } = Astro.props;
 const Tagname = href ? 'a' : 'div';
+const Heading = heading;
 const ramp = palettes[palette];
 
 const img = await getImage({ src: image, widths: [320, 480, 640, 800, 1120], format: 'webp' });
@@ -53,7 +55,7 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
   </div>
   <div class="text">
     <div class="title-row">
-      <h2 class="title">
+      <Heading class="title">
         <span class="title-text scramble-source">{title}</span>
         {href && (
           <>
@@ -62,7 +64,7 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
             <span class="ghost ghost--b" aria-hidden="true">{title}</span>
           </>
         )}
-      </h2>
+      </Heading>
       {soon && <Tag tone="soon">soon</Tag>}
     </div>
     <p class="meta">

@@ -35,5 +35,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <Nav />
     <slot />
     <PageGlitch palette={palette} />
+
+    <script>
+      import '../scripts/tooltips';
+    </script>
   </body>
 </html>
