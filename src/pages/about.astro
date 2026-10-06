@@ -209,15 +209,10 @@ const techSkills = [
     list-style: none;
   }
 
-  /* Experience: each job stacks its title over its text in the 760px column */
-  .experience :global(.job) {
-    flex-direction: column;
-    gap: 24px;
-  }
-  .experience :global(.job .heading),
-  .experience :global(.job .body) {
-    flex: none;
-    width: 100%;
+  /* Experience: no lines between the jobs or above the LinkedIn link */
+  .experience :global(.jobs > .job),
+  .experience :global(.more) {
+    border-top: 0;
   }
 
   .location {
