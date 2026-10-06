@@ -10,7 +10,7 @@ import Job from '../components/Job.astro';
 import calastoneThumb from '../assets/work/calastone-thumb.png';
 import bambooThumb from '../assets/work/bamboo-thumb.png';
 import juicywayThumb from '../assets/work/juicyway-thumb.png';
-import finxPlaceholder from '../assets/work/finx-placeholder.png';
+import finxThumb from '../assets/work/finx-thumb.png';
 ---
 
 <BaseLayout
@@ -62,8 +62,8 @@ import finxPlaceholder from '../assets/work/finx-placeholder.png';
         image={juicywayThumb}
         alt=""
       />
-      <!-- FinX: temporary placeholder image until the real one is ready -->
-      <WorkCard title="finx" meta="complex design system for fintech" image={finxPlaceholder} alt="" soon />
+      <!-- The FinX image is already dark and has the card's background, so it's shown whole and not faded -->
+      <WorkCard title="finx" meta="complex design system for fintech" image={finxThumb} alt="" soon fit="contain" dim={false} />
     </section>
 
     <!-- Experience -->
