@@ -22,7 +22,7 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
 ---
 
 <div class="case-wide carousel" data-carousel>
-  <div class="track" tabindex="0" role="region" aria-label="image slider" style={`--ratio: ${ratio}`}>
+  <div class="track" tabindex="0" role="group" aria-label="image slider" style={`--ratio: ${ratio}`}>
     {slides.length
       ? slides.map((s, i) => (
           <div class="slide" data-caption={s.caption ?? ''}>
