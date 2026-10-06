@@ -2,7 +2,7 @@
 // Case study card on Home: thumbnail, title, one-line description.
 // With `href` the whole card is a link and gets the glitch hover, coloured
 // with that case study's monochrome ramp (see src/data/palettes.ts).
-// Without it (FinX), the card is static and the image is dimmed.
+// Without it (FinX), the card is static.
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import Tag from './Tag.astro';
@@ -19,9 +19,11 @@ interface Props {
   tint?: boolean;   // the dark overlay Figma puts on the Bamboo image
   eager?: boolean;  // load immediately (cards in the first row)
   heading?: 'h2' | 'h3'; // title level: h2 on Home, h3 under "other projects"
+  fit?: 'cover' | 'contain'; // cover fills the frame (cropped), contain shows the whole image
+  dim?: boolean;    // fade the image to 25%, the "soon" look (on by default for soon cards)
 }
 
-const { title, meta, image, alt, href, palette = 'neutral', soon = false, tint = false, eager = false, heading = 'h2' } = Astro.props;
+const { title, meta, image, alt, href, palette = 'neutral', soon = false, tint = false, eager = false, heading = 'h2', fit = 'cover', dim = soon } = Astro.props;
 const Tagname = href ? 'a' : 'div';
 const Heading = heading;
 const ramp = palettes[palette];
@@ -39,9 +41,9 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
   data-glitch-card={href ? palette : undefined}
   style={href ? rampVars : undefined}
 >
-  <div class:list={['thumb', { 'thumb--tint': tint }]}>
+  <div class:list={['thumb', { 'thumb--tint': tint, 'thumb--dim': dim }]}>
     <img
-      class="thumb-img"
+      class:list={['thumb-img', { 'thumb-img--contain': fit === 'contain' }]}
       src={img.src}
       srcset={img.srcSet.attribute}
       sizes={sizes}
@@ -243,7 +245,11 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
     pointer-events: none;
   }
 
-  .card--soon .thumb {
+  .thumb-img--contain {
+    object-fit: contain;
+  }
+
+  .thumb--dim {
     opacity: 0.25;
   }
 
