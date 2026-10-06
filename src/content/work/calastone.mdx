@@ -90,7 +90,7 @@ The design system rebuild came out of Money Market Services specifically. The DO
 
 The pool clients on Money Market Services are exactly the entities the regulation targeted, and the design system as it stood could not meet AA without a real rebuild. It was a Figma library at v1.4 that had grown up around ETF Servicing, and it showed.
 
-<Carousel slides={[{ src: problem1, alt: "ETF Servicing Create Order form, step one: dealing participant, share class search, and subscription details with estimated amounts.", caption: "lorem ipsum dolor sit amet" }, { src: problem2, alt: "Money Market Services trade entry, step one: account and pool selection, an approaching cutoff warning, and purchase details with bank settlement.", caption: "lorem ipsum dolor sit amet" }]} />
+<Carousel slides={[{ src: problem1, alt: "ETF Servicing Create Order form, step one: dealing participant, share class search, and subscription details with estimated amounts.", caption: "ETF servicing order entry screen" }, { src: problem2, alt: "Money Market Services trade entry, step one: account and pool selection, an approaching cutoff warning, and purchase details with bank settlement.", caption: "money market portal trade entry screen" }]} />
 
 </Section>
 
@@ -100,7 +100,7 @@ The pool clients on Money Market Services are exactly the entities the regulatio
 
 Most of ETF Servicing's real work happens on a single screen. From it an operator can amend charges, adjust the prefunding date and amount, change settlement dates, and read a complete change log of everything that touched the order. It's the surface the whole product hangs off. It also had to do three things at once: stay dense enough for expert users, stay legible enough that nothing gets missed, and stay forgiving enough that a wrong click can be undone. Holding that balance was the craft problem I came back to for most of my time on the product.
 
-<Carousel slides={[{ src: orderDetail1, alt: "ETF order detail view: order summary, fees, deviations and settlement amounts, mark up and settlement actions, and the trade monitoring table.", caption: "lorem ipsum dolor sit amet" }, { src: orderDetail2, alt: "The order detail summary in two states, Accepted and Priced, with the same fees, deviations and settlement actions.", caption: "lorem ipsum dolor sit amet" }, { src: orderDetail3, alt: "The order detail summary in Confirmed and Settled states, showing how the status, settlement amounts and available actions change.", caption: "lorem ipsum dolor sit amet" }]} />
+<Carousel slides={[{ src: orderDetail1, alt: "ETF order detail view: order summary, fees, deviations and settlement amounts, mark up and settlement actions, and the trade monitoring table.", caption: "order detailed view" }, { src: orderDetail2, alt: "The order detail summary in two states, Accepted and Priced, with the same fees, deviations and settlement actions.", caption: "the order card has to accommodate a new font size after the WCAG update" }, { src: orderDetail3, alt: "The order detail summary in Confirmed and Settled states, showing how the status, settlement amounts and available actions change.", caption: "and support small desktop resolutions" }]} />
 
 ### four-eyes approval
 
@@ -124,7 +124,7 @@ The result is a library, currently at v1.7.X, that every brand tenant is designe
 
 We ran it as tight iteration cycles between designers and engineers. Frequent syncs, design QA on every junior-designer component before it went to dev, and close collaboration with the WCAG-specialist frontend engineer through implementation. Once a component landed we tested it end to end together: keyboard navigation, WAVE audit, NVDA screen reader walkthroughs, pixel checks. Slow per component, fast overall. The WCAG work compounded instead of stacking up as backlog.
 
-<Carousel slides={[{ src: designSystem1, alt: "Figma file for the design system: a page per component for the WCAG 2.1 AA library updates, and a page per screen for the Money Market Services accessibility refactor.", caption: "lorem ipsum dolor sit amet" }, { src: designSystem2, alt: "Figma board from WCAG retesting: rounds of automated, keyboard, modal, validation, screen reader and responsive checks, with issues marked in red.", caption: "lorem ipsum dolor sit amet" }]} />
+<Carousel slides={[{ src: designSystem1, alt: "Figma file for the design system: a page per component for the WCAG 2.1 AA library updates, and a page per screen for the Money Market Services accessibility refactor.", caption: "figma file from inside during the wcag work" }, { src: designSystem2, alt: "Figma board from WCAG retesting: rounds of automated, keyboard, modal, validation, screen reader and responsive checks, with issues marked in red.", caption: "wcag audit during the accessibility roll out" }]} />
 
 ### multi-trading and the scoping tradeoff
 
