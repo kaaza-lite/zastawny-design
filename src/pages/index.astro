@@ -5,7 +5,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Tag from '../components/Tag.astro';
 import WorkCard from '../components/WorkCard.astro';
-import Job from '../components/Job.astro';
+import Experience from '../components/Experience.astro';
 
 import calastoneThumb from '../assets/work/calastone-thumb.png';
 import bambooThumb from '../assets/work/bamboo-thumb.png';
@@ -70,127 +70,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
     <section class="experience">
       <h2 class="section-title">experience</h2>
 
-      <div class="jobs">
-        <Job
-          title="senior product designer"
-          meta={['authentic digital (client: calastone)', 'nov 2021 - present, full-time', 'remote from poland, UK company']}
-        >
-          <p>
-            B2B SaaS for Calastone, the transaction network the global funds industry runs on, used by fund operations
-            teams at end clients including HSBC, Federated Hermes, and Allspring.
-          </p>
-          <ul>
-            <li>
-              sole designer on ETF Servicing since late 2022, and moved into the lead designer role on Money Market
-              Services after it started in 2024, owning design decisions across a stakeholder group of PMs, product
-              owners, business analysts, product directors, and engineering.
-            </li>
-            <li>
-              drove a rebuild of the design system behind both products instead of forking it: a Figma variable and
-              token architecture carried into the Angular build through per brand config, taking 6 brand tenants to
-              zero forked libraries and reducing a new tenant launch to a token change.
-            </li>
-            <li>
-              mapped the domain before any UI existed, with flow charts, BPMN, and process diagrams, then designed the
-              primary ETF create and redeem workflow HSBC uses across management entities in Europe and Asia: order
-              capture, pricing, settlement, and registry reconciliation against depositories including TA2000.
-            </li>
-            <li>
-              designed four eyes approval by running working sessions with client operations teams on how approvals
-              actually moved in their firms, then iterating review states until they matched; the client signed off
-              the final process.
-            </li>
-            <li>
-              crafted high fidelity UI for the order detail view, the product's core operating surface: charge
-              amendments, prefunding and settlement dates, and a full audit log, dense enough for expert operators,
-              still legible, and forgiving of mistakes.
-            </li>
-            <li>
-              delivered WCAG 2.1 AA across the shared design system ahead of the April 2026 ADA Title II deadline,
-              testing every component with an accessibility specialist engineer: keyboard navigation, WAVE, and NVDA
-              screen reader passes before sign off.
-            </li>
-            <li>
-              drove new work on Money Market Services including the bulk multi trading flow, an inline form table for
-              large trade batches; met AA on keyboard, ARIA, contrast, and font scale, documented the screen reader gap
-              as an explicit tradeoff, and put it on the roadmap.
-            </li>
-          </ul>
-        </Job>
-
-        <Job
-          title={['senior product designer,', 'then art director']}
-          meta={['juicyway', 'aug 2021 - feb 2024, contract', 'remote from poland, nigeria based company']}
-        >
-          <p>
-            consumer and B2B fintech in Nigeria, through several pivots. Sole designer at first, later directing a
-            small brand and motion team.
-          </p>
-          <ul>
-            <li>
-              built a design foundation that bent with the strategy through every pivot: colour, typography,
-              iconography, imagery tiers, and a component set that became the substrate for the shipped Juicyway
-              platform, whose customers include Bolt, Technogym, and Nigerian Breweries.
-            </li>
-            <li>
-              held core navigation and interaction patterns stable through each pivot, so returning users never had to
-              relearn the product when it changed shape.
-            </li>
-            <li>
-              moved into art direction as the brand and motion team formed, setting creative direction, running design
-              reviews, and translating the CEO's vision into what the product shipped
-            </li>
-            <li>
-              shipped across web dashboards, web apps, and Flutter mobile, embedding in backend standups so product and
-              UX decisions fed directly into build scope.
-            </li>
-          </ul>
-        </Job>
-
-        <Job
-          title="product ux and ui designer"
-          meta={['visualpanda (main client: bamboo)', 'mar 2018 - dec 2021, full-time', 'remote from poland, nigerian client']}
-        >
-          <p>
-            external product designer embedded in client teams. Main engagement: Bamboo (Jan 2020 - Aug 2021), a
-            mobile investing app letting Nigerian users buy US stocks, mutual funds, and fractional shares with dollars
-            converted from naira.
-          </p>
-          <ul>
-            <li>
-              ran a discovery phase the engagement had no budget for, producing personas, user stories, and competitor
-              analysis with support from the client's UX researcher, which became the basis for the product roadmap.
-            </li>
-            <li>
-              launched Bamboo on iOS and Android as sole product designer, covering the full product surface: mobile
-              apps, web app, internal admin panels, and marketing site, roughly 500 artboards, and working through
-              implementation on interactions, gestures, and animations.
-            </li>
-            <li>
-              rebuilt onboarding with KYC, identity verification, bank linking, and source of funds as the spine of the
-              flow rather than an obstacle added on top, for users new to investing.
-            </li>
-            <li>
-              built the case for the one year redesign by pairing the client's external UX audit with an independent UI
-              audit and customer support signals, writing a screen by screen proposal and presenting key screens for
-              client sign off; shipped a new brand, dark mode, and rebuilt data visualisation.
-            </li>
-            <li>
-              designed for the low specification Android hardware common in the market, simplifying data visualisation
-              so one chart read for both novice and expert investors.
-            </li>
-            <li>
-              additional engagements: Helium Health (Y Combinator backed Nigerian health tech), DrOnline (US and UAE
-              health tech), DoubleMap (US transportation).
-            </li>
-          </ul>
-        </Job>
-
-        <div class="more">
-          <p>see more at my</p>
-          <a href="https://www.linkedin.com/in/zastawny/">LinkedIn</a>
-        </div>
-      </div>
+      <Experience />
     </section>
 
     <footer class="footer">
@@ -275,53 +155,9 @@ import finxThumb from '../assets/work/finx-thumb.png';
     color: var(--color-text);
   }
 
-  .jobs {
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
+  /* The job list sits 120px in from each side on desktop */
+  .experience :global(.jobs) {
     padding: 0 120px;
-  }
-
-  .jobs > :global(.job) {
-    padding: 60px 0;
-    border-top: 1px dashed var(--color-divider);
-  }
-
-  .jobs > :global(.job:first-child) {
-    padding-top: 0;
-    border-top: 0;
-  }
-
-  /* Desktop and tablet: the last job has no bottom padding in Figma */
-  @media (min-width: 800px) {
-    .jobs > :global(.job:last-of-type) {
-      padding-bottom: 0;
-    }
-  }
-
-  .more {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-top: 30px;
-    border-top: 0.5px solid var(--color-divider);
-    text-align: center;
-    color: var(--color-text-muted);
-  }
-
-  .more a {
-    font-family: var(--font-display);
-    font-size: var(--text-link-large);
-    line-height: 1.3;
-    letter-spacing: -0.01em;
-    color: inherit;
-    text-decoration: none;
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .more a:hover {
-      color: var(--color-text);
-    }
   }
 
   .footer {
@@ -347,7 +183,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
       margin: 0 auto;
     }
 
-    .jobs {
+    .experience :global(.jobs) {
       padding: 0;
     }
   }
@@ -365,18 +201,6 @@ import finxThumb from '../assets/work/finx-thumb.png';
 
     .experience {
       width: min(496px, calc(100% - 2 * var(--content-gutter)));
-    }
-
-    .jobs {
-      gap: 0;
-    }
-
-    .jobs > :global(.job) {
-      padding: 40px 0 60px;
-    }
-
-    .jobs > :global(.job:first-child) {
-      padding: 0 0 60px;
     }
 
     .footer {
