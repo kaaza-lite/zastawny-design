@@ -1,7 +1,7 @@
 ---
 // A small music player in the bottom right corner: a round play/pause button in the
-// nav's glass style, and a little equalizer next to it while the song plays (hover or
-// focus it for the song title).
+// nav's glass style (with a play / pause tooltip on its left), and a little equalizer
+// next to it while the song plays.
 //
 // The music comes from Spotify's official embed, kept invisible. It only loads when
 // someone reaches for the button, so pages stay fast and Spotify isn't contacted for
@@ -13,7 +13,6 @@
 // own 30-second preview, so for them the preview loops instead.
 const song = {
   spotify: 'https://open.spotify.com/track/2t9JBAhPDfgnvUlcL045qC',
-  title: 'Zaza - Instrumental',
   loopFrom: '0:00',
   loopTo: '2:00',
 };
@@ -30,13 +29,13 @@ const bars = [0, 1, 3, 2, 0, 0, 0, 2, 4, 3, 1, 0, 0, 2, 3, 0];
   data-from={seconds(song.loopFrom)}
   data-to={seconds(song.loopTo)}
 >
-  <span class="eq tip-host" tabindex="-1" role="img" aria-label={song.title}>
+  <span class="eq" aria-hidden="true">
     {bars.map((size, i) => <span class="bar" style={`--size:${size};--i:${i}`}></span>)}
-    <span class="tip tip--end" aria-hidden="true">{song.title}</span>
   </span>
-  <button type="button" class="play" aria-label="play">
+  <button type="button" class="play tip-host" aria-label="play">
     <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg>
     <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"></path></svg>
+    <span class="tip tip--left" aria-hidden="true">play</span>
   </button>
   <div class="spotify" aria-hidden="true"><div class="spotify-mount"></div></div>
 </div>
@@ -53,7 +52,7 @@ const bars = [0, 1, 3, 2, 0, 0, 0, 2, 4, 3, 1, 0, 0, 2, 3, 0];
   const root = document.querySelector<HTMLElement>('.song-player');
   if (root) {
     const button = root.querySelector<HTMLButtonElement>('.play')!;
-    const eq = root.querySelector<HTMLElement>('.eq')!;
+    const tip = button.querySelector<HTMLElement>('.tip')!;
     const mount = root.querySelector<HTMLElement>('.spotify-mount')!;
     const uri = root.dataset.uri!;
     const from = Number(root.dataset.from);
@@ -83,7 +82,7 @@ const bars = [0, 1, 3, 2, 0, 0, 0, 2, 4, 3, 1, 0, 0, 2, 3, 0];
     const show = (playing: boolean) => {
       root.classList.toggle('is-playing', playing);
       button.setAttribute('aria-label', playing ? 'pause' : 'play');
-      eq.tabIndex = playing ? 0 : -1;
+      tip.textContent = playing ? 'pause' : 'play';
     };
 
     // Load Spotify's embed API once, then create the (invisible) player
