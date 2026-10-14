@@ -136,21 +136,44 @@ const bars = [0, 1, 3, 2, 0, 0, 0, 2, 4, 3, 1, 0, 0, 2, 3, 0];
       } catch {}
     };
 
-    // Get Spotify ready as soon as someone reaches for the button
+    // Get Spotify ready before the first press. Phones only allow sound when the play
+    // command is sent during the tap itself, so on touch screens it loads quietly
+    // shortly after the page opens; with a mouse, when the pointer reaches the button.
+    const touch = window.matchMedia('(hover: none)').matches;
+    if (touch) window.setTimeout(load, 1200);
     button.addEventListener('pointerenter', load, { once: true });
     button.addEventListener('focus', load, { once: true });
 
-    button.addEventListener('click', async () => {
-      wantPlaying = !root.classList.contains('is-playing');
-      show(wantPlaying);
-      save(lastSaved);
-      const c = controller ?? (await load());
+    const toggle = (c: Controller) => {
       if (wantPlaying) {
         expectSound();
         lastProgressAt = performance.now() + 1500; // give it time to start before the watchdog steps in
         if (started) c.resume();
         else c.play();
       } else c.pause();
+    };
+
+    button.addEventListener('click', () => {
+      wantPlaying = !root.classList.contains('is-playing');
+      save(lastSaved);
+      if (controller) {
+        // Ready: send the command right away, inside the tap
+        show(wantPlaying);
+        toggle(controller);
+        return;
+      }
+      // Pressed before Spotify was ready
+      load().then((c) => {
+        if (!wantPlaying) return;
+        if (touch) {
+          // On a phone, starting now (outside the tap) would play silently: wait for the next tap
+          wantPlaying = false;
+          show(false);
+          return;
+        }
+        show(true);
+        toggle(c);
+      });
     });
 
     // Coming from another page while it was playing: try to carry on from the same spot.
@@ -159,11 +182,14 @@ const bars = [0, 1, 3, 2, 0, 0, 0, 2, 4, 3, 1, 0, 0, 2, 3, 0];
     try {
       const saved = JSON.parse(sessionStorage.getItem(KEY) ?? 'null');
       if (saved?.playing) {
-        wantPlaying = true;
         resumeAt = saved.position;
         lastSaved = saved.position;
-        expectSound(); // shows as playing only once the sound actually starts
-        load().then((c) => c.play());
+        // Phones would play silently without a tap: there the next press carries on instead
+        if (!touch) {
+          wantPlaying = true;
+          expectSound(); // shows as playing only once the sound actually starts
+          load().then((c) => c.play());
+        }
       }
     } catch {}
 
