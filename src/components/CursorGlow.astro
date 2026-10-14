@@ -8,6 +8,7 @@
 // It sits above the page background and the case study hero image, but under the
 // content (main has z-index 2). Blocks right behind text stay at --glow-strength, the
 // most that keeps grey text at 4.5:1; everywhere else the glow can go up to STRONG.
+// Only while the mouse is moving: it fades out when the cursor rests.
 // Only for a mouse; skipped with reduced motion.
 ---
 
@@ -23,6 +24,7 @@
   const LEVELS = 4;    // brightness steps
   const FADE = 0.86;   // how much of the glow is left each frame
   const FPS = 24;
+  const STILL = 100;   // ms without movement before the cursor stops lighting blocks
   const STRONG = 0.1;  // brightest glow away from text (share of the page colour)
 
   if (canvas && !reduce.matches) {
@@ -40,6 +42,7 @@
     const pointer = { x: -100, y: -100, vx: 0, vy: 0, inside: false };
     let raf = 0;
     let last = 0;
+    let movedAt = -Infinity;
 
     const setup = () => {
       cols = Math.ceil(window.innerWidth / BLOCK);
@@ -105,8 +108,9 @@
           next[r * cols + c] = field[sr * cols + sc] * FADE;
         }
       }
-      // Light up the blocks around the cursor, with a ragged edge
-      if (pointer.inside) {
+      // Light up the blocks around the cursor, with a ragged edge (only while it moves)
+      const moving = pointer.inside && now - movedAt < STILL;
+      if (moving) {
         const x0 = Math.max(0, Math.floor(pointer.x - RADIUS));
         const x1 = Math.min(cols - 1, Math.ceil(pointer.x + RADIUS));
         const y0 = Math.max(0, Math.floor(pointer.y - RADIUS));
@@ -136,7 +140,7 @@
 
       pointer.vx *= 0.5;
       pointer.vy *= 0.5;
-      if (!alive && !pointer.inside) {
+      if (!alive && !moving) {
         cancelAnimationFrame(raf);
         raf = 0;
       }
@@ -156,6 +160,7 @@
       pointer.x = x;
       pointer.y = y;
       pointer.inside = true;
+      movedAt = performance.now();
       if (!raf) raf = requestAnimationFrame(frame);
     });
     document.documentElement.addEventListener('pointerleave', () => {
