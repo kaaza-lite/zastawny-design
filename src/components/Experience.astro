@@ -127,35 +127,19 @@ import Job from './Job.astro';
 </div>
 
 <style>
+  /* 44px between the jobs, no lines between them */
   .jobs {
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 44px;
   }
 
-  .jobs > :global(.job) {
-    padding: 60px 0;
-    border-top: 1px dashed var(--color-divider);
-  }
-
-  .jobs > :global(.job:first-child) {
-    padding-top: 0;
-    border-top: 0;
-  }
-
-  /* Desktop and tablet: the last job has no bottom padding in Figma */
-  @media (min-width: 800px) {
-    .jobs > :global(.job:last-of-type) {
-      padding-bottom: 0;
-    }
-  }
-
+  /* "see more at my LinkedIn": 60px below the last job (90px on mobile) */
   .more {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding-top: 30px;
-    border-top: 0.5px solid var(--color-divider);
+    padding-top: 16px;
     text-align: center;
     color: var(--color-text-muted);
   }
@@ -175,19 +159,10 @@ import Job from './Job.astro';
     }
   }
 
-
   /* ---------- Mobile ---------- */
   @media (max-width: 799.98px) {
-    .jobs {
-      gap: 0;
-    }
-
-    .jobs > :global(.job) {
-      padding: 40px 0 60px;
-    }
-
-    .jobs > :global(.job:first-child) {
-      padding: 0 0 60px;
+    .more {
+      padding-top: 46px;
     }
   }
 </style>
