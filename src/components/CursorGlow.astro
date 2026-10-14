@@ -8,8 +8,10 @@
 // It sits above the page background and the case study hero image, but under the
 // content (main has z-index 2). Blocks right behind text stay at --glow-strength, the
 // most that keeps grey text at 4.5:1; everywhere else the glow can go up to STRONG.
-// Only while the mouse is moving: it fades out when the cursor rests.
-// Only for a mouse; skipped with reduced motion.
+// Only while the mouse or a finger is moving: it fades out when they rest.
+// On a phone it follows the finger while swiping; scrolling drags the lit blocks along
+// with the page (momentum included), so the background moves with the swipe.
+// Skipped with reduced motion.
 ---
 
 <canvas class="cursor-glow" aria-hidden="true"></canvas>
@@ -81,7 +83,11 @@
       }
     };
     let textQueued = false;
+    let lastScroll = window.scrollY;
+    let scrolled = 0; // blocks the page has scrolled since the last frame
     window.addEventListener('scroll', () => {
+      if (raf) scrolled += (window.scrollY - lastScroll) / BLOCK;
+      lastScroll = window.scrollY;
       if (textQueued) return;
       textQueued = true;
       requestAnimationFrame(() => {
@@ -95,9 +101,12 @@
       if (now - last < 1000 / FPS) return;
       last = now;
 
-      // Smear: every block takes the brightness of the block it was dragged from
+      // Smear: every block takes the brightness of the block it was dragged from,
+      // following the pointer and moving with the page when it scrolls
+      const scroll = Math.trunc(scrolled);
+      scrolled -= scroll;
       const dx = Math.round(pointer.vx);
-      const dy = Math.round(pointer.vy);
+      const dy = Math.round(pointer.vy) - scroll;
       let alive = false;
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
@@ -166,6 +175,28 @@
     document.documentElement.addEventListener('pointerleave', () => {
       pointer.inside = false;
     });
+
+    // Touch: follow the finger while it swipes (the page scrolling does the dragging)
+    const touch = (e: TouchEvent, moved: boolean) => {
+      const t = e.touches[0];
+      if (!t) return;
+      pointer.x = t.clientX / BLOCK;
+      pointer.y = t.clientY / BLOCK;
+      pointer.inside = true;
+      if (!moved) return;
+      movedAt = performance.now();
+      if (!raf) {
+        lastScroll = window.scrollY;
+        raf = requestAnimationFrame(frame);
+      }
+    };
+    document.addEventListener('touchstart', (e) => touch(e, false), { passive: true });
+    document.addEventListener('touchmove', (e) => touch(e, true), { passive: true });
+    const lift = () => {
+      pointer.inside = false;
+    };
+    document.addEventListener('touchend', lift, { passive: true });
+    document.addEventListener('touchcancel', lift, { passive: true });
   }
 </script>
 
