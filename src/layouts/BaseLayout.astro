@@ -4,6 +4,7 @@ import '../styles/global.css';
 import Nav from '../components/Nav.astro';
 import PageMosh from '../components/PageMosh.astro';
 import CursorGlow from '../components/CursorGlow.astro';
+import SongPlayer from '../components/SongPlayer.astro';
 
 interface Props {
   title: string;
@@ -51,6 +52,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <Nav />
     <slot />
     <PageMosh />
+    <SongPlayer />
 
     <script>
       import '../scripts/tooltips';
