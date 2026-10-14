@@ -1,9 +1,11 @@
 ---
 // Shared page shell: <head>, fonts, global styles and the floating nav.
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 import Nav from '../components/Nav.astro';
 import PageMosh from '../components/PageMosh.astro';
 import CursorGlow from '../components/CursorGlow.astro';
+import SongPlayer from '../components/SongPlayer.astro';
 
 interface Props {
   title: string;
@@ -16,7 +18,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" transition:animate="none">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -24,17 +26,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical} />
 
-    <!-- Arriving from another page of this site: show the last frame of the old page from the
-         very first paint, until the transition takes over (see PageMosh) -->
-    <script is:inline>
-      try {
-        var frame = sessionStorage.getItem('mosh-frame');
-        if (frame && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          document.documentElement.classList.add('mosh-in');
-          document.documentElement.style.setProperty('--mosh-frame', 'url("' + frame + '")');
-        }
-      } catch (e) {}
-    </script>
+    <!-- Page changes without reloading, so the music keeps playing (see src/scripts/navigation.ts) -->
+    <ClientRouter />
 
     <!-- Favicon: the "z" from the mobile nav, on the page background -->
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
@@ -51,8 +44,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <Nav />
     <slot />
     <PageMosh />
+    <SongPlayer />
 
     <script>
+      import '../scripts/navigation';
       import '../scripts/tooltips';
     </script>
   </body>

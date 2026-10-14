@@ -40,6 +40,7 @@ export class Mosh {
   draw(source: CanvasImageSource) {
     const { width: w, height: h } = this.canvas;
     this.ctx.clearRect(0, 0, w, h);
+    if ((source as HTMLCanvasElement).width === 0 || (source as HTMLCanvasElement).height === 0) return;
     this.ctx.drawImage(source, 0, 0, w, h);
   }
 

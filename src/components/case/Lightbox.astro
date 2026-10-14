@@ -15,23 +15,31 @@
 </dialog>
 
 <script>
-  const dialog = document.querySelector<HTMLDialogElement>('.lightbox');
-  const image = dialog?.querySelector<HTMLImageElement>('.lightbox-image');
+  // Each case study page has its own dialog, so it's looked up when it's needed
+  const parts = () => {
+    const dialog = document.querySelector<HTMLDialogElement>('.lightbox');
+    const image = dialog?.querySelector<HTMLImageElement>('.lightbox-image');
+    return dialog && image ? { dialog, image } : null;
+  };
+  let opener: HTMLButtonElement | null = null; // Safari doesn't focus clicked buttons, so remember it ourselves
 
-  if (dialog && image) {
+  document.addEventListener('click', (e) => {
+    const button = (e.target as Element).closest?.<HTMLButtonElement>('[data-zoom-src]');
+    const p = parts();
+    if (!button || !p) return;
+    opener = button;
+    p.image.src = button.dataset.zoomSrc ?? '';
+    p.image.alt = button.dataset.zoomAlt ?? '';
+    p.dialog.showModal();
+    document.documentElement.classList.add('is-previewing'); // stop the page scrolling behind
+  });
+
+  // The dialog's own controls, set up on each page
+  document.addEventListener('astro:page-load', () => {
+    const p = parts();
+    if (!p) return;
+    const { dialog } = p;
     const close = () => dialog.close();
-    let opener: HTMLButtonElement | null = null; // Safari doesn't focus clicked buttons, so remember it ourselves
-
-    document.addEventListener('click', (e) => {
-      const button = (e.target as Element).closest?.<HTMLButtonElement>('[data-zoom-src]');
-      if (!button) return;
-      opener = button;
-      image.src = button.dataset.zoomSrc ?? '';
-      image.alt = button.dataset.zoomAlt ?? '';
-      dialog.showModal();
-      document.documentElement.classList.add('is-previewing'); // stop the page scrolling behind
-    });
-
     dialog.querySelector('.lightbox-close')?.addEventListener('click', close);
 
     // A click that lands on the dialog itself (not the image or button) is a click on the scrim
@@ -43,7 +51,7 @@
       document.documentElement.classList.remove('is-previewing');
       opener?.focus({ preventScroll: true }); // back to the enlarge button
     });
-  }
+  });
 </script>
 
 <style>

@@ -9,8 +9,14 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-for (const host of document.querySelectorAll('.tip-host')) {
-  const reset = () => host.classList.remove('tip-dismissed');
-  host.addEventListener('pointerleave', reset);
-  host.addEventListener('blur', reset);
-}
+// On the first load and after every page change
+const ready = new WeakSet<Element>();
+document.addEventListener('astro:page-load', () => {
+  for (const host of document.querySelectorAll('.tip-host')) {
+    if (ready.has(host)) continue;
+    ready.add(host);
+    const reset = () => host.classList.remove('tip-dismissed');
+    host.addEventListener('pointerleave', reset);
+    host.addEventListener('blur', reset);
+  }
+});
