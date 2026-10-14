@@ -1,0 +1,68 @@
+---
+// A soft glow under the mouse that brightens the plain page background.
+// It sits under all the content (cards, images and text cover it), in the page's
+// colour (--focus-ring), at --glow-strength: kept low so grey text stays at 4.5:1.
+// Only for a mouse; it trails the cursor a little and fades out when it leaves the window.
+---
+
+<div class="cursor-glow" aria-hidden="true"></div>
+
+<script>
+  const glow = document.querySelector<HTMLElement>('.cursor-glow');
+  const mouse = window.matchMedia('(hover: hover) and (pointer: fine)');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  if (glow) {
+    const FOLLOW = 0.18; // share of the remaining distance covered each frame (lower = softer trail)
+    let x = 0;
+    let y = 0;
+    let targetX = 0;
+    let targetY = 0;
+    let raf = 0;
+
+    const move = () => {
+      x += (targetX - x) * FOLLOW;
+      y += (targetY - y) * FOLLOW;
+      glow.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      raf = Math.abs(targetX - x) + Math.abs(targetY - y) > 0.5 ? requestAnimationFrame(move) : 0;
+    };
+
+    document.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse' || !mouse.matches) return;
+      targetX = e.clientX;
+      targetY = e.clientY;
+      if (!glow.classList.contains('is-on') || reduce.matches) {
+        // first appearance (or reduced motion): jump straight to the cursor
+        x = targetX;
+        y = targetY;
+        glow.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        glow.classList.add('is-on');
+        return;
+      }
+      if (!raf) raf = requestAnimationFrame(move);
+    });
+
+    document.documentElement.addEventListener('pointerleave', () => glow.classList.remove('is-on'));
+  }
+</script>
+
+<style>
+  /* Under everything (z-index -1) but above the page background */
+  .cursor-glow {
+    position: fixed;
+    top: -320px;
+    left: -320px;
+    z-index: -1;
+    width: 640px;
+    height: 640px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--focus-ring) var(--glow-strength), transparent), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 400ms var(--ease-out);
+    will-change: transform;
+  }
+  .cursor-glow.is-on {
+    opacity: 1;
+  }
+</style>
