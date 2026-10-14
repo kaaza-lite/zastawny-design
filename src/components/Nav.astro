@@ -79,7 +79,8 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
     document.fonts?.ready.then(() => placeOn(current));
   }
 
-  setup();
+  // On the first load and after every page change
+  document.addEventListener('astro:page-load', setup);
 </script>
 
 <style>

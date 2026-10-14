@@ -62,38 +62,41 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
 <script>
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  for (const root of document.querySelectorAll<HTMLElement>('[data-carousel]')) {
-    const track = root.querySelector<HTMLElement>('.track')!;
-    const slides = [...root.querySelectorAll<HTMLElement>('.slide')];
-    const dots = [...root.querySelectorAll<HTMLElement>('.dot')];
-    const caption = root.querySelector<HTMLElement>('.caption');
-    const count = dots.length;
-    const current = () => Math.round(track.scrollLeft / track.clientWidth);
+  // Set up the sliders on the first load and after every page change
+  document.addEventListener('astro:page-load', () => {
+    for (const root of document.querySelectorAll<HTMLElement>('[data-carousel]')) {
+      const track = root.querySelector<HTMLElement>('.track')!;
+      const slides = [...root.querySelectorAll<HTMLElement>('.slide')];
+      const dots = [...root.querySelectorAll<HTMLElement>('.dot')];
+      const caption = root.querySelector<HTMLElement>('.caption');
+      const count = dots.length;
+      const current = () => Math.round(track.scrollLeft / track.clientWidth);
 
-    const show = (i: number) => {
-      const index = (i + count) % count; // wrap around at the ends
-      track.scrollTo({ left: index * track.clientWidth, behavior: reduce.matches ? 'auto' : 'smooth' });
-    };
+      const show = (i: number) => {
+        const index = (i + count) % count; // wrap around at the ends
+        track.scrollTo({ left: index * track.clientWidth, behavior: reduce.matches ? 'auto' : 'smooth' });
+      };
 
-    for (const btn of root.querySelectorAll<HTMLButtonElement>('.arrow')) {
-      btn.addEventListener('click', () => show(current() + Number(btn.dataset.dir)));
+      for (const btn of root.querySelectorAll<HTMLButtonElement>('.arrow')) {
+        btn.addEventListener('click', () => show(current() + Number(btn.dataset.dir)));
+      }
+
+      track.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') { e.preventDefault(); show(current() + 1); }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); show(current() - 1); }
+      });
+
+      // Keep the dots and the caption in step with swipes and scrolling
+      let shown = 0;
+      track.addEventListener('scroll', () => {
+        const i = current();
+        if (i === shown) return;
+        shown = i;
+        dots.forEach((d, n) => d.classList.toggle('is-active', n === i));
+        if (caption) caption.textContent = slides[i]?.dataset.caption ?? '';
+      }, { passive: true });
     }
-
-    track.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight') { e.preventDefault(); show(current() + 1); }
-      if (e.key === 'ArrowLeft') { e.preventDefault(); show(current() - 1); }
-    });
-
-    // Keep the dots and the caption in step with swipes and scrolling
-    let shown = 0;
-    track.addEventListener('scroll', () => {
-      const i = current();
-      if (i === shown) return;
-      shown = i;
-      dots.forEach((d, n) => d.classList.toggle('is-active', n === i));
-      if (caption) caption.textContent = slides[i]?.dataset.caption ?? '';
-    }, { passive: true });
-  }
+  });
 </script>
 
 <style>

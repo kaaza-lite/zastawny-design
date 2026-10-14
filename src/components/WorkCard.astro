@@ -94,157 +94,160 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
   const BURST = 650;    // ms: the melt when the pointer arrives, and the title glitch with it
   const REACH = 0.4;    // how far around the pointer the image gets dragged (share of the card width)
 
-  for (const card of document.querySelectorAll<HTMLElement>('[data-glitch-card]')) {
-    const thumb = card.querySelector<HTMLElement>('.thumb')!;
-    const shown = card.querySelector<HTMLImageElement>('.thumb-img')!;
-    const cnv = card.querySelector<HTMLCanvasElement>('.glitch')!;
-    // Scramble layers for the title and the category line, each with its real text
-    const scrambles = [...card.querySelectorAll<HTMLElement>('.scramble')].map((el) => ({
-      el,
-      text: el.parentElement?.querySelector('.scramble-source')?.textContent ?? '',
-      // the title is in CS Ariston Halfpixel, which only has letters
-      chars: el.classList.contains('scramble--title') ? TITLE_CHARS : SCRAMBLE_CHARS,
-    }));
+  // Set up the cards on the first load and after every page change
+  document.addEventListener('astro:page-load', () => {
+    for (const card of document.querySelectorAll<HTMLElement>('[data-glitch-card]')) {
+      const thumb = card.querySelector<HTMLElement>('.thumb')!;
+      const shown = card.querySelector<HTMLImageElement>('.thumb-img')!;
+      const cnv = card.querySelector<HTMLCanvasElement>('.glitch')!;
+      // Scramble layers for the title and the category line, each with its real text
+      const scrambles = [...card.querySelectorAll<HTMLElement>('.scramble')].map((el) => ({
+        el,
+        text: el.parentElement?.querySelector('.scramble-source')?.textContent ?? '',
+        // the title is in CS Ariston Halfpixel, which only has letters
+        chars: el.classList.contains('scramble--title') ? TITLE_CHARS : SCRAMBLE_CHARS,
+      }));
 
-    // With srcset, naturalWidth is scaled by pixel density, so use a plain
-    // copy of the chosen file (already cached) to get its real pixels.
-    const source = new Image();
-    const sync = () => {
-      if (shown.currentSrc && source.src !== shown.currentSrc) source.src = shown.currentSrc;
-    };
-    if (shown.complete) sync();
-    else shown.addEventListener('load', sync, { once: true });
+      // With srcset, naturalWidth is scaled by pixel density, so use a plain
+      // copy of the chosen file (already cached) to get its real pixels.
+      const source = new Image();
+      const sync = () => {
+        if (shown.currentSrc && source.src !== shown.currentSrc) source.src = shown.currentSrc;
+      };
+      if (shown.complete) sync();
+      else shown.addEventListener('load', sync, { once: true });
 
-    let mosh: Mosh | null = null;
-    let clean: HTMLCanvasElement | null = null;
-    let tinted: HTMLCanvasElement | null = null; // the picture in this case study's colours
-    const ramp = palettes[card.dataset.glitchCard as PaletteName] ?? palettes.neutral;
-    let raf = 0;
-    let dpr = 1;
-    let hovering = false;
-    let leftAt = 0;
-    let burstAt = 0;
-    let lastFrame = 0;
-    let still = 0; // frames with no movement
-    // Pointer position and how far it moved since the last frame, in canvas pixels
-    const pointer = { x: 0, y: 0, vx: 0, vy: 0, inside: false };
-    let wave = waves();
+      let mosh: Mosh | null = null;
+      let clean: HTMLCanvasElement | null = null;
+      let tinted: HTMLCanvasElement | null = null; // the picture in this case study's colours
+      const ramp = palettes[card.dataset.glitchCard as PaletteName] ?? palettes.neutral;
+      let raf = 0;
+      let dpr = 1;
+      let hovering = false;
+      let leftAt = 0;
+      let burstAt = 0;
+      let lastFrame = 0;
+      let still = 0; // frames with no movement
+      // Pointer position and how far it moved since the last frame, in canvas pixels
+      const pointer = { x: 0, y: 0, vx: 0, vy: 0, inside: false };
+      let wave = waves();
 
-    const ready = () => {
-      sync();
-      if (!source.complete || !source.naturalWidth) return false;
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = Math.round(thumb.clientWidth * dpr);
-      const h = Math.round(thumb.clientHeight * dpr);
-      if (!clean || clean.width !== w || clean.height !== h) {
-        cnv.width = w;
-        cnv.height = h;
-        clean = cover(source, w, h);
-        tinted = gradientMap(clean, ramp);
-        mosh = new Mosh(cnv, BLOCK * dpr);
-      }
-      return true;
-    };
+      const ready = () => {
+        sync();
+        if (!source.complete || !source.naturalWidth) return false;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = Math.round(thumb.clientWidth * dpr);
+        const h = Math.round(thumb.clientHeight * dpr);
+        if (!clean || clean.width !== w || clean.height !== h) {
+          cnv.width = w;
+          cnv.height = h;
+          clean = cover(source, w, h);
+          tinted = gradientMap(clean, ramp);
+          mosh = new Mosh(cnv, BLOCK * dpr);
+        }
+        return true;
+      };
 
-    const frame = (now: number) => {
-      raf = requestAnimationFrame(frame);
-      if (now - lastFrame < 1000 / MOSH_FPS || !mosh || !clean || !tinted) return;
-      lastFrame = now;
-
-      const burst = Math.max(0, 1 - (now - burstAt) / BURST);
-      const leaving = !hovering;
-      const moving = Math.min(1, Math.hypot(pointer.vx, pointer.vy) / (6 * dpr));
-      const reach = cnv.width * REACH;
-      const swirl = 16 * dpr * burst;
-
-      mosh.step(
-        (x, y) => {
-          // Blocks near the pointer get dragged the way it's moving
-          const near = pointer.inside ? Math.max(0, 1 - Math.hypot(x - pointer.x, y - pointer.y) / reach) ** 1.5 : 0;
-          const [dx, dy, s] = wave(x, y);
-          return [pointer.vx * near * 1.4 + dx * s * swirl, pointer.vy * near * 1.4 + dy * s * swirl];
-        },
-        () => {
-          const r = Math.random();
-          // Arriving: the colour floods in. Leaving: the photo comes back fast.
-          // Still pointer: catches up slowly. Moving: barely.
-          const catchUp = leaving ? 0.35 : Math.max(0.3 * burst, 0.015 + 0.09 * (1 - moving) * (1 - burst));
-          if (r < catchUp) return 'clean';
-          return r < 0.88 ? 'move' : 'keep';
-        },
-        leaving ? clean : tinted,
-      );
-
-      for (const s of scrambles) s.el.textContent = burst > 0 ? scrambled(s.text, 1 - burst, true, s.chars) : '';
-      if (burst <= 0) card.classList.remove('is-glitching', 'is-scrambling');
-
-      // Movement fades between frames, so the smear stops when the pointer does
-      pointer.vx *= 0.5;
-      pointer.vy *= 0.5;
-
-      // Resting pointer and a clean picture: pause until it moves again
-      if (!leaving && burst <= 0 && moving < 0.05) still++;
-      else still = 0;
-      if (!leaving && still > 36) {
-        mosh.draw(tinted);
-        cancelAnimationFrame(raf);
-        raf = 0;
-        return;
-      }
-
-      // After leaving, stop once the picture has had time to come back clean
-      if (leaving && now - leftAt > 450) {
-        cancelAnimationFrame(raf);
-        raf = 0;
-        cnv.classList.remove('is-on');
-        card.classList.remove('is-glitching', 'is-scrambling');
-      }
-    };
-
-    const enter = () => {
-      if (reduce.matches || !ready() || !mosh || !clean) return;
-      hovering = true;
-      burstAt = performance.now();
-      wave = waves();
-      if (!raf) {
-        mosh.draw(clean);
-        cnv.classList.add('is-on');
+      const frame = (now: number) => {
         raf = requestAnimationFrame(frame);
-      }
-      card.classList.add('is-glitching', 'is-scrambling');
-    };
-    const leave = () => {
-      hovering = false;
-      pointer.inside = false;
-      leftAt = performance.now();
-      if (!raf) cnv.classList.remove('is-on');
-    };
+        if (now - lastFrame < 1000 / MOSH_FPS || !mosh || !clean || !tinted) return;
+        lastFrame = now;
 
-    card.addEventListener('pointerenter', (e) => {
-      if (e.pointerType === 'mouse' && fine.matches) enter();
-    });
-    card.addEventListener('pointermove', (e) => {
-      const box = thumb.getBoundingClientRect();
-      const x = (e.clientX - box.left) * dpr;
-      const y = (e.clientY - box.top) * dpr;
-      if (pointer.inside) {
-        pointer.vx += x - pointer.x;
-        pointer.vy += y - pointer.y;
-      }
-      pointer.x = x;
-      pointer.y = y;
-      pointer.inside = true;
-      if (hovering && !raf) {
-        still = 0;
-        raf = requestAnimationFrame(frame);
-      }
-    });
-    card.addEventListener('pointerleave', leave);
-    card.addEventListener('focus', () => {
-      if (card.matches(':focus-visible')) enter();
-    });
-    card.addEventListener('blur', leave);
-  }
+        const burst = Math.max(0, 1 - (now - burstAt) / BURST);
+        const leaving = !hovering;
+        const moving = Math.min(1, Math.hypot(pointer.vx, pointer.vy) / (6 * dpr));
+        const reach = cnv.width * REACH;
+        const swirl = 16 * dpr * burst;
+
+        mosh.step(
+          (x, y) => {
+            // Blocks near the pointer get dragged the way it's moving
+            const near = pointer.inside ? Math.max(0, 1 - Math.hypot(x - pointer.x, y - pointer.y) / reach) ** 1.5 : 0;
+            const [dx, dy, s] = wave(x, y);
+            return [pointer.vx * near * 1.4 + dx * s * swirl, pointer.vy * near * 1.4 + dy * s * swirl];
+          },
+          () => {
+            const r = Math.random();
+            // Arriving: the colour floods in. Leaving: the photo comes back fast.
+            // Still pointer: catches up slowly. Moving: barely.
+            const catchUp = leaving ? 0.35 : Math.max(0.3 * burst, 0.015 + 0.09 * (1 - moving) * (1 - burst));
+            if (r < catchUp) return 'clean';
+            return r < 0.88 ? 'move' : 'keep';
+          },
+          leaving ? clean : tinted,
+        );
+
+        for (const s of scrambles) s.el.textContent = burst > 0 ? scrambled(s.text, 1 - burst, true, s.chars) : '';
+        if (burst <= 0) card.classList.remove('is-glitching', 'is-scrambling');
+
+        // Movement fades between frames, so the smear stops when the pointer does
+        pointer.vx *= 0.5;
+        pointer.vy *= 0.5;
+
+        // Resting pointer and a clean picture: pause until it moves again
+        if (!leaving && burst <= 0 && moving < 0.05) still++;
+        else still = 0;
+        if (!leaving && still > 36) {
+          mosh.draw(tinted);
+          cancelAnimationFrame(raf);
+          raf = 0;
+          return;
+        }
+
+        // After leaving, stop once the picture has had time to come back clean
+        if (leaving && now - leftAt > 450) {
+          cancelAnimationFrame(raf);
+          raf = 0;
+          cnv.classList.remove('is-on');
+          card.classList.remove('is-glitching', 'is-scrambling');
+        }
+      };
+
+      const enter = () => {
+        if (reduce.matches || !ready() || !mosh || !clean) return;
+        hovering = true;
+        burstAt = performance.now();
+        wave = waves();
+        if (!raf) {
+          mosh.draw(clean);
+          cnv.classList.add('is-on');
+          raf = requestAnimationFrame(frame);
+        }
+        card.classList.add('is-glitching', 'is-scrambling');
+      };
+      const leave = () => {
+        hovering = false;
+        pointer.inside = false;
+        leftAt = performance.now();
+        if (!raf) cnv.classList.remove('is-on');
+      };
+
+      card.addEventListener('pointerenter', (e) => {
+        if (e.pointerType === 'mouse' && fine.matches) enter();
+      });
+      card.addEventListener('pointermove', (e) => {
+        const box = thumb.getBoundingClientRect();
+        const x = (e.clientX - box.left) * dpr;
+        const y = (e.clientY - box.top) * dpr;
+        if (pointer.inside) {
+          pointer.vx += x - pointer.x;
+          pointer.vy += y - pointer.y;
+        }
+        pointer.x = x;
+        pointer.y = y;
+        pointer.inside = true;
+        if (hovering && !raf) {
+          still = 0;
+          raf = requestAnimationFrame(frame);
+        }
+      });
+      card.addEventListener('pointerleave', leave);
+      card.addEventListener('focus', () => {
+        if (card.matches(':focus-visible')) enter();
+      });
+      card.addEventListener('blur', leave);
+    }
+  });
 </script>
 
 <style>

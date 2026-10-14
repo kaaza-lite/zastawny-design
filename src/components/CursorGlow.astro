@@ -47,8 +47,8 @@
     let movedAt = -Infinity;
 
     const setup = () => {
-      cols = Math.ceil(window.innerWidth / BLOCK);
-      rows = Math.ceil(window.innerHeight / BLOCK);
+      cols = Math.max(1, Math.ceil(window.innerWidth / BLOCK)); // at least 1, even in a hidden tab
+      rows = Math.max(1, Math.ceil(window.innerHeight / BLOCK));
       canvas.width = cols;
       canvas.height = rows;
       field = new Float32Array(cols * rows);
@@ -157,6 +157,7 @@
 
     setup();
     window.addEventListener('resize', setup);
+    document.addEventListener('astro:after-swap', setup); // the next page's colour and text
 
     document.addEventListener('pointermove', (e) => {
       if (e.pointerType !== 'mouse' || !mouse.matches) return;
