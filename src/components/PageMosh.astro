@@ -1,0 +1,240 @@
+---
+// Datamosh between pages (see src/scripts/datamosh.ts for what datamoshing is).
+//
+// Leaving a page through an internal link: the visible page is redrawn into a canvas
+// (src/scripts/snapshot.ts), then its blocks get dragged toward the link you clicked.
+// The last frame is handed to the next page through sessionStorage.
+//
+// Arriving: the next page starts under that old frame. The old pixels keep moving with
+// new motion while blocks tear open, one by one, and show the new page underneath.
+// Opening a page directly (no frame to hand over), the page's own picture briefly
+// melts and resolves instead. Anything marked data-scramble (the page title) scrambles
+// and resolves at the same time. Skipped entirely with reduced motion.
+---
+
+<canvas class="page-mosh" aria-hidden="true"></canvas>
+
+<script>
+  import { Mosh, waves, MOSH_FPS } from '../scripts/datamosh';
+  import { snapshot } from '../scripts/snapshot';
+  import { scrambled } from '../scripts/glitch';
+
+  const EXIT = 300;  // ms, leaving: the page is dragged toward the link
+  const ENTER = 420; // ms, arriving: the old frame melts away into the new page
+  const BLOCK = 16;  // block size in CSS pixels
+  const KEY = 'mosh-frame';
+  const LATE = 800;  // ms since navigation start; later than this the page is already on screen
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const scale = Math.min(window.devicePixelRatio || 1, 2);
+  const canvas = document.querySelector<HTMLCanvasElement>('.page-mosh')!;
+  const root = document.documentElement;
+
+  const fit = () => {
+    canvas.width = Math.round(window.innerWidth * scale);
+    canvas.height = Math.round(window.innerHeight * scale);
+  };
+
+  // Run `frame` at the mosh frame rate for `duration` ms, then `done`
+  function run(duration: number, frame: (t: number) => void, done: () => void) {
+    const start = performance.now();
+    let last = -Infinity;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      if (now - last >= 1000 / MOSH_FPS || t >= 1) {
+        frame(t);
+        last = now;
+      }
+      if (t >= 1) return done();
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- Arriving ----------
+  let saved: string | null = null;
+  try {
+    saved = sessionStorage.getItem(KEY);
+    sessionStorage.removeItem(KEY);
+  } catch {}
+
+  const finish = () => {
+    canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.classList.remove('is-on');
+    root.classList.remove('mosh-in');
+    root.style.removeProperty('--mosh-frame');
+  };
+
+  async function arrive() {
+    fit();
+    const mosh = new Mosh(canvas, BLOCK * scale);
+    if (saved) {
+      const img = new Image();
+      img.src = saved;
+      await img.decode();
+      mosh.draw(img);
+    } else {
+      mosh.draw(snapshot(scale));
+    }
+    canvas.classList.add('is-on');
+    root.classList.remove('mosh-in'); // the canvas now covers the page itself
+    root.style.removeProperty('--mosh-frame');
+
+    // Title scramble layers; the real text stays for screen readers
+    const scrambles = [...document.querySelectorAll<HTMLElement>('[data-scramble]')].map((el) => {
+      const layer = document.createElement('span');
+      layer.className = 'page-scramble';
+      layer.setAttribute('aria-hidden', 'true');
+      el.classList.add('is-scrambling');
+      el.append(layer);
+      return { el, layer, text: el.textContent?.trim() ?? '' };
+    });
+
+    // Each block opens at its own moment, roughly top to bottom
+    const h = canvas.height;
+    const opensAt = new Map<number, number>();
+    const openTime = (x: number, y: number) => {
+      const key = y * 100000 + x;
+      if (!opensAt.has(key)) opensAt.set(key, 0.05 + Math.random() * 0.55 + (y / h) * 0.3);
+      return opensAt.get(key)!;
+    };
+    const wave = waves();
+    let t = 0;
+    run(
+      saved ? ENTER : ENTER * 0.75,
+      (now) => {
+        t = now;
+        const speed = 16 * scale * (1 - t) ** 0.6 * (saved ? 1 : 0.6);
+        mosh.step(
+          (x, y) => {
+            const [dx, dy, s] = wave(x, y);
+            return [dx * s * speed * 0.7, (0.6 + dy * 0.4) * s * speed];
+          },
+          (x, y) => (t >= openTime(x, y) ? 'clear' : Math.random() < 0.8 ? 'move' : 'keep'),
+        );
+        for (const s of scrambles) s.layer.textContent = scrambled(s.text, t, true);
+      },
+      () => {
+        finish();
+        for (const s of scrambles) {
+          s.layer.remove();
+          s.el.classList.remove('is-scrambling');
+        }
+      },
+    );
+  }
+
+  if (!reduce && performance.now() < LATE) arrive().catch(finish);
+  else finish();
+
+  // ---------- Leaving ----------
+  function leave(href: string, toX: number, toY: number) {
+    fit();
+    const mosh = new Mosh(canvas, BLOCK * scale);
+    mosh.draw(snapshot(scale));
+    canvas.classList.add('is-on');
+    const wave = waves();
+    const px = toX * scale;
+    const py = toY * scale;
+    run(
+      EXIT,
+      (t) => {
+        const speed = 14 * scale * Math.min(1, t * 1.6);
+        mosh.step(
+          (x, y) => {
+            // Pulled toward the link that was clicked, with a swirl on top
+            const dx = px - x;
+            const dy = py - y;
+            const d = Math.hypot(dx, dy) || 1;
+            const [wx, wy, s] = wave(x, y);
+            return [(dx / d) * speed + wx * s * speed * 0.6, (dy / d) * speed + wy * s * speed * 0.6];
+          },
+          () => (Math.random() < 0.6 ? 'move' : 'keep'),
+        );
+      },
+      () => {
+        // Hand the last frame to the next page (at 1 CSS pixel per pixel, as a small JPEG)
+        try {
+          const out = document.createElement('canvas');
+          out.width = window.innerWidth;
+          out.height = window.innerHeight;
+          out.getContext('2d')!.drawImage(canvas, 0, 0, out.width, out.height);
+          sessionStorage.setItem(KEY, out.toDataURL('image/jpeg', 0.8));
+        } catch {}
+        location.href = href;
+      },
+    );
+  }
+
+  if (!reduce) {
+    document.addEventListener('click', (e) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const link = (e.target as Element).closest?.('a');
+      if (!link || link.target === '_blank' || link.hasAttribute('download')) return;
+      const url = new URL(link.href, location.href);
+      if (url.origin !== location.origin) return;
+      if (url.pathname === location.pathname && url.hash) return; // same-page anchor
+      e.preventDefault();
+      // A keyboard "click" has no pointer position: use the link's centre
+      const box = link.getBoundingClientRect();
+      const x = e.detail ? e.clientX : box.left + box.width / 2;
+      const y = e.detail ? e.clientY : box.top + box.height / 2;
+      leave(url.href, x, y);
+    });
+
+    // Coming back with the Back button can restore the page mid-mosh: clear it
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) finish();
+    });
+  }
+</script>
+
+<style>
+  /* Full-screen, under the nav (z-index 10) so the nav stays put between pages */
+  .page-mosh {
+    position: fixed;
+    inset: 0;
+    z-index: 9;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    visibility: hidden;
+  }
+  .page-mosh.is-on {
+    visibility: visible;
+  }
+
+  /* Arriving from another page: the old page's last frame covers the new page until the
+     canvas takes over. The class and the frame are set by a small script in the <head>;
+     if anything goes wrong the cover lifts by itself after 1.2s. */
+  :global(html.mosh-in) .page-mosh {
+    visibility: visible;
+    background: var(--mosh-frame, none) 0 0 / 100% 100% no-repeat, var(--color-bg);
+    animation: mosh-failsafe 0s 1.2s forwards;
+  }
+  @keyframes mosh-failsafe {
+    to {
+      visibility: hidden;
+    }
+  }
+
+  /* Title scramble: the real text goes transparent, the scramble sits on top */
+  :global([data-scramble]) {
+    position: relative;
+  }
+  :global([data-scramble].is-scrambling) {
+    color: transparent;
+  }
+  /* Sized to its own text and centred on the title, so wider fallback symbols don't
+     force an extra line; it only wraps where the title itself would (small phones). */
+  :global(.page-scramble) {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: max-content;
+    max-width: calc(100vw - 40px);
+    transform: translateX(-50%);
+    color: var(--color-text);
+    text-align: center;
+  }
+</style>

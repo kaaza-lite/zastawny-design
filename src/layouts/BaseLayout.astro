@@ -2,18 +2,15 @@
 // Shared page shell: <head>, fonts, global styles and the floating nav.
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
-import PageGlitch from '../components/PageGlitch.astro';
-import type { PaletteName } from '../data/palettes';
+import PageMosh from '../components/PageMosh.astro';
 
 interface Props {
   title: string;
   description?: string;
-  palette?: PaletteName; // colours of the page-load glitch
-  theme?: 'calastone' | 'bamboo' | 'juicyway'; // case study tint (also sets the glitch colours)
+  theme?: 'calastone' | 'bamboo' | 'juicyway'; // case study tint
 }
 
 const { title, description, theme } = Astro.props;
-const palette: PaletteName = Astro.props.palette ?? theme ?? 'neutral';
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
@@ -25,6 +22,18 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical} />
+
+    <!-- Arriving from another page of this site: show the last frame of the old page from the
+         very first paint, until the transition takes over (see PageMosh) -->
+    <script is:inline>
+      try {
+        var frame = sessionStorage.getItem('mosh-frame');
+        if (frame && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          document.documentElement.classList.add('mosh-in');
+          document.documentElement.style.setProperty('--mosh-frame', 'url("' + frame + '")');
+        }
+      } catch (e) {}
+    </script>
 
     <!-- Favicon: the "z" from the mobile nav, on the page background -->
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
@@ -39,7 +48,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   <body data-theme={theme}>
     <Nav />
     <slot />
-    <PageGlitch palette={palette} />
+    <PageMosh />
 
     <script>
       import '../scripts/tooltips';
