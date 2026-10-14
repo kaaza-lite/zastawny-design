@@ -1,6 +1,6 @@
 ---
 // A small music player in the bottom right corner: a round play/pause button in the
-// nav's glass style (with a play / pause tooltip on its left), and a little equalizer
+// nav's glass style (with a play / pause tooltip above it), and a little equalizer
 // next to it while the song plays.
 //
 // The music comes from Spotify's official embed, kept invisible. It only loads when
@@ -35,7 +35,7 @@ const bars = [0, 1, 3, 2, 0, 0, 0, 2, 4, 3, 1, 0, 0, 2, 3, 0];
   <button type="button" class="play tip-host" aria-label="play">
     <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg>
     <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"></path></svg>
-    <span class="tip tip--left" aria-hidden="true">play</span>
+    <span class="tip" aria-hidden="true">play</span>
   </button>
   <div class="spotify" aria-hidden="true"><div class="spotify-mount"></div></div>
 </div>
