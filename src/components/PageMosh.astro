@@ -17,7 +17,7 @@
 <script>
   import { Mosh, waves, MOSH_FPS } from '../scripts/datamosh';
   import { snapshot } from '../scripts/snapshot';
-  import { scrambled } from '../scripts/glitch';
+  import { scrambled, TITLE_CHARS } from '../scripts/glitch';
 
   const EXIT = 300;  // ms, leaving: the page is dragged toward the link
   const ENTER = 420; // ms, arriving: the old frame melts away into the new page
@@ -112,7 +112,7 @@
           },
           (x, y) => (t >= openTime(x, y) ? 'clear' : Math.random() < 0.8 ? 'move' : 'keep'),
         );
-        for (const s of scrambles) s.layer.textContent = scrambled(s.text, t, true);
+        for (const s of scrambles) s.layer.textContent = scrambled(s.text, t, true, TITLE_CHARS);
       },
       () => {
         finish();

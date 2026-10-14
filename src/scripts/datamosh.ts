@@ -118,3 +118,34 @@ export function cover(img: HTMLImageElement, w: number, h: number) {
   c.getContext('2d')!.drawImage(img, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 0, 0, w, h);
   return c;
 }
+
+/**
+ * The picture recoloured into a monochrome ramp (darkest to lightest colour):
+ * each pixel's brightness picks its colour along the ramp.
+ */
+export function gradientMap(source: HTMLCanvasElement, ramp: readonly string[]) {
+  const w = source.width;
+  const h = source.height;
+  const out = document.createElement('canvas');
+  out.width = w;
+  out.height = h;
+  if (!w || !h) return out;
+  const stops = ramp.map((hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)));
+  const table = new Uint8ClampedArray(256 * 3);
+  for (let i = 0; i < 256; i++) {
+    const pos = (i / 255) * (stops.length - 1);
+    const a = Math.floor(pos);
+    const b = Math.min(stops.length - 1, a + 1);
+    for (let c = 0; c < 3; c++) table[i * 3 + c] = stops[a][c] + (stops[b][c] - stops[a][c]) * (pos - a);
+  }
+  const data = source.getContext('2d')!.getImageData(0, 0, w, h);
+  const d = data.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const lum = (d[i] * 54 + d[i + 1] * 183 + d[i + 2] * 19) >> 8;
+    d[i] = table[lum * 3];
+    d[i + 1] = table[lum * 3 + 1];
+    d[i + 2] = table[lum * 3 + 2];
+  }
+  out.getContext('2d')!.putImageData(data, 0, 0);
+  return out;
+}
