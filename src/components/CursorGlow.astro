@@ -1,68 +1,184 @@
 ---
-// A soft glow under the mouse that brightens the plain page background.
-// It sits under all the content (cards, images and text cover it), in the page's
-// colour (--focus-ring), at --glow-strength: kept low so grey text stays at 4.5:1.
-// Only for a mouse; it trails the cursor a little and fades out when it leaves the window.
+// A datamosh glow under the mouse. The page is covered by a grid of square blocks;
+// blocks near the cursor light up in the page's colour (--focus-ring), and when the
+// mouse moves, the lit blocks get dragged along with it and leave a smeared trail
+// that breaks up as it fades. Brightness comes in a few hard steps, like a video
+// codec running out of bits, and it updates at a stuttering 24fps.
+//
+// It sits above the page background and the case study hero image, but under the
+// content (main has z-index 2). Blocks right behind text stay at --glow-strength, the
+// most that keeps grey text at 4.5:1; everywhere else the glow can go up to STRONG.
+// Only for a mouse; skipped with reduced motion.
 ---
 
-<div class="cursor-glow" aria-hidden="true"></div>
+<canvas class="cursor-glow" aria-hidden="true"></canvas>
 
 <script>
-  const glow = document.querySelector<HTMLElement>('.cursor-glow');
+  const canvas = document.querySelector<HTMLCanvasElement>('.cursor-glow');
   const mouse = window.matchMedia('(hover: hover) and (pointer: fine)');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  if (glow) {
-    const FOLLOW = 0.18; // share of the remaining distance covered each frame (lower = softer trail)
-    let x = 0;
-    let y = 0;
-    let targetX = 0;
-    let targetY = 0;
-    let raf = 0;
+  const BLOCK = 14;    // block size in CSS pixels
+  const RADIUS = 9;    // glow radius, in blocks
+  const LEVELS = 4;    // brightness steps
+  const FADE = 0.86;   // how much of the glow is left each frame
+  const FPS = 24;
+  const STRONG = 0.1;  // brightest glow away from text (share of the page colour)
 
-    const move = () => {
-      x += (targetX - x) * FOLLOW;
-      y += (targetY - y) * FOLLOW;
-      glow.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-      raf = Math.abs(targetX - x) + Math.abs(targetY - y) > 0.5 ? requestAnimationFrame(move) : 0;
+  if (canvas && !reduce.matches) {
+    const ctx = canvas.getContext('2d')!;
+    let cols = 0;
+    let rows = 0;
+    let field = new Float32Array(0); // brightness of each block, 0 to 1
+    let nearText = new Uint8Array(0);  // 1 where a block is behind text
+    let next = new Float32Array(0);
+    let image: ImageData;
+    let colour = [255, 255, 255];
+    let strength = 0.03;
+
+    // Pointer in blocks, and how far it moved since the last frame
+    const pointer = { x: -100, y: -100, vx: 0, vy: 0, inside: false };
+    let raf = 0;
+    let last = 0;
+
+    const setup = () => {
+      cols = Math.ceil(window.innerWidth / BLOCK);
+      rows = Math.ceil(window.innerHeight / BLOCK);
+      canvas.width = cols;
+      canvas.height = rows;
+      field = new Float32Array(cols * rows);
+      next = new Float32Array(cols * rows);
+      image = ctx.createImageData(cols, rows);
+      nearText = new Uint8Array(cols * rows);
+      findText();
+      const style = getComputedStyle(document.body);
+      const hex = style.getPropertyValue('--focus-ring').trim();
+      colour = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+      strength = parseFloat(style.getPropertyValue('--glow-strength')) / 100 || 0.03;
     };
+
+    // Which blocks have text in front of them (redone on scroll and resize)
+    const findText = () => {
+      nearText.fill(0);
+      const range = document.createRange();
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const parent = node.parentElement;
+        if (!parent || !node.textContent?.trim() || parent.closest('script, style, .site-nav')) continue;
+        const box = parent.getBoundingClientRect();
+        if (box.bottom < 0 || box.top > window.innerHeight || box.width === 0) continue;
+        range.selectNodeContents(node);
+        for (const r of range.getClientRects()) {
+          const c0 = Math.max(0, Math.floor((r.left - 2) / BLOCK));
+          const c1 = Math.min(cols - 1, Math.floor((r.right + 2) / BLOCK));
+          const r0 = Math.max(0, Math.floor((r.top - 2) / BLOCK));
+          const r1 = Math.min(rows - 1, Math.floor((r.bottom + 2) / BLOCK));
+          for (let y = r0; y <= r1; y++) nearText.fill(1, y * cols + c0, y * cols + c1 + 1);
+        }
+      }
+    };
+    let textQueued = false;
+    window.addEventListener('scroll', () => {
+      if (textQueued) return;
+      textQueued = true;
+      requestAnimationFrame(() => {
+        textQueued = false;
+        findText();
+      });
+    }, { passive: true });
+
+    const frame = (now: number) => {
+      raf = requestAnimationFrame(frame);
+      if (now - last < 1000 / FPS) return;
+      last = now;
+
+      // Smear: every block takes the brightness of the block it was dragged from
+      const dx = Math.round(pointer.vx);
+      const dy = Math.round(pointer.vy);
+      let alive = false;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          // some blocks stick instead of moving, so the trail tears
+          const stuck = Math.random() < 0.25;
+          const sc = stuck ? c : Math.min(cols - 1, Math.max(0, c - dx));
+          const sr = stuck ? r : Math.min(rows - 1, Math.max(0, r - dy));
+          next[r * cols + c] = field[sr * cols + sc] * FADE;
+        }
+      }
+      // Light up the blocks around the cursor, with a ragged edge
+      if (pointer.inside) {
+        const x0 = Math.max(0, Math.floor(pointer.x - RADIUS));
+        const x1 = Math.min(cols - 1, Math.ceil(pointer.x + RADIUS));
+        const y0 = Math.max(0, Math.floor(pointer.y - RADIUS));
+        const y1 = Math.min(rows - 1, Math.ceil(pointer.y + RADIUS));
+        for (let r = y0; r <= y1; r++) {
+          for (let c = x0; c <= x1; c++) {
+            const d = Math.hypot(c + 0.5 - pointer.x, r + 0.5 - pointer.y) / RADIUS;
+            const light = Math.max(0, 1 - d - Math.random() * 0.25);
+            const i = r * cols + c;
+            next[i] = Math.max(next[i], light);
+          }
+        }
+      }
+      [field, next] = [next, field];
+
+      // Draw: brightness in hard steps, at most --glow-strength of the page colour
+      const d = image.data;
+      for (let i = 0; i < field.length; i++) {
+        const level = Math.floor(field[i] * LEVELS) / LEVELS;
+        if (level > 0) alive = true;
+        d[i * 4] = colour[0];
+        d[i * 4 + 1] = colour[1];
+        d[i * 4 + 2] = colour[2];
+        d[i * 4 + 3] = Math.round(level * (nearText[i] ? strength : STRONG) * 255);
+      }
+      ctx.putImageData(image, 0, 0);
+
+      pointer.vx *= 0.5;
+      pointer.vy *= 0.5;
+      if (!alive && !pointer.inside) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
+
+    setup();
+    window.addEventListener('resize', setup);
 
     document.addEventListener('pointermove', (e) => {
       if (e.pointerType !== 'mouse' || !mouse.matches) return;
-      targetX = e.clientX;
-      targetY = e.clientY;
-      if (!glow.classList.contains('is-on') || reduce.matches) {
-        // first appearance (or reduced motion): jump straight to the cursor
-        x = targetX;
-        y = targetY;
-        glow.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-        glow.classList.add('is-on');
-        return;
+      const x = e.clientX / BLOCK;
+      const y = e.clientY / BLOCK;
+      if (pointer.inside) {
+        pointer.vx += x - pointer.x;
+        pointer.vy += y - pointer.y;
       }
-      if (!raf) raf = requestAnimationFrame(move);
+      pointer.x = x;
+      pointer.y = y;
+      pointer.inside = true;
+      if (!raf) raf = requestAnimationFrame(frame);
     });
-
-    document.documentElement.addEventListener('pointerleave', () => glow.classList.remove('is-on'));
+    document.documentElement.addEventListener('pointerleave', () => {
+      pointer.inside = false;
+    });
   }
 </script>
 
 <style>
-  /* Under everything (z-index -1) but above the page background */
+  /* One canvas pixel per block, stretched to the window with hard pixel edges.
+     Above the background and the case study hero image (z-index 1), under the content. */
   .cursor-glow {
     position: fixed;
-    top: -320px;
-    left: -320px;
-    z-index: -1;
-    width: 640px;
-    height: 640px;
-    border-radius: 50%;
-    background: radial-gradient(closest-side, color-mix(in srgb, var(--focus-ring) var(--glow-strength), transparent), transparent);
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
     pointer-events: none;
-    opacity: 0;
-    transition: opacity 400ms var(--ease-out);
-    will-change: transform;
   }
-  .cursor-glow.is-on {
-    opacity: 1;
+  /* The page content sits above the glow */
+  :global(body > main) {
+    position: relative;
+    z-index: 2;
   }
 </style>
