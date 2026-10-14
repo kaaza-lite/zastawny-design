@@ -97,11 +97,12 @@ const heroVars = [
     object-fit: cover;
     object-position: var(--hero-pos-d);
   }
-  /* Bamboo: the image frame is 2060px wide, centred, wider than the screen */
+  /* Bamboo: the image frame is 2060px wide, centred, wider than the screen;
+     on screens wider than that (2K and up) it fills the full width */
   .hero-image--wide :global(img) {
     position: absolute;
     left: 50%;
-    width: 2060px;
+    width: max(2060px, 100%);
     max-width: none;
     transform: translateX(-50%);
   }
