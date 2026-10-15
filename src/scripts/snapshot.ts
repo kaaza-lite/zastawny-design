@@ -118,6 +118,8 @@ function drawText(ctx: CanvasRenderingContext2D, vw: number, vh: number, visible
     if (!parent || !text.trim() || parent.closest(SKIP) || !visible(parent)) continue;
     const box = parent.getBoundingClientRect();
     if (box.bottom < 0 || box.top > vh || box.right < 0 || box.left > vw) continue;
+    // Text kept for screen readers only (a 1px box, like the page title announced on each page change)
+    if (box.width <= 1 || box.height <= 1) continue;
     const cs = getComputedStyle(parent);
     if (!visibleColour(cs.color)) continue;
     ctx.globalAlpha = opacity(parent);
