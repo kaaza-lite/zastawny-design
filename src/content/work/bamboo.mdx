@@ -26,10 +26,15 @@ related: [calastone, juicyway]
 import Section from '../../components/case/Section.astro';
 import Media from '../../components/case/Media.astro';
 import YouTube from '../../components/case/YouTube.astro';
+import Carousel from '../../components/case/Carousel.astro';
 import notes from './images/bamboo/notes.webp';
 import problem from './images/bamboo/problem.webp';
 import market from './images/bamboo/market.webp';
 import shipped from './images/bamboo/shipped.webp';
+import role from './images/bamboo/role.webp';
+import redesign from './images/bamboo/redesign.webp';
+import trade from './images/bamboo/trade.webp';
+import portfolio from './images/bamboo/portfolio.webp';
 
 <Section title="the project">
 
@@ -46,6 +51,8 @@ I designed the whole product from January 2020 through August 2021 as the sole p
 </Section>
 
 <Section title="my role">
+
+<Media src={role} alt={"Four Bamboo app screens: the portfolio home with its value and a Deposit Money button, holdings, top movers and stock of the month, and recent news."} rounded />
 
 I came in at the beginning. The first two or three weeks were tight collaborative work with the founding team, establishing the shape of the app and testing ideas against what engineering could build under time pressure.
 
@@ -87,6 +94,8 @@ A year in, the problem had shifted. The app was live, users were on it, feedback
 
 ### designing for the nigerian market
 
+<Carousel slides={[{ src: trade, alt: "Buying Alphabet shares in four steps: choosing the amount and a naira or dollar wallet, reviewing the order, sending it, and the order placed confirmation.", caption: "new trade screen comprehensible for all users" }, { src: portfolio, alt: "The portfolio home next to the portfolio breakdown: total value, a chart over time, cost basis, portfolio return and current value.", caption: "portfolio breakdown accessible for everyone" }]} />
+
 The concrete constraints shaped a lot of decisions. A large share of users were on low-end Android phones, which affected everything from screen density to how much a chart could carry.
 
 The onboarding flow had to carry the whole KYC process, meaning identity verification, bank linking, and source-of-funds, for users often unfamiliar with any of it.
@@ -94,6 +103,8 @@ The onboarding flow had to carry the whole KYC process, meaning identity verific
 So I redesigned onboarding with KYC as its spine rather than an obstacle laid on top. The data visualization had a similar problem. Nearly 75% of Bamboo's users had never traded stocks before. That number is the whole brief. A farmer checking a US-stock portfolio had to read the same chart a corporate analyst does, so simpler was almost always the right call, and every financial term on the stock page carries an inline definition behind a tap rather than assuming the reader already knows what a PE ratio is. By the Series A the platform had passed 300,000 accounts.
 
 ### the redesign
+
+<Media src={redesign} alt={"Four screens of the Bamboo stock page for Alphabet: price, chart and Buy button, compare stocks and price alerts with an opinion summary, featured themes, and company details."} rounded />
 
 <YouTube id="2lfqeUKBlw0" title="Refer & Win with Bamboo" />
 
