@@ -26,7 +26,7 @@ export function initPeek() {
       from = sessionStorage.getItem('came-from') || 'neutral';
     } catch {}
     const colours = sheenColours[from] ?? sheenColours.neutral;
-    document.body.style.setProperty('--peek-bg', `rgb(${colours.bg.map((c) => Math.round(c * 255)).join(' ')})`);
+    document.body.style.setProperty('--peek-bg', `rgb(${colours.base.map((c) => Math.round(c * 255)).join(' ')})`);
     const stop = startSheen(canvas, colours);
     signal.addEventListener('abort', stop);
   }

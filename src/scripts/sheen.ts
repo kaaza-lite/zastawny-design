@@ -1,26 +1,27 @@
-// Petrol sheen: the background of the experimental page.
-// A thin film of oil on dark water: broad, slow bands of iridescent colour, mostly dark,
-// tinted toward the colours of the page you came from. It flows slowly by itself, and
-// around the pointer it brightens and swirls a little. Drawn with WebGL at half
-// resolution (it's soft anyway). With reduced motion it's drawn once and stays still.
+// Liquid colour: the background of the experimental page.
+// Soft fields of saturated colour that glide into each other like dye in water, with dark
+// pockets and a fine film grain, in the colours of the page you came from. It flows
+// slowly by itself; around the pointer it brightens and swirls a little. Drawn with WebGL
+// at half resolution (it's soft anyway). With reduced motion it's drawn once and stays still.
 
-export type SheenColours = { bg: [number, number, number]; tint: [number, number, number] };
+type RGB = [number, number, number];
+export type SheenColours = { base: RGB; deep: RGB; bright: RGB; accent: RGB };
 
 const hex = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255) as [number, number, number];
 
-/** Background and tint for each page the visitor can arrive from. */
+/** Colours for each page the visitor can arrive from: near-black base, a deep colour, a bright one and an accent. */
 export const sheenColours: Record<string, SheenColours> = {
-  neutral: { bg: hex('#0f0f11'), tint: hex('#d8d8e0') },
-  calastone: { bg: hex('#0c0d17'), tint: hex('#8ab0fe') },
-  bamboo: { bg: hex('#0c120e'), tint: hex('#6bc891') },
-  juicyway: { bg: hex('#120c11'), tint: hex('#e193cf') },
+  neutral: { base: hex('#03040a'), deep: hex('#0b0f8c'), bright: hex('#00b6bd'), accent: hex('#c4479c') },
+  calastone: { base: hex('#02030c'), deep: hex('#0a1fa0'), bright: hex('#2f8bff'), accent: hex('#19c8e0') },
+  bamboo: { base: hex('#020805'), deep: hex('#06603a'), bright: hex('#1fd08a'), accent: hex('#12b3c0') },
+  juicyway: { base: hex('#08030a'), deep: hex('#4a0c78'), bright: hex('#e0459f'), accent: hex('#7c4dff') },
 };
 
 const VERTEX = `
 attribute vec2 a;
 void main() { gl_Position = vec4(a, 0.0, 1.0); }`;
 
-// Simplex noise (Ashima Arts, MIT), domain-warped, mapped to thin-film colours
+// Simplex noise (Ashima Arts, MIT), domain-warped into slow, watery colour fields
 const FRAGMENT = `
 precision highp float;
 uniform vec2 u_size;    // canvas size in CSS pixels
@@ -28,8 +29,10 @@ uniform float u_scale;  // canvas pixels per CSS pixel
 uniform float u_time;
 uniform vec2 u_mouse;   // CSS pixels, top-left origin
 uniform float u_stir;   // 0..1, how much the pointer has been moving lately
-uniform vec3 u_bg;
-uniform vec3 u_tint;
+uniform vec3 u_base;
+uniform vec3 u_deep;
+uniform vec3 u_bright;
+uniform vec3 u_accent;
 
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
 vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -57,7 +60,7 @@ float snoise(vec2 v) {
 }
 float fbm(vec2 p) {
   float s = 0.0, a = 0.5;
-  for (int i = 0; i < 3; i++) { s += a * snoise(p); p *= 2.0; a *= 0.5; }
+  for (int i = 0; i < 2; i++) { s += a * snoise(p); p *= 2.0; a *= 0.5; }
   return s * 0.7;
 }
 
@@ -65,25 +68,28 @@ void main() {
   vec2 px = vec2(gl_FragCoord.x, u_size.y * u_scale - gl_FragCoord.y) / u_scale; // CSS px, top-left origin
   vec2 toMouse = px - u_mouse;
   float d = length(toMouse);
-  float glow = pow(max(0.0, 1.0 - d / 900.0), 2.0);
+  float glow = pow(max(0.0, 1.0 - d / 750.0), 2.0);
 
-  // the film swirls a little around a moving pointer
-  float swirl = u_stir * 0.9 * exp(-d * d / 60000.0);
+  // the liquid swirls a little around a moving pointer
+  float swirl = u_stir * 1.1 * exp(-d * d / 70000.0);
   float c = cos(swirl), s = sin(swirl);
   vec2 q0 = u_mouse + mat2(c, -s, s, c) * toMouse;
 
-  vec2 p = q0 / 1150.0 + vec2(u_time * 0.010, u_time * 0.005);
-  float qx = fbm(p + vec2(0.0, u_time * 0.004));
-  float qy = fbm(p + vec2(5.2, 1.3));
-  float n = fbm(p + 2.2 * vec2(qx, qy));
+  // slow, smooth domain warping: broad watery shapes, no fine detail
+  vec2 p = q0 / 2200.0;
+  float t = u_time * 0.035;
+  vec2 q = vec2(fbm(p + vec2(0.0, t)), fbm(p + vec2(5.2, 1.3) - t * 0.7));
+  vec2 r = vec2(fbm(p + 1.0 * q + vec2(1.7, 9.2) + t * 0.4), fbm(p + 1.0 * q + vec2(8.3, 2.8)));
+  float f = fbm(p + 1.0 * r);
 
-  float t = n * 2.1 + qx * 0.9 + px.y / 2600.0;                  // film thickness: broad, slow bands
-  vec3 film = 0.5 + 0.5 * cos(6.2831 * (t + vec3(0.0, 0.33, 0.67)));
-  float sheen = pow(clamp((n + 0.3) * 1.2, 0.0, 1.0), 1.5);       // mostly dark, light on the ridges
-  float k = (0.15 + 0.3 * glow + 0.1 * u_stir * glow) * sheen;
-  vec3 col = u_bg + (film * 0.55 + u_tint * 0.45) * k;
+  vec3 col = u_base;
+  col = mix(col, u_deep, smoothstep(-0.35, 0.45, f));                     // deep colour in broad pools
+  col = mix(col, u_bright, smoothstep(0.0, 0.42, r.x));                     // a vivid current flows through
+  col = mix(col, u_accent, smoothstep(0.2, 0.8, q.y) * 0.4);              // and a hint of the accent
+  col *= smoothstep(-0.35, 0.45, fbm(p * 0.7 - r * 0.4 + 3.1));           // wide, soft dark areas between them
+  col *= 0.95 + 0.3 * glow + 0.15 * u_stir * glow;                       // brighter near the pointer
   float grain = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
-  gl_FragColor = vec4(col + grain * 0.012, 1.0);
+  gl_FragColor = vec4(col + grain * 0.05, 1.0);
 }`;
 
 /** Starts the sheen on a canvas. Returns a function that stops it. */
@@ -108,8 +114,10 @@ export function startSheen(canvas: HTMLCanvasElement, colours: SheenColours): ()
   gl.enableVertexAttribArray(loc);
   gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
   const u = (name: string) => gl.getUniformLocation(prog, name);
-  gl.uniform3fv(u('u_bg'), colours.bg);
-  gl.uniform3fv(u('u_tint'), colours.tint);
+  gl.uniform3fv(u('u_base'), colours.base);
+  gl.uniform3fv(u('u_deep'), colours.deep);
+  gl.uniform3fv(u('u_bright'), colours.bright);
+  gl.uniform3fv(u('u_accent'), colours.accent);
 
   const SCALE = 0.5; // half resolution
   const size = () => {
