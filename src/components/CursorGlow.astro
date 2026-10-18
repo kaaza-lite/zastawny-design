@@ -1,168 +1,158 @@
 ---
-// A datamosh glow under the mouse. The page is covered by a grid of square blocks;
-// blocks near the cursor light up in the page's colour (--focus-ring), and when the
-// mouse moves, the lit blocks get dragged along with it and leave a smeared trail
-// that breaks up as it fades. Brightness comes in a few hard steps, like a video
-// codec running out of bits, and it updates at a stuttering 24fps.
+// A faint datamosh of the page itself, under the mouse (or a finger while swiping).
 //
-// It sits above the page background and the case study hero image, but under the
-// content (main has z-index 2). Blocks right behind text stay at --glow-strength, the
-// most that keeps grey text at 4.5:1; everywhere else the glow can go up to STRONG.
-// Only while the mouse or a finger is moving: it fades out when they rest.
-// On a phone it follows the finger while swiping; scrolling drags the lit blocks along
-// with the page (momentum included), so the background moves with the swipe.
+// When the pointer starts moving, the visible page is redrawn into a picture
+// (src/scripts/snapshot.ts) and recoloured into the page's colours, like the case
+// study cards. Around the pointer, blocks of that picture are dropped in, dragged along
+// by the pointer and the same swirling motion as the other datamosh effects, and they
+// catch up and disappear when it rests: the same streaks and torn blocks as on the
+// cards and heroes, just much quieter.
+//
+// It sits under the page content (main has z-index 2) at low opacity, so it only shows
+// in the gaps: margins, between paragraphs, over the hero image. Blocks right behind
+// text are always kept clear, so text contrast never changes.
 // Skipped with reduced motion.
 ---
 
 <canvas class="cursor-glow" aria-hidden="true"></canvas>
 
 <script>
+  import { Mosh, waves, gradientMap, MOSH_FPS } from '../scripts/datamosh';
+  import { snapshot } from '../scripts/snapshot';
+  import { palettes, type PaletteName } from '../data/palettes';
+
   const canvas = document.querySelector<HTMLCanvasElement>('.cursor-glow');
-  const mouse = window.matchMedia('(hover: hover) and (pointer: fine)');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  const BLOCK = 14;    // block size in CSS pixels
-  const RADIUS = 9;    // glow radius, in blocks
-  const LEVELS = 4;    // brightness steps
-  const FADE = 0.86;   // how much of the glow is left each frame
-  const FPS = 24;
-  const STILL = 100;   // ms without movement before the cursor stops lighting blocks
-  const STRONG = 0.1;  // brightest glow away from text (share of the page colour)
+  const BLOCK = 10;     // block size in CSS pixels
+  const REACH = 150;    // px around the pointer where the page gets disturbed
+  const OPACITY = 0.3;  // how strongly it shows (it's meant to stay in the background)
+  const STILL = 100;    // ms without movement before the pointer stops disturbing the page
+  const SETTLE = 1200;  // ms after the last movement before it's all cleared and stopped
 
   if (canvas && !reduce.matches) {
-    const ctx = canvas.getContext('2d')!;
+    canvas.style.opacity = String(OPACITY);
+    let mosh: Mosh | null = null;
+    let source: HTMLCanvasElement | null = null; // the page, recoloured
+    let behindText = new Uint8Array(0);           // 1 where a block is behind text
     let cols = 0;
-    let rows = 0;
-    let field = new Float32Array(0); // brightness of each block, 0 to 1
-    let nearText = new Uint8Array(0);  // 1 where a block is behind text
-    let next = new Float32Array(0);
-    let image: ImageData;
-    let colour = [255, 255, 255];
-    let strength = 0.03;
-
-    // Pointer in blocks, and how far it moved since the last frame
-    const pointer = { x: -100, y: -100, vx: 0, vy: 0, inside: false };
+    let wave = waves();
     let raf = 0;
-    let last = 0;
+    let lastFrame = 0;
     let movedAt = -Infinity;
+    // The area that may have blocks in it (canvas pixels), so the rest is skipped
+    let area = { x0: 0, y0: 0, x1: 0, y1: 0, empty: true };
+    const pointer = { x: 0, y: 0, vx: 0, vy: 0, inside: false };
 
     const setup = () => {
-      cols = Math.max(1, Math.ceil(window.innerWidth / BLOCK)); // at least 1, even in a hidden tab
-      rows = Math.max(1, Math.ceil(window.innerHeight / BLOCK));
-      canvas.width = cols;
-      canvas.height = rows;
-      field = new Float32Array(cols * rows);
-      next = new Float32Array(cols * rows);
-      image = ctx.createImageData(cols, rows);
-      nearText = new Uint8Array(cols * rows);
-      findText();
-      const style = getComputedStyle(document.body);
-      const hex = style.getPropertyValue('--focus-ring').trim();
-      colour = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
-      strength = parseFloat(style.getPropertyValue('--glow-strength')) / 100 || 0.03;
+      canvas.width = Math.max(1, window.innerWidth);
+      canvas.height = Math.max(1, window.innerHeight);
+      mosh = new Mosh(canvas, BLOCK);
+      source = null;
+      area.empty = true;
     };
 
-    // Which blocks have text in front of them (redone on scroll and resize)
+    // Which blocks have text in front of them
     const findText = () => {
-      nearText.fill(0);
+      cols = Math.ceil(canvas.width / BLOCK);
+      const rows = Math.ceil(canvas.height / BLOCK);
+      behindText = new Uint8Array(cols * rows);
       const range = document.createRange();
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
       for (let node = walker.nextNode(); node; node = walker.nextNode()) {
         const parent = node.parentElement;
-        if (!parent || !node.textContent?.trim() || parent.closest('script, style, .site-nav')) continue;
-        const box = parent.getBoundingClientRect();
-        if (box.bottom < 0 || box.top > window.innerHeight || box.width === 0) continue;
+        if (!parent || !node.textContent?.trim() || parent.closest('script, style, .site-nav, .song-player')) continue;
+        const b = parent.getBoundingClientRect();
+        if (b.bottom < 0 || b.top > window.innerHeight || b.width <= 1) continue;
         range.selectNodeContents(node);
         for (const r of range.getClientRects()) {
-          const c0 = Math.max(0, Math.floor((r.left - 2) / BLOCK));
-          const c1 = Math.min(cols - 1, Math.floor((r.right + 2) / BLOCK));
-          const r0 = Math.max(0, Math.floor((r.top - 2) / BLOCK));
-          const r1 = Math.min(rows - 1, Math.floor((r.bottom + 2) / BLOCK));
-          for (let y = r0; y <= r1; y++) nearText.fill(1, y * cols + c0, y * cols + c1 + 1);
+          const c0 = Math.max(0, Math.floor((r.left - 4) / BLOCK));
+          const c1 = Math.min(cols - 1, Math.floor((r.right + 4) / BLOCK));
+          const r0 = Math.max(0, Math.floor((r.top - 4) / BLOCK));
+          const r1 = Math.min(rows - 1, Math.floor((r.bottom + 4) / BLOCK));
+          for (let y = r0; y <= r1; y++) behindText.fill(1, y * cols + c0, y * cols + c1 + 1);
         }
       }
     };
-    let textQueued = false;
-    let lastScroll = window.scrollY;
-    let scrolled = 0; // blocks the page has scrolled since the last frame
-    window.addEventListener('scroll', () => {
-      if (raf) scrolled += (window.scrollY - lastScroll) / BLOCK;
-      lastScroll = window.scrollY;
-      if (textQueued) return;
-      textQueued = true;
-      requestAnimationFrame(() => {
-        textQueued = false;
+
+    // The page as a picture in its colours (made when movement starts, redone after scrolling)
+    const ensureSource = () => {
+      if (source) return true;
+      try {
+        const theme = document.body.dataset.theme as PaletteName | undefined;
+        source = gradientMap(snapshot(1), palettes[theme ?? 'neutral'] ?? palettes.neutral);
         findText();
-      });
-    }, { passive: true });
+        return true;
+      } catch {
+        return false;
+      }
+    };
 
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
-      if (now - last < 1000 / FPS) return;
-      last = now;
+      if (now - lastFrame < 1000 / MOSH_FPS || !mosh || !source) return;
+      lastFrame = now;
 
-      // Smear: every block takes the brightness of the block it was dragged from,
-      // following the pointer and moving with the page when it scrolls
-      const scroll = Math.trunc(scrolled);
-      scrolled -= scroll;
-      const dx = Math.round(pointer.vx);
-      const dy = Math.round(pointer.vy) - scroll;
-      let alive = false;
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          // some blocks stick instead of moving, so the trail tears
-          const stuck = Math.random() < 0.25;
-          const sc = stuck ? c : Math.min(cols - 1, Math.max(0, c - dx));
-          const sr = stuck ? r : Math.min(rows - 1, Math.max(0, r - dy));
-          next[r * cols + c] = field[sr * cols + sc] * FADE;
-        }
-      }
-      // Light up the blocks around the cursor, with a ragged edge (only while it moves)
       const moving = pointer.inside && now - movedAt < STILL;
+      const px = pointer.x;
+      const py = pointer.y;
       if (moving) {
-        const x0 = Math.max(0, Math.floor(pointer.x - RADIUS));
-        const x1 = Math.min(cols - 1, Math.ceil(pointer.x + RADIUS));
-        const y0 = Math.max(0, Math.floor(pointer.y - RADIUS));
-        const y1 = Math.min(rows - 1, Math.ceil(pointer.y + RADIUS));
-        for (let r = y0; r <= y1; r++) {
-          for (let c = x0; c <= x1; c++) {
-            const d = Math.hypot(c + 0.5 - pointer.x, r + 0.5 - pointer.y) / RADIUS;
-            const light = Math.max(0, 1 - d - Math.random() * 0.25);
-            const i = r * cols + c;
-            next[i] = Math.max(next[i], light);
+        // the area in play grows to include the pointer's surroundings
+        const g = REACH * 1.6;
+        area = area.empty
+          ? { x0: px - g, y0: py - g, x1: px + g, y1: py + g, empty: false }
+          : { x0: Math.min(area.x0, px - g), y0: Math.min(area.y0, py - g), x1: Math.max(area.x1, px + g), y1: Math.max(area.y1, py + g), empty: false };
+      }
+      const swirl = Math.min(14, Math.hypot(pointer.vx, pointer.vy) * 0.6);
+      const catchUp = moving ? 0.03 : 0.25; // resting: the page comes back quickly
+
+      // Close to a moving pointer, blocks of the page drop in, taken from a little way back
+      // along the movement, so nearby text and edges smear into the gaps
+      if (moving) {
+        const ctx = canvas.getContext('2d')!;
+        const x0 = Math.max(0, Math.floor((px - REACH) / BLOCK)) * BLOCK;
+        const y0 = Math.max(0, Math.floor((py - REACH) / BLOCK)) * BLOCK;
+        for (let y = y0; y < Math.min(canvas.height, py + REACH); y += BLOCK) {
+          for (let x = x0; x < Math.min(canvas.width, px + REACH); x += BLOCK) {
+            if (Math.hypot(x - px, y - py) > REACH || Math.random() > 0.3) continue;
+            if (behindText[Math.floor(y / BLOCK) * cols + Math.floor(x / BLOCK)]) continue;
+            const [dx, dy, s] = wave(x, y);
+            const sx = Math.min(canvas.width - BLOCK, Math.max(0, Math.round(x - pointer.vx * 2 - dx * s * (swirl + 6))));
+            const sy = Math.min(canvas.height - BLOCK, Math.max(0, Math.round(y - pointer.vy * 2 - dy * s * (swirl + 6))));
+            ctx.clearRect(x, y, BLOCK, BLOCK);
+            ctx.drawImage(source, sx, sy, BLOCK, BLOCK, x, y, BLOCK, BLOCK);
           }
         }
       }
-      [field, next] = [next, field];
 
-      // Draw: brightness in hard steps, at most --glow-strength of the page colour
-      const d = image.data;
-      for (let i = 0; i < field.length; i++) {
-        const level = Math.floor(field[i] * LEVELS) / LEVELS;
-        if (level > 0) alive = true;
-        d[i * 4] = colour[0];
-        d[i * 4 + 1] = colour[1];
-        d[i * 4 + 2] = colour[2];
-        d[i * 4 + 3] = Math.round(level * (nearText[i] ? strength : STRONG) * 255);
-      }
-      ctx.putImageData(image, 0, 0);
+      mosh.step(
+        (x, y) => {
+          // dragged the way the pointer moves, plus the swirling motion field
+          const near = Math.max(0, 1 - Math.hypot(x - px, y - py) / (REACH * 1.6)) ** 1.5;
+          const [dx, dy, s] = wave(x, y);
+          return [pointer.vx * near * 1.4 + dx * s * swirl, pointer.vy * near * 1.4 + dy * s * swirl];
+        },
+        (x, y) => {
+          if (area.empty || x < area.x0 || x > area.x1 || y < area.y0 || y > area.y1) return 'keep';
+          if (behindText[Math.floor(y / BLOCK) * cols + Math.floor(x / BLOCK)]) return 'clear';
+          if (Math.random() < catchUp) return 'clear';
+          return Math.random() < 0.88 ? 'move' : 'keep';
+        },
+      );
 
       pointer.vx *= 0.5;
       pointer.vy *= 0.5;
-      if (!alive && !moving) {
+
+      // Resting long enough: clear everything and stop until the next movement
+      if (!moving && now - movedAt > SETTLE) {
+        canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+        area.empty = true;
         cancelAnimationFrame(raf);
         raf = 0;
       }
     };
 
-    setup();
-    window.addEventListener('resize', setup);
-    document.addEventListener('astro:after-swap', setup); // the next page's colour and text
-
-    document.addEventListener('pointermove', (e) => {
-      if (e.pointerType !== 'mouse' || !mouse.matches) return;
-      const x = e.clientX / BLOCK;
-      const y = e.clientY / BLOCK;
+    const moveTo = (x: number, y: number) => {
       if (pointer.inside) {
         pointer.vx += x - pointer.x;
         pointer.vy += y - pointer.y;
@@ -171,49 +161,56 @@
       pointer.y = y;
       pointer.inside = true;
       movedAt = performance.now();
-      if (!raf) raf = requestAnimationFrame(frame);
+      // A fresh picture of the page when there isn't one (first movement, after scrolling or a page change)
+      if (!source && !ensureSource()) return;
+      if (!raf) {
+        wave = waves(); // a new motion field for each new movement
+        raf = requestAnimationFrame(frame);
+      }
+    };
+
+    setup();
+    window.addEventListener('resize', setup);
+    // After scrolling or a page change the picture is out of date: start fresh
+    const reset = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      source = null;
+      area.empty = true;
+      canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+    };
+    window.addEventListener('scroll', reset, { passive: true });
+    document.addEventListener('astro:after-swap', reset);
+
+    document.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'mouse') moveTo(e.clientX, e.clientY);
     });
     document.documentElement.addEventListener('pointerleave', () => {
       pointer.inside = false;
     });
-
-    // Touch: follow the finger while it swipes (the page scrolling does the dragging)
-    const touch = (e: TouchEvent, moved: boolean) => {
+    // Touch: follow the finger while it swipes
+    document.addEventListener('touchmove', (e) => {
       const t = e.touches[0];
-      if (!t) return;
-      pointer.x = t.clientX / BLOCK;
-      pointer.y = t.clientY / BLOCK;
-      pointer.inside = true;
-      if (!moved) return;
-      movedAt = performance.now();
-      if (!raf) {
-        lastScroll = window.scrollY;
-        raf = requestAnimationFrame(frame);
-      }
-    };
-    document.addEventListener('touchstart', (e) => touch(e, false), { passive: true });
-    document.addEventListener('touchmove', (e) => touch(e, true), { passive: true });
-    const lift = () => {
+      if (t) moveTo(t.clientX, t.clientY);
+    }, { passive: true });
+    document.addEventListener('touchend', () => {
       pointer.inside = false;
-    };
-    document.addEventListener('touchend', lift, { passive: true });
-    document.addEventListener('touchcancel', lift, { passive: true });
+    }, { passive: true });
   }
 </script>
 
 <style>
-  /* One canvas pixel per block, stretched to the window with hard pixel edges.
-     Above the background and the case study hero image (z-index 1), under the content. */
+  /* Full window, above the background and the case study hero image (z-index 1),
+     under the content */
   .cursor-glow {
     position: fixed;
     inset: 0;
     z-index: 1;
     width: 100%;
     height: 100%;
-    image-rendering: pixelated;
     pointer-events: none;
   }
-  /* The page content sits above the glow */
+  /* The page content sits above it */
   :global(body > main) {
     position: relative;
     z-index: 2;

@@ -183,3 +183,67 @@ a {
     color: var(--color-accent-2);
   }
 }
+
+/*
+  Playful pills (src/scripts/pills.ts): put data-pill-group on a list and data-pill on
+  each item that holds a <Tag>. They glow under the cursor and can be grabbed and thrown.
+  --pill-glow sets the glow colour.
+*/
+[data-pill-group] {
+  --pill-glow: rgb(228 228 228 / 0.22);
+}
+.status-pill {
+  --pill-glow: rgb(80 200 120 / 0.3); /* "open to work": green, like its dot */
+}
+[data-pill] {
+  position: relative;
+  display: inline-flex;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  will-change: transform;
+}
+[data-pill].is-held {
+  z-index: 3;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  [data-pill] {
+    cursor: grab;
+  }
+  [data-pill].is-held {
+    cursor: grabbing;
+  }
+}
+/* A soft light inside the pill that follows the cursor */
+[data-pill] .tag {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+[data-pill] .tag::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(64px circle at var(--mx, 50%) var(--my, 50%), var(--pill-glow), transparent 70%);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  [data-pill]:hover .tag::before {
+    opacity: 1;
+  }
+}
+[data-pill].is-held .tag::before {
+  opacity: 1;
+}
+/* The trail canvas: fixed, under the page content */
+.pill-trail {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}

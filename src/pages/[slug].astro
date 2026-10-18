@@ -36,10 +36,10 @@ const heroVars = [
       <p class="case-meta">{d.meta}</p>
     </header>
 
-    <!-- Project details -->
-    <dl class="details">
+    <!-- Project details: a spec sheet, one column per detail -->
+    <dl class="details" style={`--count: ${d.details.length}`}>
       {d.details.map((item) => (
-        <div class="detail">
+        <div class="detail" data-label={item.label}>
           <dt class="detail-label">{item.label}</dt>
           <dd>
             <ul class="detail-lines">
@@ -80,6 +80,14 @@ const heroVars = [
   <Lightbox />
 </BaseLayout>
 
+<script>
+  import { initHeroMosh } from '../scripts/heroMosh';
+  // Datamosh on the hero image, like the case study cards (see src/scripts/heroMosh.ts)
+  document.addEventListener('astro:page-load', () => {
+    if (document.querySelector('.hero-image')) initHeroMosh();
+  });
+</script>
+
 <style>
   /* ---------- Hero image ---------- */
   .hero-image {
@@ -90,6 +98,10 @@ const heroVars = [
     height: 668px;
     overflow: hidden;
     pointer-events: none;
+    /* The whole hero (photo, datamosh and fade) turns transparent towards its bottom edge,
+       so it melts into the page instead of ending in a line */
+    -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent);
+    mask-image: linear-gradient(to bottom, #000 50%, transparent);
   }
   .hero-image :global(img) {
     width: 100%;
@@ -106,10 +118,23 @@ const heroVars = [
     max-width: none;
     transform: translateX(-50%);
   }
+  /* Datamosh layer over the photo while the mouse moves over it (src/scripts/heroMosh.ts) */
+  .hero-image :global(.hero-mosh) {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+  }
+  .hero-image :global(.hero-mosh.is-on) {
+    opacity: 1;
+  }
   .hero-image::after {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: 2; /* the fade stays on top of the datamosh */
     background: linear-gradient(to top, var(--color-bg), var(--theme-hero-fade));
   }
 
@@ -146,26 +171,24 @@ const heroVars = [
     color: var(--color-text);
   }
 
-  /* ---------- Details cards ---------- */
+  /* ---------- Details: a spec sheet ---------- */
+  /* Desktop: one row, a column per detail, thin dividers between them, no boxes */
   .details {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    width: min(968px, calc(100% - 2 * var(--gutter)));
+    display: grid;
+    grid-template-columns: repeat(var(--count), minmax(0, 1fr));
+    width: min(1160px, calc(100% - 2 * var(--gutter)));
     margin: var(--hero-gap) 0 0;
     padding: 0;
-    list-style: none;
   }
   .detail {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    flex: 0 0 calc((100% - 24px) / 3);
-    padding: 16px;
-    background: var(--theme-card);
-    border: 1px solid var(--theme-surface-border);
-    border-radius: var(--radius-card);
+    padding: 4px 20px;
+    border-left: 1px dashed var(--color-divider); /* same as the section dividers below */
+  }
+  .detail:first-child {
+    border-left: 0;
   }
   .detail-label {
     font-family: var(--font-display);
@@ -178,14 +201,15 @@ const heroVars = [
   .detail dd {
     margin: 0;
   }
+  /* Each line on its own row, no bullets */
   .detail-lines {
     display: flex;
     flex-direction: column;
     gap: 4px;
     margin: 0;
-    padding-left: 1.1em; /* bullets, as in Figma */
-    list-style: disc;
-    color: var(--color-text-muted);
+    padding: 0;
+    list-style: none;
+    color: var(--color-text); /* lighter than body text: these lines sit over the hero image */
   }
 
   /* ---------- Content ---------- */
@@ -318,8 +342,20 @@ const heroVars = [
       --hero-gap: 110px;
       --section-gap: 60px;
     }
+    /* Two columns with dashed dividers, "my role" across the full width */
     .details {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-auto-flow: row dense; /* a later detail fills the gap next to a lone one */
+      column-gap: 24px;
       width: min(690px, calc(100% - 2 * var(--gutter)));
+    }
+    .detail {
+      padding: 14px 0;
+      border-left: 0;
+      border-top: 1px dashed var(--color-divider);
+    }
+    .detail[data-label='my role'] {
+      grid-column: 1 / -1;
     }
   }
 
@@ -338,9 +374,6 @@ const heroVars = [
     }
     .details {
       width: min(496px, calc(100% - 2 * var(--content-gutter)));
-    }
-    .detail {
-      flex-basis: 100%;
     }
     .others {
       width: min(496px, calc(100% - 2 * var(--content-gutter)));
