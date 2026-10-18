@@ -1,0 +1,371 @@
+---
+// The experimental page, reached through the keyhole in the nav. No visible title:
+// just a moving 3D grid of projects over a petrol-sheen background.
+// Clicking a tile opens a glass modal with that project's images, one per scroll.
+// All the content is placeholder for now (src/data/peek.ts).
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { projects } from '../data/peek';
+
+// Where each tile sits on the plane: x and y (share of the plane), depth (px), tilt (deg)
+const slots = [
+  { x: 0.06, y: 0.08, z: -160, rz: -4, ry: 14 },
+  { x: 0.38, y: 0.05, z: 60, rz: 3, ry: 0 },
+  { x: 0.64, y: 0.1, z: -260, rz: 5, ry: -18 },
+  { x: 0.08, y: 0.48, z: 120, rz: 2, ry: 10 },
+  { x: 0.44, y: 0.44, z: -40, rz: -5, ry: 0 },
+  { x: 0.7, y: 0.52, z: 90, rz: -6, ry: -12 },
+  { x: 0.22, y: 0.78, z: -120, rz: 4, ry: 0 },
+  { x: 0.58, y: 0.8, z: 40, rz: 2, ry: 6 },
+];
+---
+
+<BaseLayout title="Lorem ipsum | Tomasz Zastawny" description="Lorem ipsum dolor sit amet." page="peek">
+  <main class="peek">
+    <h1 class="visually-hidden">lorem ipsum</h1>
+    <canvas class="peek-sheen" aria-hidden="true"></canvas>
+
+    <div class="peek-stage">
+      <div class="peek-field">
+        {projects.map((p, i) => {
+          const s = slots[i % slots.length];
+          return (
+            <button
+              type="button"
+              class:list={['peek-tile', `peek-tile--${p.kind}`]}
+              data-project={i}
+              aria-label={`${p.title}, open project`}
+              style={`left:${s.x * 100}%;top:${s.y * 100}%;transform:translateZ(${s.z}px) rotateZ(${s.rz}deg) rotateY(${s.ry}deg)`}
+            >
+              <Image src={p.images[0].src} alt="" widths={[360, 720]} sizes="(max-width: 799.98px) 70vw, 34vw" loading={i < 4 ? 'eager' : 'lazy'} draggable="false" />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  </main>
+
+  <dialog class="peek-modal" aria-label="project" tabindex="-1">
+    <div class="peek-sheet" aria-hidden="true"></div>
+    <button type="button" class="icon-button tip-host peek-close" aria-label="close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+        <path d="M6 6l12 12M18 6 6 18"></path>
+      </svg>
+      <span class="tip tip--left" aria-hidden="true">close</span>
+    </button>
+
+    {projects.map((p, i) => (
+      <div class="peek-slides" data-project={i} hidden>
+        {p.images.map((img, n) => (
+          <section class="peek-slide">
+            <div class="peek-slide-image">
+              <Image src={img.src} alt="" widths={[640, 1280, 1920]} sizes="(max-width: 799.98px) 92vw, 58vw" loading="lazy" />
+            </div>
+            <div class="peek-slide-text">
+              {n === 0 ? <h2 class="peek-project">{p.title}</h2> : <p class="peek-project" aria-hidden="true">{p.title}</p>}
+              <h3>{img.title}</h3>
+              <p>{img.description}</p>
+            </div>
+          </section>
+        ))}
+      </div>
+    ))}
+
+    <div class="peek-indicator" aria-hidden="true">
+      <span class="peek-dots"></span>
+      <span class="peek-count"></span>
+    </div>
+  </dialog>
+</BaseLayout>
+
+<script>
+  import { initPeek } from '../scripts/peek';
+  document.addEventListener('astro:page-load', () => {
+    if (document.querySelector('.peek-stage')) initPeek();
+  });
+</script>
+
+<style>
+  /* No page scrolling here: the plane moves instead */
+  :global(body[data-page='peek']) {
+    overflow: hidden;
+    background: var(--peek-bg, #0f0f11);
+  }
+
+  .peek-sheen {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(120% 90% at 60% 40%, #17171c, var(--peek-bg, #0f0f11) 70%);
+  }
+
+  /* ---------- The moving grid ---------- */
+  .peek-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    perspective: 1200px;
+    overflow: hidden;
+    touch-action: none;
+    cursor: grab;
+  }
+  .peek-stage:active {
+    cursor: grabbing;
+  }
+  .peek-field {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  .peek-tile {
+    position: absolute;
+    padding: 0;
+    border: 0;
+    background: #000;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgb(0 0 0 / 0.6);
+    cursor: pointer;
+    transition: box-shadow var(--dur-base) var(--ease-out), filter var(--dur-base) var(--ease-out);
+  }
+  .peek-tile :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    pointer-events: none;
+    user-select: none;
+  }
+  .peek-tile--web {
+    width: clamp(300px, 34vw, 560px);
+    aspect-ratio: 3 / 2;
+  }
+  /* Mobile apps: a tall phone shape with a dark bezel */
+  .peek-tile--app {
+    width: clamp(170px, 15vw, 250px);
+    aspect-ratio: 9 / 19;
+    border: 6px solid #1b1b1b;
+    border-radius: 28px;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .peek-tile:hover {
+      filter: brightness(1.08);
+      box-shadow: 0 50px 100px rgb(0 0 0 / 0.7);
+    }
+  }
+  .peek-tile:focus-visible {
+    outline-offset: 6px;
+  }
+  /* While a project is open the grid dims, so the glass shows colour, not bright blobs */
+  .peek-stage {
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
+  .peek-stage.is-behind {
+    opacity: 0.3;
+  }
+
+  /* ---------- Modal: iOS-like glass over the sheen ---------- */
+  .peek-modal {
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-text);
+    overflow: hidden;
+  }
+  .peek-modal::backdrop {
+    background: rgb(0 0 0 / 0.15);
+  }
+  .peek-modal:focus {
+    outline: none;
+  }
+  .peek-sheet {
+    position: absolute;
+    inset: 24px;
+    border-radius: 28px;
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0.04)),
+      rgb(30 30 34 / 0.14);
+    border: 1px solid rgb(255 255 255 / 0.14);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.28),
+      inset 0 -1px 0 rgb(255 255 255 / 0.06),
+      0 40px 120px rgb(0 0 0 / 0.6);
+    -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.08);
+    backdrop-filter: blur(28px) saturate(200%) brightness(1.08);
+  }
+  .peek-modal[open] .peek-sheet {
+    animation: peek-in var(--dur-base) var(--ease-out);
+  }
+  @keyframes peek-in {
+    from {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+  }
+  .peek-close {
+    position: absolute;
+    top: 48px;
+    right: 48px;
+    z-index: 2;
+  }
+
+  /* One image per screen; scrolling snaps to the next one */
+  .peek-slides {
+    position: absolute;
+    inset: 24px;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .peek-slides::-webkit-scrollbar {
+    display: none;
+  }
+  .peek-slide {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 56px;
+    align-items: center;
+    height: 100%;
+    padding: 48px 104px 48px 48px;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+  .peek-slide-image :global(img) {
+    display: block;
+    width: 100%;
+    max-height: calc(100dvh - 150px);
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 30px 60px rgb(0 0 0 / 0.45);
+  }
+  .peek-slide-text {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 440px;
+  }
+  .peek-project {
+    margin-bottom: 24px;
+    font-family: var(--font-display);
+    font-size: 56px;
+    line-height: 1;
+    color: var(--color-accent-2);
+  }
+  .peek-slide-text h3 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    line-height: 1.1;
+    color: var(--color-accent-2);
+  }
+  .peek-slide-text p:not(.peek-project) {
+    color: var(--color-text);
+  }
+
+  /* Which image is on screen */
+  .peek-indicator {
+    position: absolute;
+    right: 56px;
+    top: 50%;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+  .peek-dots {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+  .peek-dots :global(i) {
+    width: 6px;
+    height: 6px;
+    border-radius: 9px;
+    background: rgb(255 255 255 / 0.25);
+    transition: width var(--dur-base) var(--ease-out), height var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
+  }
+  .peek-dots :global(i.is-on) {
+    height: 28px;
+    background: var(--color-accent-2);
+  }
+  .peek-count {
+    font-size: 12px;
+    color: var(--color-text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .peek-modal[open] .peek-sheet {
+      animation: none;
+    }
+  }
+
+  /* ---------- Phones: the modal stacks, image on top ---------- */
+  @media (max-width: 799.98px) {
+    .peek-tile--web {
+      width: 70vw;
+    }
+    .peek-tile--app {
+      width: 40vw;
+    }
+    .peek-sheet,
+    .peek-slides {
+      inset: 12px;
+      border-radius: 22px;
+    }
+    .peek-close {
+      top: 24px;
+      right: 24px;
+    }
+    .peek-slide {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      align-content: center;
+      gap: 24px;
+      padding: 80px 40px 40px 20px;
+    }
+    .peek-slide-image :global(img) {
+      max-height: 52dvh;
+    }
+    .peek-project {
+      margin-bottom: 8px;
+      font-size: 40px;
+    }
+    .peek-slide-text h3 {
+      font-size: 24px;
+    }
+    /* the indicator lies flat along the bottom */
+    .peek-indicator {
+      top: auto;
+      right: 50%;
+      bottom: 32px;
+      flex-direction: row;
+      gap: 16px;
+      transform: translateX(50%);
+    }
+    .peek-dots {
+      flex-direction: row;
+    }
+    .peek-dots :global(i.is-on) {
+      width: 28px;
+      height: 6px;
+    }
+    .peek-slide {
+      padding: 80px 24px 72px 20px;
+    }
+  }
+</style>

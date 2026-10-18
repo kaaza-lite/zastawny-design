@@ -164,6 +164,7 @@
     };
 
     const moveTo = (x: number, y: number) => {
+      if (document.body.dataset.page === 'peek') return; // the experimental page has its own background
       if (pointer.inside) {
         pointer.vx += x - pointer.x;
         pointer.vy += y - pointer.y;

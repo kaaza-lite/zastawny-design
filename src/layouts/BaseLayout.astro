@@ -11,9 +11,10 @@ interface Props {
   title: string;
   description?: string;
   theme?: 'calastone' | 'bamboo' | 'juicyway'; // case study tint
+  page?: string; // a name for pages with their own behaviour (the experimental page is 'peek')
 }
 
-const { title, description, theme } = Astro.props;
+const { title, description, theme, page } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
@@ -26,7 +27,15 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical} />
 
-    <!-- Page changes without reloading, so the music keeps playing (see src/scripts/navigation.ts) -->
+    <!-- Page changes without reloading, so the music keeps playing (see src/scripts/navigation.ts).
+         The browser's own View Transitions are switched off: the datamosh is the transition, and
+         Safari's View Transitions crash when the old page has 3D layers (the experimental page). -->
+    <script is:inline>
+      try {
+        delete Document.prototype.startViewTransition;
+      } catch (e) {}
+    </script>
+    <meta name="astro-view-transitions-fallback" content="swap" />
     <ClientRouter />
 
     <!-- Favicon: the "z" from the mobile nav, on the page background -->
@@ -39,7 +48,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <link rel="preload" href="/fonts/google-sans-flex-300-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/cormorant-garamond-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
   </head>
-  <body data-theme={theme}>
+  <body data-theme={theme} data-page={page}>
     <CursorGlow />
     <Nav />
     <slot />
