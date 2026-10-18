@@ -161,7 +161,9 @@
       pointer.y = y;
       pointer.inside = true;
       movedAt = performance.now();
-      if (!raf && ensureSource()) {
+      // A fresh picture of the page when there isn't one (first movement, after scrolling or a page change)
+      if (!source && !ensureSource()) return;
+      if (!raf) {
         wave = waves(); // a new motion field for each new movement
         raf = requestAnimationFrame(frame);
       }
@@ -171,6 +173,8 @@
     window.addEventListener('resize', setup);
     // After scrolling or a page change the picture is out of date: start fresh
     const reset = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
       source = null;
       area.empty = true;
       canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
