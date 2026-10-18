@@ -6,6 +6,7 @@ import Tag from '../components/Tag.astro';
 import Experience from '../components/Experience.astro';
 
 const howIWork = [
+  'AI-native',
   'close to engineering',
   'decisions that survive',
   'scoping out loud',
@@ -20,8 +21,8 @@ const techSkills = [
   'design systems',
   'multi-brand theming',
   'BPMN',
-  'complex & regulated domains',
   'WCAG 2.2 AA',
+  'complex & regulated domains',
   'accessibility testing',
 ];
 ---
@@ -74,6 +75,22 @@ const techSkills = [
 
       <section class="block">
         <h2>how i work</h2>
+        <div class="prose">
+          <p>
+            Most designers do one of three things well: they architect the system, they reason about the product, or
+            they understand how it all gets built. I work across all three, and that’s shaped how I think about where
+            this craft is going.
+          </p>
+          <p>
+            AI is getting fast at execution, but it’s still weak at judgment, deciding the right abstraction, naming
+            things so a whole team understands them, setting the constraints everything else grows from.
+          </p>
+          <p>
+            That’s the layer I care about. A well-structured system is the best possible scaffolding for these tools
+            anyway: clean foundations in, consistent product out. So I treat AI as something I set the direction for,
+            not something I hand the thinking to.
+          </p>
+        </div>
         <ul class="pills">
           {howIWork.map((item) => <li><Tag tone="work">{item}</Tag></li>)}
         </ul>
