@@ -87,7 +87,7 @@ const techSkills = [
 
       <section class="block">
         <h2>tech skills</h2>
-        <ul class="pills">
+        <ul class="pills skill-pills">
           {techSkills.map((item) => <li><Tag tone="skill">{item}</Tag></li>)}
         </ul>
       </section>
@@ -117,6 +117,14 @@ const techSkills = [
     </footer>
   </main>
 </BaseLayout>
+
+<script>
+  import { initPills } from '../scripts/pills';
+  // The pills can be dragged, thrown and glow under the cursor (see src/scripts/pills.ts)
+  document.addEventListener('astro:page-load', () => {
+    if (document.querySelector('.pills')) initPills();
+  });
+</script>
 
 <style>
   /* ---------- Page ---------- */
@@ -213,6 +221,65 @@ const techSkills = [
     margin: 0;
     padding: 0;
     list-style: none;
+    --pill-glow: rgb(196 160 235 / 0.4); /* how i work: purple */
+  }
+  .block:has(.skill-pills) .pills,
+  .skill-pills {
+    --pill-glow: rgb(120 214 182 / 0.35); /* tech skills: green */
+  }
+
+  /* Playful pills: grab, throw, glow (src/scripts/pills.ts) */
+  .pills > li {
+    position: relative;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    will-change: transform;
+  }
+  .pills > li.is-held {
+    z-index: 3;
+  }
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .pills > li {
+      cursor: grab;
+    }
+    .pills > li.is-held {
+      cursor: grabbing;
+    }
+  }
+  /* A soft light inside the pill that follows the cursor */
+  .pills :global(.tag) {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .pills :global(.tag)::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(64px circle at var(--mx, 50%) var(--my, 50%), var(--pill-glow), transparent 70%);
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-out);
+    pointer-events: none;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .pills > li:hover :global(.tag)::before {
+      opacity: 1;
+    }
+  }
+  .pills > li.is-held :global(.tag)::before {
+    opacity: 1;
+  }
+
+  /* The trail canvas: fixed, under the page content */
+  :global(.pill-trail) {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
   }
 
   /* Desktop: a 272px column for the job title, the text takes the rest */
