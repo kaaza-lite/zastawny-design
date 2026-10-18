@@ -17,9 +17,6 @@ const { Content } = await render(study);
 const d = study.data;
 const related = await Promise.all(d.related.map((slug) => getEntry('work', slug)));
 
-// Opening details: three layouts to compare for now, one per case study
-const detailsLayout = ({ bamboo: 'sheet', calastone: 'side', juicyway: 'cards' } as Record<string, string>)[study.id] ?? 'cards';
-
 const heroVars = [
   `--hero-pos-d: ${d.heroPosition.desktop}`,
   `--hero-pos-t: ${d.heroPosition.tablet}`,
@@ -39,38 +36,21 @@ const heroVars = [
       <p class="case-meta">{d.meta}</p>
     </header>
 
-    <!-- Project details (Calastone mock-up: inside the article, in a column beside "the project") -->
-    {detailsLayout !== 'side' && (
-    <dl class:list={['details', `details--${detailsLayout === 'side' ? 'rows details--side' : detailsLayout}`]} style={`--count: ${d.details.length}`}>
-        {d.details.map((item) => (
-          <div class="detail" data-label={item.label}>
-            <dt class="detail-label">{item.label}</dt>
-            <dd>
-              <ul class="detail-lines">
-                {item.lines.map((line) => <li>{line}</li>)}
-              </ul>
-            </dd>
-          </div>
-        ))}
-      </dl>
-    )}
+    <!-- Project details: a spec sheet, one column per detail -->
+    <dl class="details" style={`--count: ${d.details.length}`}>
+      {d.details.map((item) => (
+        <div class="detail" data-label={item.label}>
+          <dt class="detail-label">{item.label}</dt>
+          <dd>
+            <ul class="detail-lines">
+              {item.lines.map((line) => <li>{line}</li>)}
+            </ul>
+          </dd>
+        </div>
+      ))}
+    </dl>
 
-
-    <article class:list={['case-body', { 'case-body--side': detailsLayout === 'side' }]}>
-      {detailsLayout === 'side' && (
-      <dl class:list={['details', `details--${detailsLayout === 'side' ? 'rows details--side' : detailsLayout}`]} style={`--count: ${d.details.length}`}>
-          {d.details.map((item) => (
-            <div class="detail" data-label={item.label}>
-              <dt class="detail-label">{item.label}</dt>
-              <dd>
-                <ul class="detail-lines">
-                  {item.lines.map((line) => <li>{line}</li>)}
-                </ul>
-              </dd>
-            </div>
-          ))}
-        </dl>
-      )}
+    <article class="case-body">
       <Content />
     </article>
 
@@ -166,26 +146,24 @@ const heroVars = [
     color: var(--color-text);
   }
 
-  /* ---------- Details cards ---------- */
+  /* ---------- Details: a spec sheet ---------- */
+  /* Desktop: one row, a column per detail, thin dividers between them, no boxes */
   .details {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    width: min(968px, calc(100% - 2 * var(--gutter)));
+    display: grid;
+    grid-template-columns: repeat(var(--count), minmax(0, 1fr));
+    width: min(1160px, calc(100% - 2 * var(--gutter)));
     margin: var(--hero-gap) 0 0;
     padding: 0;
-    list-style: none;
   }
   .detail {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    flex: 0 0 calc((100% - 24px) / 3);
-    padding: 16px;
-    background: var(--theme-card);
-    border: 1px solid var(--theme-surface-border);
-    border-radius: var(--radius-card);
+    padding: 4px 20px;
+    border-left: 1px solid var(--color-divider);
+  }
+  .detail:first-child {
+    border-left: 0;
   }
   .detail-label {
     font-family: var(--font-display);
@@ -198,125 +176,15 @@ const heroVars = [
   .detail dd {
     margin: 0;
   }
+  /* Each line on its own row, no bullets */
   .detail-lines {
     display: flex;
     flex-direction: column;
     gap: 4px;
     margin: 0;
-    padding-left: 1.1em; /* bullets, as in Figma */
-    list-style: disc;
-    color: var(--color-text-muted);
-  }
-
-  /* ---------- Opening details: three layouts to compare ---------- */
-  /* No bullets in any of them: each line on its own row */
-  .details--sheet .detail-lines,
-  .details--rows .detail-lines,
-  .details--cards .detail-lines {
-    padding-left: 0;
+    padding: 0;
     list-style: none;
-  }
-
-  /* Spec sheet (Bamboo): no boxes, one row of columns with thin dividers */
-  .details--sheet {
-    display: grid;
-    grid-template-columns: repeat(var(--count), minmax(0, 1fr));
-    gap: 0;
-    width: min(1160px, calc(100% - 2 * var(--gutter)));
-  }
-  .details--sheet .detail {
-    padding: 4px 20px;
-    background: none;
-    border: 0;
-    border-left: 1px solid var(--color-divider);
-    border-radius: 0;
-  }
-  .details--sheet .detail:first-child {
-    border-left: 0;
-  }
-
-  /* Label and value rows (Calastone): a calm list in the text column */
-  .details--rows {
-    display: block;
-    width: min(var(--column), calc(100% - 2 * var(--content-gutter)));
-  }
-  .details--rows .detail {
-    display: grid;
-    grid-template-columns: 160px minmax(0, 1fr);
-    gap: 24px;
-    align-items: baseline;
-    padding: 14px 0;
-    background: none;
-    border: 0;
-    border-top: 1px dashed var(--color-divider);
-    border-radius: 0;
-  }
-  .details--rows .detail:last-child {
-    border-bottom: 1px dashed var(--color-divider);
-  }
-
-  /* Tighter cards (Juicyway): lighter boxes in one even row */
-  .details--cards {
-    display: grid;
-    grid-template-columns: repeat(var(--count), minmax(0, 1fr));
-    gap: 10px;
-    width: min(1160px, calc(100% - 2 * var(--gutter)));
-  }
-  .details--cards .detail {
-    gap: 6px;
-    padding: 12px 14px;
-  }
-
-  /* ---------- Calastone mock-up: details beside "the project", content left aligned ---------- */
-  .case-body.case-body--side {
-    margin-top: var(--hero-gap);
-  }
-  .case-body.case-body--side > .details {
-    margin: 0;
-    width: 100%;
-  }
-  @media (min-width: 1280px) {
-    .case-body.case-body--side {
-      display: grid;
-      grid-template-columns: 300px minmax(0, 1fr);
-      column-gap: 64px;
-      row-gap: 30px;
-      width: min(1160px, calc(100% - 2 * var(--gutter)));
-      --media: 100%; /* images as wide as their column */
-    }
-    .case-body.case-body--side > .details {
-      grid-column: 1;
-      grid-row: 1;
-      align-self: start;
-    }
-    .case-body.case-body--side > .details .detail {
-      grid-template-columns: 92px minmax(0, 1fr);
-      gap: 16px;
-    }
-    /* "the project" sits beside the details; everything after spans the full width */
-    .case-body.case-body--side > :global(.case-section:first-of-type) {
-      grid-column: 2;
-      grid-row: 1;
-      padding-top: 0;
-      border-top: 0;
-    }
-    .case-body.case-body--side > :global(.case-section ~ .case-section) {
-      grid-column: 1 / -1;
-    }
-    /* Text keeps a readable width, aligned left; images use the whole width */
-    .case-body.case-body--side :global(.case-prose > :not(.case-wide)) {
-      max-width: 760px;
-    }
-    .case-body.case-body--side :global(.case-wide) {
-      max-width: 100%;
-      margin-left: 0;
-    }
-  }
-  @media (max-width: 1279.98px) {
-    .case-body.case-body--side > :global(.case-section:first-of-type) {
-      padding-top: 30px;
-      border-top: 0;
-    }
+    color: var(--color-text); /* lighter than body text: these lines sit over the hero image */
   }
 
   /* ---------- Content ---------- */
@@ -449,29 +317,20 @@ const heroVars = [
       --hero-gap: 110px;
       --section-gap: 60px;
     }
+    /* Two columns with dashed dividers, "my role" across the full width */
     .details {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-auto-flow: row dense; /* a later detail fills the gap next to a lone one */
+      column-gap: 24px;
       width: min(690px, calc(100% - 2 * var(--gutter)));
     }
-    /* Spec sheet and cards: two columns, "my role" across the full width */
-    .details--sheet,
-    .details--cards {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-auto-flow: row dense; /* a later item fills the gap next to a lone one */
-    }
-    .details--sheet .detail[data-label='my role'],
-    .details--cards .detail[data-label='my role'] {
-      grid-column: 1 / -1;
-    }
-    .details--sheet {
-      column-gap: 24px;
-    }
-    .details--sheet .detail {
+    .detail {
       padding: 14px 0;
       border-left: 0;
       border-top: 1px dashed var(--color-divider);
     }
-    .details--cards {
-      gap: 8px;
+    .detail[data-label='my role'] {
+      grid-column: 1 / -1;
     }
   }
 
@@ -490,16 +349,6 @@ const heroVars = [
     }
     .details {
       width: min(496px, calc(100% - 2 * var(--content-gutter)));
-    }
-    .detail {
-      flex-basis: 100%;
-    }
-    .details--rows {
-      width: min(496px, calc(100% - 2 * var(--content-gutter)));
-    }
-    .details--rows .detail {
-      grid-template-columns: 104px minmax(0, 1fr);
-      gap: 16px;
     }
     .others {
       width: min(496px, calc(100% - 2 * var(--content-gutter)));
