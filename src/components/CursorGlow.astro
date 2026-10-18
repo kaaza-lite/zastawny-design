@@ -8,9 +8,11 @@
 // catch up and disappear when it rests: the same streaks and torn blocks as on the
 // cards and heroes, just much quieter.
 //
-// It sits under the page content (main has z-index 2) at low opacity, so it only shows
-// in the gaps: margins, between paragraphs, over the hero image. Blocks right behind
-// text are always kept clear, so text contrast never changes.
+// It sits under the page content (main has z-index 2), so it only shows in the gaps:
+// margins, between paragraphs, over the hero image. Blocks right behind text are always
+// kept clear, so text contrast never changes.
+// On a phone it starts when the screen is touched, keeps going while the finger is down,
+// and while scrolling the blocks travel with the page.
 // Skipped with reduced motion.
 ---
 
@@ -25,8 +27,8 @@
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   const BLOCK = 10;     // block size in CSS pixels
-  const REACH = 150;    // px around the pointer where the page gets disturbed
-  const OPACITY = 0.3;  // how strongly it shows (it's meant to stay in the background)
+  const REACH = 190;    // px around the pointer where the page gets disturbed
+  const OPACITY = 0.5;  // how strongly it shows
   const STILL = 100;    // ms without movement before the pointer stops disturbing the page
   const SETTLE = 1200;  // ms after the last movement before it's all cleared and stopped
 
@@ -43,6 +45,9 @@
     // The area that may have blocks in it (canvas pixels), so the rest is skipped
     let area = { x0: 0, y0: 0, x1: 0, y1: 0, empty: true };
     const pointer = { x: 0, y: 0, vx: 0, vy: 0, inside: false };
+    let touching = false;   // a finger is on the screen
+    let textDirty = false;  // text positions changed (scrolling): measure again soon
+    let textAt = 0;
 
     const setup = () => {
       canvas.width = Math.max(1, window.innerWidth);
@@ -90,10 +95,16 @@
 
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
-      if (now - lastFrame < 1000 / MOSH_FPS || !mosh || !source) return;
+      if (now - lastFrame < 1000 / MOSH_FPS || !mosh) return;
+      if (!source && !ensureSource()) return;
       lastFrame = now;
+      if (textDirty && now - textAt > 120) {
+        findText();
+        textDirty = false;
+        textAt = now;
+      }
 
-      const moving = pointer.inside && now - movedAt < STILL;
+      const moving = pointer.inside && (touching || now - movedAt < STILL);
       const px = pointer.x;
       const py = pointer.y;
       if (moving) {
@@ -114,7 +125,7 @@
         const y0 = Math.max(0, Math.floor((py - REACH) / BLOCK)) * BLOCK;
         for (let y = y0; y < Math.min(canvas.height, py + REACH); y += BLOCK) {
           for (let x = x0; x < Math.min(canvas.width, px + REACH); x += BLOCK) {
-            if (Math.hypot(x - px, y - py) > REACH || Math.random() > 0.3) continue;
+            if (Math.hypot(x - px, y - py) > REACH || Math.random() > 0.45) continue;
             if (behindText[Math.floor(y / BLOCK) * cols + Math.floor(x / BLOCK)]) continue;
             const [dx, dy, s] = wave(x, y);
             const sx = Math.min(canvas.width - BLOCK, Math.max(0, Math.round(x - pointer.vx * 2 - dx * s * (swirl + 6))));
@@ -144,7 +155,7 @@
       pointer.vy *= 0.5;
 
       // Resting long enough: clear everything and stop until the next movement
-      if (!moving && now - movedAt > SETTLE) {
+      if (!moving && !touching && now - movedAt > SETTLE) {
         canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
         area.empty = true;
         cancelAnimationFrame(raf);
@@ -171,7 +182,7 @@
 
     setup();
     window.addEventListener('resize', setup);
-    // After scrolling or a page change the picture is out of date: start fresh
+    // After a page change the picture is out of date: start fresh
     const reset = () => {
       cancelAnimationFrame(raf);
       raf = 0;
@@ -179,8 +190,31 @@
       area.empty = true;
       canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
     };
-    window.addEventListener('scroll', reset, { passive: true });
     document.addEventListener('astro:after-swap', reset);
+
+    // Scrolling: the blocks and the picture travel with the page; a fresh picture once it stops
+    let lastScroll = window.scrollY;
+    let scrollIdle = 0;
+    const shift = (c: HTMLCanvasElement, dy: number) => {
+      const g = c.getContext('2d')!;
+      g.globalCompositeOperation = 'copy';
+      g.drawImage(c, 0, -dy);
+      g.globalCompositeOperation = 'source-over';
+    };
+    window.addEventListener('scroll', () => {
+      const dy = Math.round(window.scrollY - lastScroll);
+      lastScroll = window.scrollY;
+      if (!dy) return;
+      if (source) shift(source, dy);
+      shift(canvas, dy);
+      area.y0 -= dy;
+      area.y1 -= dy;
+      textDirty = true;
+      clearTimeout(scrollIdle);
+      scrollIdle = window.setTimeout(() => {
+        source = null; // taken again on the next frame
+      }, 200);
+    }, { passive: true });
 
     document.addEventListener('pointermove', (e) => {
       if (e.pointerType === 'mouse') moveTo(e.clientX, e.clientY);
@@ -188,14 +222,25 @@
     document.documentElement.addEventListener('pointerleave', () => {
       pointer.inside = false;
     });
-    // Touch: follow the finger while it swipes
+    // Touch: starts when the screen is touched, follows the finger, keeps going while it's down
+    document.addEventListener('touchstart', (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      touching = true;
+      pointer.inside = false; // no speed from the jump to a new spot
+      moveTo(t.clientX, t.clientY);
+    }, { passive: true });
     document.addEventListener('touchmove', (e) => {
       const t = e.touches[0];
       if (t) moveTo(t.clientX, t.clientY);
     }, { passive: true });
-    document.addEventListener('touchend', () => {
+    const lift = () => {
+      touching = false;
       pointer.inside = false;
-    }, { passive: true });
+      movedAt = performance.now();
+    };
+    document.addEventListener('touchend', lift, { passive: true });
+    document.addEventListener('touchcancel', lift, { passive: true });
   }
 </script>
 

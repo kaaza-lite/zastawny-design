@@ -190,10 +190,7 @@ a {
   --pill-glow sets the glow colour.
 */
 [data-pill-group] {
-  --pill-glow: rgb(228 228 228 / 0.22);
-}
-.status-pill {
-  --pill-glow: rgb(80 200 120 / 0.3); /* "open to work": green, like its dot */
+  --pill-glow: rgb(228 228 228 / 0.22); /* grey, for grey pills like "open to work" */
 }
 [data-pill] {
   position: relative;
@@ -235,7 +232,8 @@ a {
     opacity: 1;
   }
 }
-[data-pill].is-held .tag::before {
+[data-pill].is-held .tag::before,
+[data-pill].is-touched .tag::before {
   opacity: 1;
 }
 /* The trail canvas: fixed, under the page content */

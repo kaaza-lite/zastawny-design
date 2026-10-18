@@ -118,17 +118,18 @@ const heroVars = [
     max-width: none;
     transform: translateX(-50%);
   }
-  /* Datamosh layer over the photo while the mouse moves over it (src/scripts/heroMosh.ts) */
+  /* Datamosh blocks above the photo and its fade while the mouse moves over it;
+     never behind text (src/scripts/heroMosh.ts) */
   .hero-image :global(.hero-mosh) {
     position: absolute;
     inset: 0;
-    z-index: 1;
+    z-index: 3;
     width: 100%;
     height: 100%;
-    opacity: 0;
+    visibility: hidden;
   }
   .hero-image :global(.hero-mosh.is-on) {
-    opacity: 1;
+    visibility: visible;
   }
   .hero-image::after {
     content: '';

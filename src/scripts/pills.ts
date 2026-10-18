@@ -12,7 +12,7 @@
 
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-const HOLD = 350;       // ms: press and hold on a touch screen before the pill is picked up
+const HOLD = 250;       // ms: press and hold on a touch screen before the pill is picked up
 const HOME = 70;        // spring pulling a let-go pill home (higher = snappier)
 const HOME_DAMP = 9;    // how quickly that spring settles
 const ROOM = 200;       // spring moving neighbours out of the way and back
@@ -75,7 +75,7 @@ function setupList(list: HTMLElement, signal: AbortSignal) {
     }
   };
 
-  const pickUp = (p: Pill, e: PointerEvent) => {
+  const pickUp = (p: Pill, e: { clientX: number; clientY: number }) => {
     measure();
     active = p;
     dragging = true;
@@ -122,29 +122,62 @@ function setupList(list: HTMLElement, signal: AbortSignal) {
       pickUp(p, e);
       return;
     }
-    // Touch: press and hold to pick it up; moving first means scrolling
-    const start = { x: e.clientX, y: e.clientY };
-    clearTimeout(holdTimer);
-    holdTimer = window.setTimeout(() => pickUp(p, e), HOLD);
-    const cancel = (m: PointerEvent) => {
-      if (Math.hypot(m.clientX - start.x, m.clientY - start.y) > 8) clearTimeout(holdTimer);
-    };
-    list.addEventListener('pointermove', cancel);
-    list.addEventListener('pointerup', () => {
-      clearTimeout(holdTimer);
-      list.removeEventListener('pointermove', cancel);
-    }, { once: true });
+    // Touch is handled with touch events below
   });
 
+  // ---------- Touch: press and hold to pick a pill up; moving first means scrolling ----------
+  // (touch events, because only they can stop the page from scrolling once a pill is held)
+  let touchStart = { x: 0, y: 0 };
+  list.addEventListener('touchstart', (e) => {
+    if (reduce.matches || e.touches.length > 1) return;
+    const li = (e.target as Element).closest<HTMLElement>('[data-pill]');
+    const p = pills.find((q) => q.el === li);
+    if (!p) return;
+    const t = e.touches[0];
+    touchStart = { x: t.clientX, y: t.clientY };
+    // the glow lights up under the finger straight away
+    const r = p.tag.getBoundingClientRect();
+    p.tag.style.setProperty('--mx', `${t.clientX - r.left}px`);
+    p.tag.style.setProperty('--my', `${t.clientY - r.top}px`);
+    p.el.classList.add('is-touched');
+    clearTimeout(holdTimer);
+    holdTimer = window.setTimeout(() => pickUp(p, { clientX: touchStart.x, clientY: touchStart.y }), HOLD);
+  }, { passive: true, signal });
+
+  list.addEventListener('touchmove', (e) => {
+    const t = e.touches[0];
+    if (!t) return;
+    if (dragging && active) {
+      e.preventDefault(); // the pill moves, the page doesn't scroll
+      active.x = Math.min(bounds.maxX, Math.max(bounds.minX, grab.x + t.clientX - grab.px));
+      active.y = Math.min(bounds.maxY, Math.max(bounds.minY, grab.y + t.clientY - grab.py));
+      samples.push({ t: performance.now(), x: active.x, y: active.y });
+      if (samples.length > 12) samples.shift();
+      return;
+    }
+    // moved before the hold finished: it's a scroll
+    if (Math.hypot(t.clientX - touchStart.x, t.clientY - touchStart.y) > 8) {
+      clearTimeout(holdTimer);
+      for (const p of pills) p.el.classList.remove('is-touched');
+    }
+  }, { passive: false, signal });
+
+  const touchEnd = () => {
+    clearTimeout(holdTimer);
+    for (const p of pills) p.el.classList.remove('is-touched');
+    letGo();
+  };
+  list.addEventListener('touchend', touchEnd, { signal });
+  list.addEventListener('touchcancel', touchEnd, { signal });
+
   window.addEventListener('pointermove', (e) => {
-    if (!active || !dragging) return;
+    if (!active || !dragging || e.pointerType !== 'mouse') return;
     active.x = Math.min(bounds.maxX, Math.max(bounds.minX, grab.x + e.clientX - grab.px));
     active.y = Math.min(bounds.maxY, Math.max(bounds.minY, grab.y + e.clientY - grab.py));
     samples.push({ t: performance.now(), x: active.x, y: active.y });
     if (samples.length > 12) samples.shift();
   }, { signal });
-  window.addEventListener('pointerup', letGo, { signal });
-  window.addEventListener('pointercancel', letGo, { signal });
+  window.addEventListener('pointerup', (e) => e.pointerType === 'mouse' && letGo(), { signal });
   // While a pill is held on a touch screen, the page doesn't scroll
   document.addEventListener('touchmove', (e) => {
     if (dragging) e.preventDefault();
