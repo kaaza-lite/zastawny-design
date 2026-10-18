@@ -80,6 +80,14 @@ const heroVars = [
   <Lightbox />
 </BaseLayout>
 
+<script>
+  import { initHeroMosh } from '../scripts/heroMosh';
+  // Datamosh on the hero image, like the case study cards (see src/scripts/heroMosh.ts)
+  document.addEventListener('astro:page-load', () => {
+    if (document.querySelector('.hero-image')) initHeroMosh();
+  });
+</script>
+
 <style>
   /* ---------- Hero image ---------- */
   .hero-image {
@@ -106,10 +114,23 @@ const heroVars = [
     max-width: none;
     transform: translateX(-50%);
   }
+  /* Datamosh layer over the photo while the mouse moves over it (src/scripts/heroMosh.ts) */
+  .hero-image :global(.hero-mosh) {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+  }
+  .hero-image :global(.hero-mosh.is-on) {
+    opacity: 1;
+  }
   .hero-image::after {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: 2; /* the fade stays on top of the datamosh */
     background: linear-gradient(to top, var(--color-bg), var(--theme-hero-fade));
   }
 
