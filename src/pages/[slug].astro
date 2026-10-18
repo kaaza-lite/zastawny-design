@@ -98,6 +98,10 @@ const heroVars = [
     height: 668px;
     overflow: hidden;
     pointer-events: none;
+    /* The whole hero (photo, datamosh and fade) turns transparent towards its bottom edge,
+       so it melts into the page instead of ending in a line */
+    -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent);
+    mask-image: linear-gradient(to bottom, #000 50%, transparent);
   }
   .hero-image :global(img) {
     width: 100%;
