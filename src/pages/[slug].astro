@@ -17,6 +17,9 @@ const { Content } = await render(study);
 const d = study.data;
 const related = await Promise.all(d.related.map((slug) => getEntry('work', slug)));
 
+// Opening details: three layouts to compare for now, one per case study
+const detailsLayout = ({ bamboo: 'sheet', calastone: 'rows', juicyway: 'cards' } as Record<string, string>)[study.id] ?? 'cards';
+
 const heroVars = [
   `--hero-pos-d: ${d.heroPosition.desktop}`,
   `--hero-pos-t: ${d.heroPosition.tablet}`,
@@ -37,9 +40,9 @@ const heroVars = [
     </header>
 
     <!-- Project details -->
-    <dl class="details">
+    <dl class:list={['details', `details--${detailsLayout}`]} style={`--count: ${d.details.length}`}>
       {d.details.map((item) => (
-        <div class="detail">
+        <div class="detail" data-label={item.label}>
           <dt class="detail-label">{item.label}</dt>
           <dd>
             <ul class="detail-lines">
@@ -188,6 +191,65 @@ const heroVars = [
     color: var(--color-text-muted);
   }
 
+  /* ---------- Opening details: three layouts to compare ---------- */
+  /* No bullets in any of them: each line on its own row */
+  .details--sheet .detail-lines,
+  .details--rows .detail-lines,
+  .details--cards .detail-lines {
+    padding-left: 0;
+    list-style: none;
+  }
+
+  /* Spec sheet (Bamboo): no boxes, one row of columns with thin dividers */
+  .details--sheet {
+    display: grid;
+    grid-template-columns: repeat(var(--count), minmax(0, 1fr));
+    gap: 0;
+    width: min(1160px, calc(100% - 2 * var(--gutter)));
+  }
+  .details--sheet .detail {
+    padding: 4px 20px;
+    background: none;
+    border: 0;
+    border-left: 1px solid var(--color-divider);
+    border-radius: 0;
+  }
+  .details--sheet .detail:first-child {
+    border-left: 0;
+  }
+
+  /* Label and value rows (Calastone): a calm list in the text column */
+  .details--rows {
+    display: block;
+    width: min(var(--column), calc(100% - 2 * var(--content-gutter)));
+  }
+  .details--rows .detail {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
+    gap: 24px;
+    align-items: baseline;
+    padding: 14px 0;
+    background: none;
+    border: 0;
+    border-top: 1px dashed var(--color-divider);
+    border-radius: 0;
+  }
+  .details--rows .detail:last-child {
+    border-bottom: 1px dashed var(--color-divider);
+  }
+
+  /* Tighter cards (Juicyway): lighter boxes in one even row */
+  .details--cards {
+    display: grid;
+    grid-template-columns: repeat(var(--count), minmax(0, 1fr));
+    gap: 10px;
+    width: min(1160px, calc(100% - 2 * var(--gutter)));
+  }
+  .details--cards .detail {
+    gap: 6px;
+    padding: 12px 14px;
+  }
+
   /* ---------- Content ---------- */
   .case-body {
     display: flex;
@@ -321,6 +383,27 @@ const heroVars = [
     .details {
       width: min(690px, calc(100% - 2 * var(--gutter)));
     }
+    /* Spec sheet and cards: two columns, "my role" across the full width */
+    .details--sheet,
+    .details--cards {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-auto-flow: row dense; /* a later item fills the gap next to a lone one */
+    }
+    .details--sheet .detail[data-label='my role'],
+    .details--cards .detail[data-label='my role'] {
+      grid-column: 1 / -1;
+    }
+    .details--sheet {
+      column-gap: 24px;
+    }
+    .details--sheet .detail {
+      padding: 14px 0;
+      border-left: 0;
+      border-top: 1px dashed var(--color-divider);
+    }
+    .details--cards {
+      gap: 8px;
+    }
   }
 
   /* ---------- Mobile ---------- */
@@ -341,6 +424,13 @@ const heroVars = [
     }
     .detail {
       flex-basis: 100%;
+    }
+    .details--rows {
+      width: min(496px, calc(100% - 2 * var(--content-gutter)));
+    }
+    .details--rows .detail {
+      grid-template-columns: 104px minmax(0, 1fr);
+      gap: 16px;
     }
     .others {
       width: min(496px, calc(100% - 2 * var(--content-gutter)));
