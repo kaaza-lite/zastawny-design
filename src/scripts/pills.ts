@@ -1,9 +1,10 @@
-// Playful pills on the About page ("how i work" and "tech skills").
+// Playful pills: the About page lists and the "open to work" pill.
+// Mark a list with data-pill-group and each item with data-pill.
 //
 //   glow      a soft light follows the cursor inside the pill (the colour is set in CSS)
 //   drag      grab a pill and move it (on phones: press and hold first, so scrolling still works)
-//   throw     let go while moving and it flies, bounces off the edges of its section,
-//             then springs back home; nothing stays out of place
+//   throw     let go while moving and it flies anywhere on screen, bounces off the
+//             window edges, then springs back home; nothing stays out of place
 //   make room the other pills in the row step aside while one passes through them
 //   trail     a moving pill leaves a short datamosh trail of blocks behind it
 //
@@ -16,7 +17,7 @@ const HOME = 70;        // spring pulling a let-go pill home (higher = snappier)
 const HOME_DAMP = 9;    // how quickly that spring settles
 const ROOM = 200;       // spring moving neighbours out of the way and back
 const ROOM_DAMP = 24;
-const BOUNCE = 0.55;    // speed kept when a thrown pill hits the edge of its section
+const BOUNCE = 0.55;    // speed kept when a thrown pill hits the edge of the window
 const GAP = 8;          // space kept around a pill when neighbours step aside
 const TRAIL_BLOCK = 8;  // trail block size in CSS pixels
 const TRAIL_FPS = 24;
@@ -37,17 +38,16 @@ export function initPills() {
   page = new AbortController();
   const signal = page.signal;
   document.addEventListener('astro:before-swap', () => page?.abort(), { once: true, signal });
-  for (const list of document.querySelectorAll<HTMLElement>('.pills')) setupList(list, signal);
+  for (const list of document.querySelectorAll<HTMLElement>('[data-pill-group]')) setupList(list, signal);
 }
 
 function setupList(list: HTMLElement, signal: AbortSignal) {
-  const pills: Pill[] = [...list.querySelectorAll<HTMLElement>(':scope > li')].map((el) => ({
+  const pills: Pill[] = [...list.querySelectorAll<HTMLElement>('[data-pill]')].map((el) => ({
     el,
     tag: el.querySelector<HTMLElement>('.tag')!,
     x: 0, y: 0, vx: 0, vy: 0,
     home: el.getBoundingClientRect(),
   }));
-  const section = list.closest<HTMLElement>('section') ?? list;
 
   // ---------- Glow: follow the cursor inside the pill ----------
   list.addEventListener('pointermove', (e) => {
@@ -81,12 +81,12 @@ function setupList(list: HTMLElement, signal: AbortSignal) {
     dragging = true;
     grab = { px: e.clientX, py: e.clientY, x: p.x, y: p.y };
     samples = [{ t: performance.now(), x: p.x, y: p.y }];
-    const s = section.getBoundingClientRect();
+    // It can go anywhere in the window
     bounds = {
-      minX: s.left - p.home.left,
-      maxX: s.right - p.home.right,
-      minY: s.top - p.home.top,
-      maxY: s.bottom - p.home.bottom,
+      minX: -p.home.left,
+      maxX: window.innerWidth - p.home.right,
+      minY: -p.home.top,
+      maxY: window.innerHeight - p.home.bottom,
     };
     p.el.classList.add('is-held');
     trail.start(p);
@@ -114,7 +114,7 @@ function setupList(list: HTMLElement, signal: AbortSignal) {
 
   list.addEventListener('pointerdown', (e) => {
     if (reduce.matches || e.button > 0) return;
-    const li = (e.target as Element).closest<HTMLElement>('.pills > li');
+    const li = (e.target as Element).closest<HTMLElement>('[data-pill]');
     const p = pills.find((q) => q.el === li);
     if (!p) return;
     if (e.pointerType === 'mouse') {
@@ -155,7 +155,7 @@ function setupList(list: HTMLElement, signal: AbortSignal) {
     const dt = Math.min(0.033, (now - last) / 1000);
     last = now;
 
-    // The let-go pill: flies with its speed, bounces off the section edges, springs home
+    // The let-go pill: flies with its speed, bounces off the window edges, springs home
     if (active && !dragging) {
       const p = active;
       p.vx += (-HOME * p.x - HOME_DAMP * p.vx) * dt;
