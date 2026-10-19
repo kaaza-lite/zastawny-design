@@ -7,7 +7,7 @@
 // Modal: one scroll (or swipe, or arrow key) moves exactly one image. The indicator on
 // the right shows which image is on screen.
 
-import { startSheen, sheenColours } from './sheen';
+import { startDome } from './dome';
 
 let page: AbortController | null = null;
 
@@ -18,17 +18,14 @@ export function initPeek() {
   document.addEventListener('astro:before-swap', () => page?.abort(), { once: true, signal });
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // ---------- Background: the petrol sheen, tinted by the page you came from ----------
-  const canvas = document.querySelector<HTMLCanvasElement>('.peek-sheen');
-  if (canvas) {
+  // ---------- Background: a gradient dome, in the colours of the page you came from ----------
+  const dome = document.querySelector<HTMLElement>('.peek-dome');
+  if (dome) {
     let from = 'neutral';
     try {
       from = sessionStorage.getItem('came-from') || 'neutral';
     } catch {}
-    const colours = sheenColours[from] ?? sheenColours.neutral;
-    document.body.style.setProperty('--peek-bg', `rgb(${colours.base.map((c) => Math.round(c * 255)).join(' ')})`);
-    const stop = startSheen(canvas, colours);
-    signal.addEventListener('abort', stop);
+    signal.addEventListener('abort', startDome(dome, from));
   }
 
   // ---------- Grid ----------
