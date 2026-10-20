@@ -41,6 +41,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
         title="Calastone"
         meta="Institutional fintech - fund services"
         image={calastoneThumb}
+        sizes="(max-width: 799.98px) calc(100vw - 40px), (max-width: 1279.98px) 75vw, 925px"
         alt=""
         eager
       />
@@ -50,6 +51,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
         title="Bamboo"
         meta="Consumer fintech - retail investing"
         image={bambooThumb}
+        sizes="(max-width: 799.98px) calc(100vw - 40px), (max-width: 1279.98px) 75vw, 925px"
         alt=""
         tint
         eager
@@ -60,10 +62,11 @@ import finxThumb from '../assets/work/finx-thumb.png';
         title="Juicyway"
         meta="Consumer & B2B fintech"
         image={juicywayThumb}
+        sizes="(max-width: 799.98px) calc(100vw - 40px), (max-width: 1279.98px) 75vw, 925px"
         alt=""
       />
       <!-- The FinX image is already dark and has the card's background, so it's shown whole and not faded -->
-      <WorkCard title="FinX" meta="Complex design system for fintech" image={finxThumb} alt="" soon fit="contain" dim={false} />
+      <WorkCard title="FinX" meta="Complex design system for fintech" image={finxThumb} alt="" soon fit="contain" dim={false} sizes="(max-width: 799.98px) calc(100vw - 40px), (max-width: 1279.98px) 75vw, 925px" />
     </section>
 
     <!-- Experience -->
@@ -77,7 +80,52 @@ import finxThumb from '../assets/work/finx-thumb.png';
       <p>zastawny ©2026</p>
     </footer>
   </main>
+  <div class="bottom-shade" aria-hidden="true"></div>
 </BaseLayout>
+
+<script>
+  // Case study tiles: open the one under the mouse, the focused one, or the tapped one.
+  // On touch, the first tap opens a tile and the second follows its link. On phones the tiles stack and links work at once.
+  const stacked = window.matchMedia('(max-width: 799.98px)');
+  const firstOpen = window.matchMedia('(min-width: 800px) and (max-width: 1279.98px)');
+
+  document.addEventListener('astro:page-load', () => {
+    const work = document.querySelector<HTMLElement>('.work');
+    if (!work) return;
+    const cards = [...work.querySelectorAll<HTMLElement>('.card')];
+    const open = (card: HTMLElement | null) => {
+      for (const c of cards) c.classList.toggle('is-open', c === card);
+      work.classList.toggle('has-open', !!card);
+    };
+    // The first tile is shown open on tablets until another one is picked
+    const isOpen = (card: HTMLElement) =>
+      card.classList.contains('is-open') || (firstOpen.matches && !work.classList.contains('has-open') && card === cards[0]);
+
+    // A short pause before opening, so sweeping the mouse across the tiles doesn't open each one on the way
+    let wait = 0;
+    work.addEventListener('pointerleave', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      clearTimeout(wait);
+      open(null);
+    });
+    for (const card of cards) {
+      card.addEventListener('pointerenter', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        clearTimeout(wait);
+        wait = window.setTimeout(() => open(card), 90);
+      });
+      card.addEventListener('focus', () => {
+        if (card.matches(':focus-visible')) open(card);
+      });
+      card.addEventListener('blur', () => open(null));
+      card.addEventListener('click', (e) => {
+        if (stacked.matches || isOpen(card)) return;
+        e.preventDefault();
+        open(card);
+      });
+    }
+  });
+</script>
 
 <style>
   .page {
@@ -128,12 +176,72 @@ import finxThumb from '../assets/work/finx-thumb.png';
   }
 
   /* ---------- Case study cards ---------- */
+  /*
+    Four portrait tiles side by side. The hovered (or tapped, or focused) one opens to the width
+    of three closed tiles, the others narrow and hide their text. The picture inside each tile is
+    always the open width and centred, so opening only reveals more of it (and the datamosh
+    canvas never has to resize).
+  */
   .work {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
+    --gap: 20px;
+    --closed: calc((100cqw - 3 * var(--gap)) / 4);
+    --open: calc(3 * var(--closed) + 2 * var(--gap));
+    container-type: inline-size;
+    display: flex;
+    gap: var(--gap);
+    height: 520px;
     margin-top: 60px;
-    padding: 0 var(--gutter) 64px;
+    padding: 0 var(--gutter);
+    margin-bottom: 64px;
+  }
+
+  .work :global(.card) {
+    position: relative;
+    display: block;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    background: none;
+    transition: flex 500ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .work :global(.card.is-open) {
+    flex: 0 0 var(--open);
+  }
+
+  .work :global(.thumb) {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: var(--open);
+    height: auto;
+    transform: translateX(-50%);
+  }
+
+  /* Shade behind the title so it reads on light pictures */
+  .work :global(.card)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgb(0 0 0 / 0.75), rgb(0 0 0 / 0) 45%);
+    pointer-events: none;
+    transition: opacity 200ms;
+  }
+
+  /* Title and subtitle at the bottom left, as wide as a closed tile so they never reflow */
+  .work :global(.text) {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1;
+    width: calc(var(--closed) - 40px);
+    transition: opacity 200ms;
+  }
+
+  .work:global(.has-open) :global(.card:not(.is-open) .text),
+  .work:global(.has-open) :global(.card:not(.is-open))::after {
+    opacity: 0;
   }
 
   /* ---------- Experience ---------- */
@@ -173,8 +281,19 @@ import finxThumb from '../assets/work/finx-thumb.png';
       max-width: 488px;
     }
 
+    /* Closed tiles are too narrow for the titles here, so the first one is open until another is picked */
     .work {
-      row-gap: 48px;
+      height: 460px;
+    }
+    .work:not(:global(.has-open)) :global(.card:first-child) {
+      flex: 0 0 var(--open);
+    }
+    .work:not(:global(.has-open)) :global(.card:not(:first-child) .text),
+    .work:not(:global(.has-open)) :global(.card:not(:first-child))::after {
+      opacity: 0;
+    }
+    .work :global(.text) {
+      width: calc(var(--open) - 40px);
     }
 
     /* Figma: a 560px column, 120px in from each side at 800px. Centred at wider tablet widths. */
@@ -191,12 +310,33 @@ import finxThumb from '../assets/work/finx-thumb.png';
   /* ---------- Mobile ---------- */
   @media (max-width: 799.98px) {
     /* Cards and experience stay in a 496px column, so wide phones keep side gutters */
+    /* Phones: the tiles stack, full width, with their titles */
     .work {
-      grid-template-columns: minmax(0, 1fr);
+      flex-direction: column;
       gap: 12px;
+      height: auto;
       max-width: calc(496px + 2 * var(--gutter));
       margin-left: auto;
       margin-right: auto;
+    }
+    .work :global(.card),
+    .work :global(.card.is-open),
+    .work:not(:global(.has-open)) :global(.card:first-child) {
+      flex: none;
+      height: 320px;
+    }
+    .work :global(.thumb) {
+      left: 0;
+      width: 100%;
+      transform: none;
+    }
+    .work :global(.text) {
+      right: 20px;
+      width: auto;
+    }
+    .work :global(.card .text),
+    .work :global(.card)::after {
+      opacity: 1 !important;
     }
 
     .experience {

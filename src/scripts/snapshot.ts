@@ -4,7 +4,7 @@
 // overlays, images, and every word of text in its own font, colour and position.
 // It doesn't need to be perfect: the datamosh starts breaking it up straight away.
 
-const SKIP = 'script, style, .page-mosh, .cursor-glow, .pill-trail, .peek-dome, dialog:not([open]), .site-nav, .song-player, svg';
+const SKIP = 'script, style, .page-mosh, .cursor-glow, .bottom-shade, .pill-trail, .peek-dome, dialog:not([open]), .site-nav, .song-player, svg';
 
 type Opaque = Element & { checkVisibility?: (o?: object) => boolean };
 
