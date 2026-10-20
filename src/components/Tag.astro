@@ -1,5 +1,5 @@
 ---
-// Small pill tag in Cormorant Garamond Italic: "open to work", "soon",
+// Small pill tag in Google Sans Flex: "open to work", "soon",
 // and the About page pills ("how i work" in purple, "tech skills" in green).
 // `dot` adds the green status dot in front of the label.
 interface Props {
@@ -20,30 +20,21 @@ const { dot = false, tone = 'default' } = Astro.props;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 2px 12px 5px;
+    padding: 4px 12px;
     background: var(--color-bg);
     border: 1px solid var(--color-border-tag);
     border-radius: var(--radius-pill);
-    font-family: var(--font-tag);
-    font-style: italic;
-    font-weight: 400;
-    font-size: var(--text-tag);
-    line-height: 1.19; /* Figma "auto" line height for this font */
-    letter-spacing: 0.01em;
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.4;
+    letter-spacing: var(--tracking-body);
     color: var(--color-text-muted);
     white-space: nowrap;
-    font-variant-numeric: lining-nums; /* numbers as tall as capitals (the font defaults to old-style) */
   }
 
   .tag--soon {
-    letter-spacing: -0.01em;
     color: var(--color-text-muted);
-  }
-
-  /* About pills sit 5px from the top edge */
-  .tag--work,
-  .tag--skill {
-    padding-top: 5px;
   }
 
   .tag--work {
@@ -62,7 +53,6 @@ const { dot = false, tone = 'default' } = Astro.props;
     flex: none;
     width: 6px;
     height: 6px;
-    margin-top: 0.2em; /* optical centre against the italic x-height */
     border-radius: 50%;
     background: var(--color-status);
   }
