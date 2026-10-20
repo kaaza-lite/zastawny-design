@@ -313,7 +313,7 @@ const menu = [
     align-items: center;
     gap: 40px;
     height: 56px;
-    padding: 0 6px;
+    padding: 0 8px;
     background:
       linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
       var(--glass-tint);
@@ -375,10 +375,21 @@ const menu = [
     height: 100%;
   }
 
+  /* 22px either side of each link and 8px inside the pill: 40px wider than the labels alone need */
   .links a {
     position: relative;
     z-index: 1;
-    padding: 0 16px;
+    padding: 0 22px;
+  }
+
+  /* Very narrow phones (under 360px): the tighter spacing, so the pill still fits */
+  @media (max-width: 359.98px) {
+    .nav {
+      padding: 0 6px;
+    }
+    .links a {
+      padding: 0 16px;
+    }
   }
 
   .external-label {
