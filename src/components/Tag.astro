@@ -10,7 +10,7 @@ interface Props {
 const { dot = false, tone = 'default' } = Astro.props;
 ---
 
-<span class:list={['tag', `tag--${tone}`]}>
+<span class:list={['tag', `tag--${tone}`, { 'tag--status': dot }]}>
   {dot && <span class="dot" aria-hidden="true"></span>}
   <span class="label"><slot /></span>
 </span>
@@ -31,6 +31,11 @@ const { dot = false, tone = 'default' } = Astro.props;
     letter-spacing: var(--tracking-body);
     color: var(--color-text-muted);
     white-space: nowrap;
+  }
+
+  /* With the status dot ("Open to work"): a border in the dot's green */
+  .tag--status {
+    border-color: var(--color-status);
   }
 
   .tag--soon {
