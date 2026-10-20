@@ -6,24 +6,24 @@ import Tag from '../components/Tag.astro';
 import Experience from '../components/Experience.astro';
 
 const howIWork = [
-  'AI-native',
-  'close to engineering',
-  'decisions that survive',
-  'scoping out loud',
-  'design critique into plans',
-  'systems over one-offs',
-  'accessibility as default',
+  'AI-Native',
+  'Close to Engineering',
+  'Decisions That Survive',
+  'Scoping Out Loud',
+  'Design Critique into Plans',
+  'Systems over One-Offs',
+  'Accessibility as Default',
 ];
 
 const techSkills = [
-  'claude',
-  'figma',
-  'design systems',
-  'multi-brand theming',
+  'Claude',
+  'Figma',
+  'Design Systems',
+  'Multi-Brand Theming',
   'BPMN',
   'WCAG 2.2 AA',
-  'complex & regulated domains',
-  'accessibility testing',
+  'Complex & Regulated Domains',
+  'Accessibility Testing',
 ];
 ---
 
@@ -32,24 +32,24 @@ const techSkills = [
   description="12 years in design, working across UX, UI and systems. From trading infrastructure to consumer apps in emerging markets, I’ve spent that time where the rules matter and small UI decisions carry real weight. Based in Poland, Schengen Area, EU."
 >
   <main class="page">
-    <h1 data-scramble>about me</h1>
+    <h1 data-scramble>About Me</h1>
 
     <div class="content">
       <!-- Intro -->
       <section class="intro">
         <div class="name">
-          <p class="name-title">tomasz zastawny</p>
-          <p class="role">senior product designer</p>
+          <p class="name-title">Tomasz Zastawny</p>
+          <p class="role">Senior Product Designer</p>
         </div>
         <p class="summary">
           12 years in design, working across UX, UI and systems. From trading infrastructure to consumer apps in
           emerging markets, I’ve spent that time where the rules matter and small UI decisions carry real weight.
         </p>
-        <span class="status-pill" data-pill-group><span data-pill><Tag dot>open to work</Tag></span></span>
+        <span class="status-pill" data-pill-group><span data-pill><Tag dot>Open to Work</Tag></span></span>
       </section>
 
       <section class="block">
-        <h2>what i do</h2>
+        <h2>What I Do</h2>
         <div class="prose">
           <p>
             I’m at my best when the problem is genuinely complex, whatever the domain. Lately that’s meant
@@ -73,31 +73,31 @@ const techSkills = [
       </section>
 
       <section class="block experience">
-        <h2>experience</h2>
+        <h2>Experience</h2>
         <Experience />
       </section>
 
       <section class="block">
-        <h2>how i work</h2>
+        <h2>How I Work</h2>
         <ul class="pills" data-pill-group>
           {howIWork.map((item) => <li data-pill><Tag tone="work">{item}</Tag></li>)}
         </ul>
       </section>
 
       <section class="block">
-        <h2>tech skills</h2>
+        <h2>Tech Skills</h2>
         <ul class="pills skill-pills" data-pill-group>
           {techSkills.map((item) => <li data-pill><Tag tone="skill">{item}</Tag></li>)}
         </ul>
       </section>
 
       <section class="block block--centred">
-        <h2>worked with</h2>
+        <h2>Worked with</h2>
         <p>HSBC · Federated Hermes · Calastone · Bamboo · Juicyway · DoubleMap · DrOnline · Helium Health</p>
       </section>
 
       <section class="block block--centred block--last">
-        <h2>location</h2>
+        <h2>Location</h2>
         <div class="location">
           <p>Based in Poland, Schengen Area, EU.</p>
           <iframe
