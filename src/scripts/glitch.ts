@@ -5,7 +5,7 @@
 /** Characters swapped in while text glitches (letters, digits and symbols). */
 export const SCRAMBLE_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789#&/<>_+=';
 
-/** Letters only, for text in CS Ariston Halfpixel (the titles): the font has no digits or symbols. */
+/** Letters only, for text in CS Pacify Halfpixel (the titles): the font has no digits or symbols. */
 export const TITLE_CHARS = 'abcdefghijklmnopqrstuvwxyz';
 
 /**

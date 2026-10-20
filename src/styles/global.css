@@ -258,3 +258,24 @@ a {
   background: linear-gradient(to top, rgb(113 70 0 / 0.1), rgb(113 70 0 / 0));
   pointer-events: none;
 }
+
+/* Glow: a soft light under the pointer while it's over the shade (src/scripts/shade.ts) */
+.bottom-shade::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 480px 100% at var(--glow-x, 50%) 100%, rgb(113 70 0 / 0.3), rgb(113 70 0 / 0));
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+.bottom-shade.is-glowing::after {
+  opacity: 1;
+}
+
+/* Case studies: the same shade in black */
+.bottom-shade--dark {
+  background: linear-gradient(to top, rgb(0 0 0 / 0.1), rgb(0 0 0 / 0));
+}
+.bottom-shade--dark::after {
+  display: none;
+}

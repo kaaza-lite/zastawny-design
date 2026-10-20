@@ -164,6 +164,15 @@
     };
 
     const moveTo = (x: number, y: number) => {
+      // Over a case study tile its own datamosh plays, so the background one clears and waits
+      if (document.querySelector('[data-glitch-card]:hover')) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+        pointer.inside = false;
+        area.empty = true;
+        canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
       if (pointer.inside) {
         pointer.vx += x - pointer.x;
         pointer.vy += y - pointer.y;

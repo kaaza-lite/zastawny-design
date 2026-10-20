@@ -3,13 +3,13 @@
   Files live in public/fonts/.
 */
 
-/* CS Ariston Halfpixel: headings and nav. Licensed file, not modified. */
+/* CS Pacify Halfpixel: headings and nav. Licensed file, not modified. */
 @font-face {
-  font-family: 'CS Ariston Halfpixel';
+  font-family: 'CS Pacify Halfpixel';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/cs-ariston-halfpixel.woff2') format('woff2');
+  src: url('/fonts/cs-pacify-halfpixel.woff2') format('woff2');
 }
 
 /* Google Sans Flex Light (300): body copy. Google's own latin subsets. */

@@ -4,28 +4,62 @@
 //
 // The active item sits on a light fill that slides from the previous page's item
 // to the current one on page load (transform only).
+//
+// "Works" opens a menu of the case studies (hover or keyboard on desktop, tap on touch),
+// with the current one highlighted. Clicking it on desktop still goes to Home.
+import { getEntry } from 'astro:content';
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import finxThumb from '../assets/work/finx-thumb.png';
 
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 const caseStudies = ['/calastone', '/bamboo', '/juicyway'];
 // Home and the case studies highlight "works"; About highlights "about"
 const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '/about' ? 'about' : null;
+
+// The case study menu, in the Home order, with FinX last as "soon"
+const thumb = async (src: ImageMetadata) => (await getImage({ src, width: 112, format: 'webp' })).src;
+const menu = [
+  ...(await Promise.all(
+    ['calastone', 'bamboo', 'juicyway'].map(async (id) => {
+      const e = (await getEntry('work', id))!;
+      return { href: `/${id}`, title: e.data.title, meta: e.data.meta, thumb: await thumb(e.data.thumbnail), soon: false };
+    }),
+  )),
+  { href: '', title: 'FinX', meta: 'Complex design system for fintech', thumb: await thumb(finxThumb), soon: true },
+];
 ---
 
 <header class="site-nav">
   <nav class="nav">
-    <a class="logo" href="/">
-      <span class="logo-full">zastawny</span>
-      <span class="logo-short" aria-hidden="true">z</span>
-    </a>
     <div class="links">
       <span class="highlight" aria-hidden="true"></span>
-      <a href="/" data-key="works" aria-current={active === 'works' ? 'page' : undefined}>works</a>
-      <a href="/about" data-key="about" aria-current={active === 'about' ? 'page' : undefined}>about</a>
+      <a href="/" data-key="works" class="works" aria-haspopup="true" aria-expanded="false" aria-controls="works-menu" aria-current={active === 'works' ? 'page' : undefined}>Works<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></a>
+      <a href="/about" data-key="about" aria-current={active === 'about' ? 'page' : undefined}>About</a>
       <a href="https://www.linkedin.com/in/zastawny/" target="_blank" rel="noopener" class="external">
-        <span class="external-label">linkedin</span><span class="external-arrow" aria-hidden="true">⇗</span>
+        <span class="external-label">LinkedIn</span><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></svg>
       </a>
     </div>
   </nav>
+
+  <!-- Case study menu under "Works" -->
+  <div class="works-menu" id="works-menu">
+    {menu.map((m) =>
+      m.soon ? (
+        <div class="menu-item menu-item--soon" aria-disabled="true">
+          <img src={m.thumb} alt="" width="56" height="36" loading="lazy" />
+          <span class="menu-text"><span class="menu-title">{m.title}</span><span class="menu-meta">{m.meta}</span></span>
+          <span class="menu-soon">Soon</span>
+        </div>
+      ) : (
+        <a class="menu-item" href={m.href} aria-current={path === m.href ? 'page' : undefined}>
+          <img src={m.thumb} alt="" width="56" height="36" loading="lazy" />
+          <span class="menu-text"><span class="menu-title">{m.title}</span><span class="menu-meta">{m.meta}</span></span>
+          {path === m.href && <span class="menu-dot" aria-hidden="true"></span>}
+        </a>
+      ),
+    )}
+  </div>
 </header>
 
 <script>
@@ -81,6 +115,115 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
 
   // On the first load and after every page change
   document.addEventListener('astro:page-load', setup);
+
+  // "Works" menu: opens on hover or keyboard focus on desktop, on tap on touch screens
+  const hoverable = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+  function setupMenu() {
+    const header = document.querySelector<HTMLElement>('.site-nav');
+    const works = header?.querySelector<HTMLAnchorElement>('.works');
+    const menu = header?.querySelector<HTMLElement>('.works-menu');
+    if (!header || !works || !menu) return;
+
+    let closeTimer = 0;
+    // Centred under "Works", kept 16px inside the window
+    const place = () => {
+      const h = header.getBoundingClientRect();
+      const w = works.getBoundingClientRect();
+      const width = menu.offsetWidth;
+      const left = Math.min(Math.max(w.left + w.width / 2 - width / 2, 16), window.innerWidth - 16 - width);
+      menu.style.left = `${left - h.left}px`;
+    };
+    const open = () => {
+      clearTimeout(closeTimer);
+      if (menu.classList.contains('is-open')) return;
+      place();
+      menu.classList.add('is-open');
+      works.setAttribute('aria-expanded', 'true');
+    };
+    const close = () => {
+      clearTimeout(closeTimer);
+      menu.classList.remove('is-open');
+      works.setAttribute('aria-expanded', 'false');
+    };
+    // A short grace period, so the pointer can cross the gap between the nav and the menu
+    const closeSoon = () => {
+      clearTimeout(closeTimer);
+      closeTimer = window.setTimeout(close, 200);
+    };
+
+    for (const el of [works, menu]) {
+      el.addEventListener('pointerenter', (e) => {
+        if (e.pointerType === 'mouse' && hoverable.matches) open();
+      });
+      el.addEventListener('pointerleave', (e) => {
+        if (e.pointerType === 'mouse' && hoverable.matches) closeSoon();
+      });
+    }
+    // Touch: the first tap opens the menu, a second tap on "Works" closes it
+    works.addEventListener('click', (e) => {
+      if (hoverable.matches) return;
+      e.preventDefault();
+      if (menu.classList.contains('is-open')) close();
+      else open();
+    });
+    // Keyboard: Tab moves along the nav as usual. On "Works", Enter or Space opens the menu,
+    // the arrow keys move through it, Escape closes it, and Tab leaves it for the next nav item.
+    const items = [...menu.querySelectorAll<HTMLElement>('a.menu-item')];
+    for (const item of items) item.tabIndex = -1; // reached with the arrow keys, not Tab
+    const after = works.nextElementSibling as HTMLElement | null;
+    const isOpen = () => menu.classList.contains('is-open');
+    const focusItem = (i: number) => items[(i + items.length) % items.length]?.focus();
+    const openWithKeys = () => {
+      open();
+      const current = items.findIndex((item) => item.getAttribute('aria-current') === 'page');
+      focusItem(Math.max(current, 0));
+    };
+
+    works.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (isOpen() && e.key !== 'ArrowDown') close();
+        else openWithKeys();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        open();
+        focusItem(items.length - 1);
+      }
+    });
+    menu.addEventListener('keydown', (e) => {
+      const at = items.indexOf(document.activeElement as HTMLElement);
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        focusItem(at + (e.key === 'ArrowDown' ? 1 : -1));
+      } else if (e.key === 'Home' || e.key === 'End') {
+        e.preventDefault();
+        focusItem(e.key === 'Home' ? 0 : items.length - 1);
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        close();
+        (e.shiftKey ? works : (after ?? works)).focus();
+      }
+    });
+    header.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen()) {
+        close();
+        works.focus();
+      }
+    });
+    header.addEventListener('focusout', (e) => {
+      const next = e.relatedTarget as Node | null;
+      if (next && !(works.contains(next) || menu.contains(next))) close();
+    });
+    // A tap or click anywhere else closes it
+    document.addEventListener('pointerdown', (e) => {
+      const t = e.target as Node;
+      if (!works.contains(t) && !menu.contains(t)) close();
+    });
+    window.addEventListener('resize', () => menu.classList.contains('is-open') && place());
+  }
+
+  document.addEventListener('astro:page-load', setupMenu);
 </script>
 
 <style>
@@ -104,7 +247,7 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
     align-items: center;
     gap: 40px;
     height: 56px;
-    padding: 0 6px 0 8px;
+    padding: 0 6px;
     background:
       linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
       var(--glass-tint);
@@ -119,14 +262,13 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
     /* heavy blur plus a slight darkening of whatever is behind keeps the labels readable */
     -webkit-backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
     backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     font-size: var(--text-nav);
     line-height: normal;
     letter-spacing: 0;
     color: var(--color-text);
   }
 
-  .logo,
   .links a {
     display: inline-flex;
     align-items: center;
@@ -134,15 +276,6 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
     color: inherit;
     text-decoration: none;
     border-radius: var(--radius-pill);
-  }
-
-  /* 16px either side so the keyboard focus ring has room around the name */
-  .logo {
-    padding: 0 16px;
-  }
-
-  .logo-short {
-    display: none;
   }
 
   .links {
@@ -164,24 +297,31 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
     text-underline-position: from-font;
   }
 
-  .external-arrow {
-    margin-left: 0.3em;
-    font-size: 11px;
+  /* Icons from Lucide (lucide.dev, ISC licence): chevron-down on Works, arrow-up-right on LinkedIn */
+  .nav-icon {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    margin-left: 4px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .logo:hover,
     .links a:hover {
       color: var(--color-accent-2);
     }
   }
 
-  .logo:focus-visible,
   .links a:focus-visible {
     color: var(--color-accent-2);
     outline-offset: -2px;
     box-shadow: none;
   }
+
 
   /* Active item: a flat light fill, no outline or shadow (positioned by the script) */
   .highlight {
@@ -209,28 +349,138 @@ const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '
     background: var(--glass-active);
   }
 
-  /* Mobile: "z" as the logo, as in Figma */
+  /* ---------- "Works" menu: the same glass as the pill ---------- */
+  .works-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 330px;
+    padding: 6px;
+    background:
+      linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
+      var(--glass-tint);
+    border: 1px solid var(--glass-rim);
+    border-radius: 20px;
+    box-shadow:
+      inset 0 1px 0 var(--glass-highlight),
+      0 14px 36px rgb(0 0 0 / 0.5),
+      0 2px 8px rgb(0 0 0 / 0.35);
+    -webkit-backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
+    backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition:
+      opacity 180ms ease,
+      transform 180ms ease,
+      visibility 0s linear 180ms;
+  }
+  .works-menu.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition:
+      opacity 180ms ease,
+      transform 180ms ease;
+  }
+
+  /* 8px all round, so the thumbnail sits as far from the edge as from the top */
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-radius: 14px;
+    color: var(--color-text);
+    text-decoration: none;
+  }
+  .menu-item img {
+    flex: none;
+    width: 56px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+  .menu-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .menu-title {
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.2;
+  }
+  .menu-meta {
+    font-family: var(--font-body);
+    font-size: 12px;
+    line-height: 1.3;
+    color: var(--color-text);
+  }
+
+  /* The case study you're on: the same fill as the active nav item */
+  .menu-item[aria-current='page'] {
+    background: var(--glass-active);
+    color: var(--color-text);
+  }
+  .menu-dot {
+    flex: none;
+    width: 6px;
+    height: 6px;
+    margin: 0 8px 0 auto;
+    border-radius: 50%;
+    background: var(--color-accent-2);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    a.menu-item:not([aria-current='page']):hover {
+      background: rgb(255 255 255 / 0.05);
+      color: var(--color-accent-2);
+    }
+  }
+  a.menu-item:focus-visible {
+    outline-offset: -2px;
+    box-shadow: none;
+  }
+
+  .menu-item--soon {
+    opacity: 0.45;
+    cursor: default;
+  }
+  .menu-soon {
+    display: flex;
+    align-items: center;
+    height: 20px;
+    margin: 0 8px 0 auto;
+    padding-bottom: 2px; /* Cormorant sits low in its box */
+    font-family: var(--font-tag);
+    font-style: italic;
+    font-size: 13px;
+    line-height: 1;
+    color: var(--color-text);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .works-menu,
+    .works-menu.is-open {
+      transform: none;
+      transition: none;
+    }
+  }
+
+  /* Mobile */
   @media (max-width: 799.98px) {
     .site-nav {
       top: 16px;
     }
     .nav {
       gap: 8px;
-      padding-left: 4px;
     }
     .links a {
       padding: 0 10px;
-    }
-    .logo-full {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip: rect(0 0 0 0);
-      white-space: nowrap;
-    }
-    .logo-short {
-      display: inline;
     }
   }
 </style>
