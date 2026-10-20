@@ -519,13 +519,18 @@ const menu = [
     font-family: var(--font-body);
     font-size: 12px;
     line-height: 1.3;
-    color: var(--color-text);
+    color: inherit;
+  }
+
+  /* Case study links in white (FinX, not a link yet, stays grey) */
+  a.menu-item {
+    color: var(--color-accent-2);
   }
 
   /* The case study you're on: the same fill as the active nav item */
   .menu-item[aria-current='page'] {
     background: var(--glass-active);
-    color: var(--color-text);
+    color: var(--color-accent-2);
   }
   .menu-dot {
     flex: none;
