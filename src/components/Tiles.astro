@@ -137,6 +137,14 @@ const { count, class: className } = Astro.props;
     }
   }
 
+  /* Tablet only: smaller, tighter titles so they fit the closed tiles */
+  @media (min-width: 800px) and (max-width: 1279.98px) {
+    .tiles :global(.title) {
+      font-size: 32px;
+      letter-spacing: -0.05em;
+    }
+  }
+
   /* ---------- Mobile ---------- */
   @media (max-width: 799.98px) {
     .tiles {

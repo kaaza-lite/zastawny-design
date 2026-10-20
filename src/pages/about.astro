@@ -272,6 +272,14 @@ const techSkills = [
     }
   }
 
+  /* Tablet only: the summary keeps the desktop width (760px), wider than the 496px column */
+  @media (min-width: 800px) and (max-width: 1279.98px) {
+    .summary {
+      width: min(760px, calc(100vw - 2 * var(--content-gutter)));
+      max-width: none;
+    }
+  }
+
   /* ---------- Mobile ---------- */
   @media (max-width: 799.98px) {
     .content {
