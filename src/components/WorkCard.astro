@@ -105,7 +105,7 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
       const scrambles = [...card.querySelectorAll<HTMLElement>('.scramble')].map((el) => ({
         el,
         text: el.parentElement?.querySelector('.scramble-source')?.textContent ?? '',
-        // the title is in CS Ariston Halfpixel, which only has letters
+        // the title is in CS Pacify Halfpixel, which only has letters
         chars: el.classList.contains('scramble--title') ? TITLE_CHARS : SCRAMBLE_CHARS,
       }));
 

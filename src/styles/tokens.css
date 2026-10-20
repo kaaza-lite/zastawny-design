@@ -41,14 +41,14 @@
   --glass-active: rgb(255 255 255 / 0.1); /* active nav item fill */
 
   /* Font families */
-  --font-display: 'CS Ariston Halfpixel', 'Google Sans Flex', system-ui, sans-serif;
+  --font-display: 'CS Pacify Halfpixel', 'Google Sans Flex', system-ui, sans-serif;
   --font-body: 'Google Sans Flex', system-ui, sans-serif;
   --font-tag: 'Cormorant Garamond', Georgia, serif;
 
-  /* Figma's "auto" line height for CS Ariston Halfpixel */
-  --leading-display-auto: 1.09;
+  /* Figma's "auto" line height for CS Pacify Halfpixel */
+  --leading-display-auto: 1.11; /* (790 ascent + 220 descent + 100 gap) / 1000 */
 
-  /* Type: display (CS Ariston Halfpixel, weight 400) */
+  /* Type: display (CS Pacify Halfpixel, weight 400) */
   --text-hero: 96px;          /* home name */
   --text-section: 60px;       /* "experience" */
   --text-card-title: 44px;    /* case study card titles */
