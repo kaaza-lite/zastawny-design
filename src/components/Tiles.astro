@@ -1,0 +1,168 @@
+---
+// A row of case study tiles (WorkCards) that open on hover: on Home (four) and under
+// "Other projects" on case studies (two). The open tile takes about three quarters of the row,
+// the others narrow and hide their text. The picture inside each tile is always the open width
+// and centred, so opening only reveals more of it (and the datamosh canvas never has to resize).
+// Phones: the tiles stack, full width, with their titles.
+interface Props {
+  count: number;
+  class?: string;
+}
+
+const { count, class: className } = Astro.props;
+---
+
+<div class:list={['tiles', className]} style={`--count: ${count}`}>
+  <slot />
+</div>
+
+<script>
+  // Open the tile under the mouse, the focused one, or the tapped one.
+  // On touch, the first tap opens a tile and the second follows its link. On phones links work at once.
+  const stacked = window.matchMedia('(max-width: 799.98px)');
+
+  document.addEventListener('astro:page-load', () => {
+    for (const row of document.querySelectorAll<HTMLElement>('.tiles')) {
+      const cards = [...row.querySelectorAll<HTMLElement>('.card')];
+      const open = (card: HTMLElement | null) => {
+        for (const c of cards) c.classList.toggle('is-open', c === card);
+        row.classList.toggle('has-open', !!card);
+      };
+      // A short pause before opening, so sweeping the mouse across the tiles doesn't open each one on the way
+      let wait = 0;
+      row.addEventListener('pointerleave', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        clearTimeout(wait);
+        open(null);
+      });
+      for (const card of cards) {
+        card.addEventListener('pointerenter', (e) => {
+          if (e.pointerType !== 'mouse') return;
+          clearTimeout(wait);
+          wait = window.setTimeout(() => open(card), 90);
+        });
+        card.addEventListener('focus', () => {
+          if (card.matches(':focus-visible')) open(card);
+        });
+        card.addEventListener('blur', () => open(null));
+        card.addEventListener('click', (e) => {
+          if (stacked.matches || card.classList.contains('is-open')) return;
+          e.preventDefault();
+          open(card);
+        });
+      }
+    }
+  });
+</script>
+
+<style>
+  .tiles {
+    --gap: 20px;
+    --free: calc(100cqw - (var(--count) - 1) * var(--gap));
+    --closed: calc(var(--free) / var(--count));
+    /* Four tiles: three closed tiles and the two gaps between them. Two tiles: three quarters of the row. */
+    --open: calc(var(--free) * 0.75 + (var(--count) - 2) * var(--gap));
+    container-type: inline-size;
+    display: flex;
+    gap: var(--gap);
+    height: 520px;
+  }
+
+  .tiles :global(.card) {
+    position: relative;
+    display: block;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    background: none;
+    transition: flex 800ms cubic-bezier(0.45, 0, 0.2, 1);
+  }
+  .tiles :global(.card.is-open) {
+    flex: 0 0 var(--open);
+  }
+
+  /* FinX (soon) sits on its own dark background */
+  .tiles :global(.card--soon) {
+    background: #0d0d0d;
+  }
+
+  .tiles :global(.thumb) {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: var(--open);
+    height: auto;
+    transform: translateX(-50%);
+  }
+
+  /* Shade behind the title so it reads on light pictures */
+  .tiles :global(.card)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 50%; /* the lower half of the card */
+    background: linear-gradient(to top, rgb(0 0 0 / 1), rgb(0 0 0 / 0));
+    pointer-events: none;
+  }
+
+  /* Title and subtitle at the bottom left, as wide as a closed tile so they never reflow */
+  .tiles :global(.text) {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1;
+    width: calc(var(--closed) - 40px);
+    text-align: left;
+    transition: opacity 300ms;
+  }
+
+  .tiles.has-open :global(.card:not(.is-open) .text) {
+    opacity: 0;
+  }
+
+  /* ---------- Tablet ---------- */
+  @media (max-width: 1279.98px) {
+    /* A tighter gap and inset, so the longest titles fit a closed tile down to 800px */
+    .tiles {
+      --gap: 12px;
+    }
+    .tiles :global(.text) {
+      bottom: 16px;
+      left: 16px;
+      width: calc(var(--closed) - 32px);
+    }
+  }
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 799.98px) {
+    .tiles {
+      flex-direction: column;
+      gap: 12px;
+      height: auto;
+    }
+    .tiles :global(.card),
+    .tiles :global(.card.is-open) {
+      flex: none;
+      height: 320px;
+    }
+    .tiles :global(.thumb) {
+      left: 0;
+      width: 100%;
+      transform: none;
+    }
+    .tiles :global(.text) {
+      right: 20px;
+      bottom: 20px;
+      left: 20px;
+      width: auto;
+    }
+    .tiles :global(.card .text),
+    .tiles :global(.card)::after {
+      opacity: 1 !important;
+    }
+  }
+</style>

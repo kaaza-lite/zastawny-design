@@ -5,6 +5,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Tag from '../components/Tag.astro';
 import WorkCard from '../components/WorkCard.astro';
+import Tiles from '../components/Tiles.astro';
 import Experience from '../components/Experience.astro';
 
 import calastoneThumb from '../assets/work/calastone-thumb.png';
@@ -34,7 +35,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
     </section>
 
     <!-- Case studies -->
-    <section class="work">
+    <Tiles count={4} class="work">
       <WorkCard
         href="/calastone"
         palette="calastone"
@@ -67,7 +68,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
       />
       <!-- The FinX image is already dark and has the card's background, so it's shown whole and not faded -->
       <WorkCard title="FinX" meta="Complex design system for fintech" image={finxThumb} alt="" soon fit="contain" dim={false} sizes="(max-width: 799.98px) calc(100vw - 40px), (max-width: 1279.98px) 75vw, 925px" />
-    </section>
+    </Tiles>
 
     <!-- Experience -->
     <section class="experience">
@@ -82,45 +83,6 @@ import finxThumb from '../assets/work/finx-thumb.png';
   </main>
   <div class="bottom-shade" aria-hidden="true"></div>
 </BaseLayout>
-
-<script>
-  // Case study tiles: open the one under the mouse, the focused one, or the tapped one.
-  // On touch, the first tap opens a tile and the second follows its link. On phones the tiles stack and links work at once.
-  const stacked = window.matchMedia('(max-width: 799.98px)');
-
-  document.addEventListener('astro:page-load', () => {
-    const work = document.querySelector<HTMLElement>('.work');
-    if (!work) return;
-    const cards = [...work.querySelectorAll<HTMLElement>('.card')];
-    const open = (card: HTMLElement | null) => {
-      for (const c of cards) c.classList.toggle('is-open', c === card);
-      work.classList.toggle('has-open', !!card);
-    };
-    // A short pause before opening, so sweeping the mouse across the tiles doesn't open each one on the way
-    let wait = 0;
-    work.addEventListener('pointerleave', (e) => {
-      if (e.pointerType !== 'mouse') return;
-      clearTimeout(wait);
-      open(null);
-    });
-    for (const card of cards) {
-      card.addEventListener('pointerenter', (e) => {
-        if (e.pointerType !== 'mouse') return;
-        clearTimeout(wait);
-        wait = window.setTimeout(() => open(card), 90);
-      });
-      card.addEventListener('focus', () => {
-        if (card.matches(':focus-visible')) open(card);
-      });
-      card.addEventListener('blur', () => open(null));
-      card.addEventListener('click', (e) => {
-        if (stacked.matches || card.classList.contains('is-open')) return;
-        e.preventDefault();
-        open(card);
-      });
-    }
-  });
-</script>
 
 <style>
   .page {
@@ -170,79 +132,11 @@ import finxThumb from '../assets/work/finx-thumb.png';
     color: var(--color-text);
   }
 
-  /* ---------- Case study cards ---------- */
-  /*
-    Four portrait tiles side by side. The hovered (or tapped, or focused) one opens to the width
-    of three closed tiles, the others narrow and hide their text. The picture inside each tile is
-    always the open width and centred, so opening only reveals more of it (and the datamosh
-    canvas never has to resize).
-  */
-  .work {
-    --gap: 20px;
-    --closed: calc((100cqw - 3 * var(--gap)) / 4);
-    --open: calc(3 * var(--closed) + 2 * var(--gap));
-    container-type: inline-size;
-    display: flex;
-    gap: var(--gap);
-    height: 520px;
+  /* ---------- Case study tiles (src/components/Tiles.astro) ---------- */
+  .page :global(.work) {
     margin-top: 60px;
-    padding: 0 var(--gutter);
     margin-bottom: 64px;
-  }
-
-  .work :global(.card) {
-    position: relative;
-    display: block;
-    flex: 1 1 0;
-    min-width: 0;
-    padding: 0;
-    overflow: hidden;
-    background: none;
-    transition: flex 800ms cubic-bezier(0.45, 0, 0.2, 1);
-  }
-  .work :global(.card.is-open) {
-    flex: 0 0 var(--open);
-  }
-
-  /* FinX (soon) sits on its own dark background */
-  .work :global(.card--soon) {
-    background: #0d0d0d;
-  }
-
-  .work :global(.thumb) {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: var(--open);
-    height: auto;
-    transform: translateX(-50%);
-  }
-
-  /* Shade behind the title so it reads on light pictures */
-  .work :global(.card)::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: 50%; /* the lower half of the card */
-    background: linear-gradient(to top, rgb(0 0 0 / 1), rgb(0 0 0 / 0));
-    pointer-events: none;
-  }
-
-  /* Title and subtitle at the bottom left, as wide as a closed tile so they never reflow */
-  .work :global(.text) {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    z-index: 1;
-    width: calc(var(--closed) - 40px);
-    transition: opacity 300ms;
-  }
-
-  .work:global(.has-open) :global(.card:not(.is-open) .text) {
-    opacity: 0;
+    padding: 0 var(--gutter);
   }
 
   /* ---------- Experience ---------- */
@@ -282,16 +176,6 @@ import finxThumb from '../assets/work/finx-thumb.png';
       max-width: 488px;
     }
 
-    /* A tighter gap and inset, so the longest titles fit a closed tile down to 800px */
-    .work {
-      --gap: 12px;
-    }
-    .work :global(.text) {
-      bottom: 16px;
-      left: 16px;
-      width: calc(var(--closed) - 32px);
-    }
-
     /* Figma: a 560px column, 120px in from each side at 800px. Centred at wider tablet widths. */
     .experience {
       width: min(560px, calc(100% - 2 * var(--content-gutter)));
@@ -305,35 +189,11 @@ import finxThumb from '../assets/work/finx-thumb.png';
 
   /* ---------- Mobile ---------- */
   @media (max-width: 799.98px) {
-    /* Cards and experience stay in a 496px column, so wide phones keep side gutters */
-    /* Phones: the tiles stack, full width, with their titles */
-    .work {
-      flex-direction: column;
-      gap: 12px;
-      height: auto;
+    /* Tiles and experience stay in a 496px column, so wide phones keep side gutters */
+    .page :global(.work) {
       max-width: calc(496px + 2 * var(--gutter));
       margin-left: auto;
       margin-right: auto;
-    }
-    .work :global(.card),
-    .work :global(.card.is-open) {
-      flex: none;
-      height: 320px;
-    }
-    .work :global(.thumb) {
-      left: 0;
-      width: 100%;
-      transform: none;
-    }
-    .work :global(.text) {
-      right: 20px;
-      bottom: 20px;
-      left: 20px;
-      width: auto;
-    }
-    .work :global(.card .text),
-    .work :global(.card)::after {
-      opacity: 1 !important;
     }
 
     .experience {
