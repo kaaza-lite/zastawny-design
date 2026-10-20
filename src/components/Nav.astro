@@ -89,7 +89,6 @@ const menu = [
         <a class="menu-item" href={m.href} aria-current={path === m.href ? 'page' : undefined}>
           <img src={m.thumb} alt="" width="56" height="36" loading="lazy" />
           <span class="menu-text"><span class="menu-title">{m.title}</span><span class="menu-meta">{m.meta}</span></span>
-          {path === m.href && <span class="menu-dot" aria-hidden="true"></span>}
         </a>
       ),
     )}
@@ -327,8 +326,8 @@ const menu = [
       0 14px 36px rgb(0 0 0 / 0.5),
       0 2px 8px rgb(0 0 0 / 0.35);
     /* heavy blur plus a slight darkening of whatever is behind keeps the labels readable */
-    -webkit-backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
-    backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     font-family: var(--font-body);
     font-size: var(--text-nav);
     line-height: normal;
@@ -470,8 +469,8 @@ const menu = [
       inset 0 1px 0 var(--glass-highlight),
       0 14px 36px rgb(0 0 0 / 0.5),
       0 2px 8px rgb(0 0 0 / 0.35);
-    -webkit-backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
-    backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     opacity: 0;
     visibility: hidden;
     transform: translateY(-4px);
@@ -526,14 +525,6 @@ const menu = [
   /* The case study you're on: the same fill as the active nav item */
   .menu-item[aria-current='page'] {
     background: var(--glass-active);
-  }
-  .menu-dot {
-    flex: none;
-    width: 6px;
-    height: 6px;
-    margin: 0 8px 0 auto;
-    border-radius: 50%;
-    background: var(--color-accent-2);
   }
 
   @media (hover: hover) and (pointer: fine) {
