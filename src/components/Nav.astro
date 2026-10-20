@@ -47,15 +47,15 @@ const peeking = path === peekPath;
       <span class="tip tip--below" aria-hidden="true">lorem ipsum</span>
     </a>
     <a class="logo" href="/">
-      <span class="logo-full">zastawny</span>
+      <span class="logo-full">Zastawny</span>
       <span class="logo-short" aria-hidden="true">z</span>
     </a>
     <div class="links">
       <span class="highlight" aria-hidden="true"></span>
-      <a href="/" data-key="works" aria-current={active === 'works' ? 'page' : undefined}>works</a>
-      <a href="/about" data-key="about" aria-current={active === 'about' ? 'page' : undefined}>about</a>
+      <a href="/" data-key="works" aria-current={active === 'works' ? 'page' : undefined}>Works<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></a>
+      <a href="/about" data-key="about" aria-current={active === 'about' ? 'page' : undefined}>About</a>
       <a href="https://www.linkedin.com/in/zastawny/" target="_blank" rel="noopener" class="external">
-        <span class="external-label">linkedin</span><span class="external-arrow" aria-hidden="true">⇗</span>
+        <span class="external-label">LinkedIn</span><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></svg>
       </a>
     </div>
   </nav>
@@ -256,9 +256,17 @@ const peeking = path === peekPath;
     text-underline-position: from-font;
   }
 
-  .external-arrow {
-    margin-left: 0.3em;
-    font-size: 11px;
+  /* Icons from Lucide (lucide.dev, ISC licence): chevron-down on Works, arrow-up-right on LinkedIn */
+  .nav-icon {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    margin-left: 4px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   @media (hover: hover) and (pointer: fine) {
