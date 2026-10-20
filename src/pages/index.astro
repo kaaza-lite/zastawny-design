@@ -87,7 +87,6 @@ import finxThumb from '../assets/work/finx-thumb.png';
   // Case study tiles: open the one under the mouse, the focused one, or the tapped one.
   // On touch, the first tap opens a tile and the second follows its link. On phones the tiles stack and links work at once.
   const stacked = window.matchMedia('(max-width: 799.98px)');
-  const firstOpen = window.matchMedia('(min-width: 800px) and (max-width: 1279.98px)');
 
   document.addEventListener('astro:page-load', () => {
     const work = document.querySelector<HTMLElement>('.work');
@@ -97,10 +96,6 @@ import finxThumb from '../assets/work/finx-thumb.png';
       for (const c of cards) c.classList.toggle('is-open', c === card);
       work.classList.toggle('has-open', !!card);
     };
-    // The first tile is shown open on tablets until another one is picked
-    const isOpen = (card: HTMLElement) =>
-      card.classList.contains('is-open') || (firstOpen.matches && !work.classList.contains('has-open') && card === cards[0]);
-
     // A short pause before opening, so sweeping the mouse across the tiles doesn't open each one on the way
     let wait = 0;
     work.addEventListener('pointerleave', (e) => {
@@ -119,7 +114,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
       });
       card.addEventListener('blur', () => open(null));
       card.addEventListener('click', (e) => {
-        if (stacked.matches || isOpen(card)) return;
+        if (stacked.matches || card.classList.contains('is-open')) return;
         e.preventDefault();
         open(card);
       });
@@ -203,7 +198,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
     padding: 0;
     overflow: hidden;
     background: none;
-    transition: flex 500ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition: flex 800ms cubic-bezier(0.45, 0, 0.2, 1);
   }
   .work :global(.card.is-open) {
     flex: 0 0 var(--open);
@@ -224,9 +219,8 @@ import finxThumb from '../assets/work/finx-thumb.png';
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgb(0 0 0 / 0.75), rgb(0 0 0 / 0) 45%);
+    background: linear-gradient(to top, rgb(0 0 0 / 0.2), rgb(0 0 0 / 0) 45%);
     pointer-events: none;
-    transition: opacity 200ms;
   }
 
   /* Title and subtitle at the bottom left, as wide as a closed tile so they never reflow */
@@ -236,11 +230,10 @@ import finxThumb from '../assets/work/finx-thumb.png';
     left: 20px;
     z-index: 1;
     width: calc(var(--closed) - 40px);
-    transition: opacity 200ms;
+    transition: opacity 300ms;
   }
 
-  .work:global(.has-open) :global(.card:not(.is-open) .text),
-  .work:global(.has-open) :global(.card:not(.is-open))::after {
+  .work:global(.has-open) :global(.card:not(.is-open) .text) {
     opacity: 0;
   }
 
@@ -281,19 +274,14 @@ import finxThumb from '../assets/work/finx-thumb.png';
       max-width: 488px;
     }
 
-    /* Closed tiles are too narrow for the titles here, so the first one is open until another is picked */
+    /* A tighter gap and inset, so the longest titles fit a closed tile down to 800px */
     .work {
-      height: 460px;
-    }
-    .work:not(:global(.has-open)) :global(.card:first-child) {
-      flex: 0 0 var(--open);
-    }
-    .work:not(:global(.has-open)) :global(.card:not(:first-child) .text),
-    .work:not(:global(.has-open)) :global(.card:not(:first-child))::after {
-      opacity: 0;
+      --gap: 12px;
     }
     .work :global(.text) {
-      width: calc(var(--open) - 40px);
+      bottom: 16px;
+      left: 16px;
+      width: calc(var(--closed) - 32px);
     }
 
     /* Figma: a 560px column, 120px in from each side at 800px. Centred at wider tablet widths. */
@@ -320,8 +308,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
       margin-right: auto;
     }
     .work :global(.card),
-    .work :global(.card.is-open),
-    .work:not(:global(.has-open)) :global(.card:first-child) {
+    .work :global(.card.is-open) {
       flex: none;
       height: 320px;
     }
@@ -332,6 +319,8 @@ import finxThumb from '../assets/work/finx-thumb.png';
     }
     .work :global(.text) {
       right: 20px;
+      bottom: 20px;
+      left: 20px;
       width: auto;
     }
     .work :global(.card .text),
