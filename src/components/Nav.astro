@@ -408,26 +408,16 @@ const menu = [
     text-underline-position: from-font;
   }
 
-  /* Home: a bold Z on a white circle; on hover the circle glows a little, as the other items brighten */
+  /* Home: a bold Z on a black circle; the Z brightens on hover like the other items */
   .z-mark {
     display: grid;
     place-items: center;
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: #ffffff;
-    color: var(--color-bg);
+    background: #000000;
     font-weight: 700;
     line-height: 1;
-    transition: box-shadow var(--dur-fast) var(--ease-out);
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .home:hover .z-mark {
-      box-shadow: 0 0 0 3px rgb(255 255 255 / 0.25), 0 0 14px rgb(255 255 255 / 0.55);
-    }
-  }
-  .home:focus-visible .z-mark {
-    box-shadow: 0 0 0 3px rgb(255 255 255 / 0.25), 0 0 14px rgb(255 255 255 / 0.55);
   }
 
   /* Icons from Lucide (lucide.dev, ISC licence): chevron-down on Works, arrow-up-right on LinkedIn */
