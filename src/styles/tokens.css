@@ -60,16 +60,16 @@
   --text-body: 16px;
   --text-card-meta: 16px;
   --leading-card-meta: 1.4;
-  --tracking-card-meta: -0.01em;
+  --tracking-card-meta: normal;
   --text-caption: 12px;
 
   /* Type: case study body (16px at every size, unified from Bamboo and Juicyway) and sub-headings */
   --text-case-body: 16px;
   --leading-case-body: 1.4;
-  --tracking-case-body: -0.01em;
+  --tracking-case-body: normal;
   --text-case-h3: 36px;
   --leading-body: 1.4;
-  --tracking-body: -0.01em;
+  --tracking-body: normal;
 
   /* Type: pill tags (Cormorant Garamond Italic) */
   --text-tag: 20px;
@@ -110,7 +110,7 @@
   :root {
     --text-section: 52px;
     --text-job-title: 32px;
-    --tracking-card-meta: -0.005em;
+    --tracking-card-meta: normal;
     --text-case-h3: 32px;
     --page-top: 200px;
     --gutter: 20px;
