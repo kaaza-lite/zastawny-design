@@ -282,6 +282,21 @@ a {
   pointer-events: none;
 }
 
+/* The same shade along the top edge, at half the strength (5% to 0%) */
+.top-shade {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  height: 40vh;
+  background: linear-gradient(to bottom, rgb(113 70 0 / 0.05), rgb(113 70 0 / 0));
+  pointer-events: none;
+}
+.top-shade--dark {
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0.05), rgb(0 0 0 / 0));
+}
+
 /* Glow: a soft light under the pointer while it's over the shade (src/scripts/shade.ts) */
 .bottom-shade::after {
   content: '';
