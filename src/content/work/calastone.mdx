@@ -1,6 +1,6 @@
 ---
-title: calastone
-meta: institutional fintech - fund services
+title: Calastone
+meta: Institutional fintech - fund services
 pageTitle: Calastone case study | Tomasz Zastawny
 description: ETF Servicing and Money Market Services at Calastone, the transaction network the global funds industry runs on, used by HSBC, Federated Hermes, and Allspring.
 palette: calastone
@@ -8,18 +8,18 @@ hero: ./images/calastone/hero.png
 heroPosition: { desktop: '50% 100%', tablet: '95% 50%', mobile: '85% 50%' }
 thumbnail: ../../assets/work/calastone-thumb.png
 details:
-  - label: client
-    lines: [calastone, HSBC and federated hermes]
-  - label: timeframe
-    lines: [2021 - present, full-time]
-  - label: products
-    lines: [ETF servicing, money market services]
-  - label: team
+  - label: Client
+    lines: [Calastone, HSBC and Federated Hermes]
+  - label: Timeframe
+    lines: [2021 - present, Full-time]
+  - label: Products
+    lines: [ETF Servicing, Money Market Services]
+  - label: Team
     lines: ['2 PM, 5 BA', '3 FE, 12 BE, 10 QA', '1–3 designers (varied by phase)']
-  - label: my role
-    lines: ['ETF servicing: sole senior product designer', 'money market services: lead designer + design system rebuild']
-  - label: stack
-    lines: [figma + claude, angular, JS]
+  - label: My role
+    lines: ['ETF Servicing: sole senior product designer', 'Money Market Services: lead designer + design system rebuild']
+  - label: Stack
+    lines: [Figma + Claude, Angular, JS]
 related: [bamboo, juicyway]
 ---
 
@@ -40,11 +40,11 @@ import designSystem1 from './images/calastone/design-system-1.png';
 import designSystem2 from './images/calastone/design-system-2.png';
 import multiTrading from './images/calastone/multi-trading.jpg';
 
-<Section title="the project">
+<Section title="The project">
 
 Calastone is the transaction network the global funds industry runs on. I've spent the last five years inside it, designing two of its institutional products: ETF Servicing, used by HSBC, and Money Market Services, used by Federated Hermes and Allspring.
 
-### etf servicing
+### ETF Servicing
 
 Runs the primary ETF market, the machinery where authorised participants and issuers create and redeem ETF shares. It captures orders, prices them, triggers settlement, and reconciles the share registry with depositories.
 
@@ -52,7 +52,7 @@ HSBC uses it to trade funds and share classes across their management entities i
 
 <Media src={etfServicing} alt={"ETF Servicing order list: order counts by status from pending to settled, above a table of ETF orders with trade and FX progress."} rounded />
 
-### money market services
+### Money Market Services
 
 It's a newer product in the same family, a digital connectivity layer for money market fund investing. It routes trades from treasury systems into fund providers, instructs banks to settle, delivers fund data back, and auto-invests surplus cash.
 
@@ -65,7 +65,7 @@ Both products are designed from one shared design system.
 
 </Section>
 
-<Section title="my role">
+<Section title="My role">
 
 I joined ETF Servicing in 2021 as one of two designers. The first year and a half was mostly upstream work: flow charts, BPMNs, process diagrams, wall maps. We were mapping the mechanics of primary ETF flows before there was a UI to design.
 
@@ -78,7 +78,7 @@ Both products carry the full corporate stakeholder tree: PMs, delivery leads, pr
 
 </Section>
 
-<Section title="the problem">
+<Section title="The problem">
 
 <Media src={problem} alt={"A University of Virginia Fortran program punch card."} ratio={962 / 455} rounded />
 
@@ -90,31 +90,31 @@ The design system rebuild came out of Money Market Services specifically. The DO
 
 The pool clients on Money Market Services are exactly the entities the regulation targeted, and the design system as it stood could not meet AA without a real rebuild. It was a Figma library at v1.4 that had grown up around ETF Servicing, and it showed.
 
-<Carousel slides={[{ src: problem1, alt: "ETF Servicing Create Order form, step one: dealing participant, share class search, and subscription details with estimated amounts.", caption: "ETF servicing order entry screen" }, { src: problem2, alt: "Money Market Services trade entry, step one: account and pool selection, an approaching cutoff warning, and purchase details with bank settlement.", caption: "money market portal trade entry screen" }]} />
+<Carousel slides={[{ src: problem1, alt: "ETF Servicing Create Order form, step one: dealing participant, share class search, and subscription details with estimated amounts.", caption: "ETF Servicing order entry screen" }, { src: problem2, alt: "Money Market Services trade entry, step one: account and pool selection, an approaching cutoff warning, and purchase details with bank settlement.", caption: "Money market portal trade entry screen" }]} />
 
 </Section>
 
-<Section title="the work">
+<Section title="The work">
 
-### the order detail view
+### The order detail view
 
 Most of ETF Servicing's real work happens on a single screen. From it an operator can amend charges, adjust the prefunding date and amount, change settlement dates, and read a complete change log of everything that touched the order. It's the surface the whole product hangs off. It also had to do three things at once: stay dense enough for expert users, stay legible enough that nothing gets missed, and stay forgiving enough that a wrong click can be undone. Holding that balance was the craft problem I came back to for most of my time on the product.
 
-<Carousel slides={[{ src: orderDetail1, alt: "ETF order detail view: order summary, fees, deviations and settlement amounts, mark up and settlement actions, and the trade monitoring table.", caption: "order detailed view" }, { src: orderDetail2, alt: "The order detail summary in two states, Accepted and Priced, with the same fees, deviations and settlement actions.", caption: "the order card has to accommodate a new font size after the WCAG update" }, { src: orderDetail3, alt: "The order detail summary in Confirmed and Settled states, showing how the status, settlement amounts and available actions change.", caption: "and support small desktop resolutions" }]} />
+<Carousel slides={[{ src: orderDetail1, alt: "ETF order detail view: order summary, fees, deviations and settlement amounts, mark up and settlement actions, and the trade monitoring table.", caption: "Order detailed view" }, { src: orderDetail2, alt: "The order detail summary in two states, Accepted and Priced, with the same fees, deviations and settlement actions.", caption: "The order card has to accommodate a new font size after the WCAG update" }, { src: orderDetail3, alt: "The order detail summary in Confirmed and Settled states, showing how the status, settlement amounts and available actions change.", caption: "And support small desktop resolutions" }]} />
 
-### four-eyes approval
+### Four-eyes approval
 
 In institutional fund ops, a second operator has to sign off on a first operator's action before it goes live. That much is standard practice. What varies is the mechanics, and every firm has its own quirks. Designing it well meant sitting with client operations teams and walking through how approvals actually moved on their side, then sketching states and iterating the review flow until it matched. The client signed off on the final process, and it still shapes how approvals move through the product.
 
 <Media src={fourEyesApproval} alt={"Pending approval transactions: an expanded exchange request with bank details and Reject and Approve buttons, above other transactions awaiting approval."} rounded />
 
-### the IDP login
+### The IDP login
 
 Money Market Services runs on Angular, but its login flow is built separately in vanilla JavaScript because it hooks into an identity provider sitting outside the main app stack. A login screen sounds like a minor surface. It isn't. For an institutional product it's where a client first sees the brand tenant they signed up for, and where a lot of the product's trust posture either lands or doesn't. Designing it meant handling brand variability, session and error states, and the specific handshake with the provider, none of it treated as boilerplate.
 
 <Media src={idpLogin} alt={"INVEST PA login screen: a photo of the Pennsylvania State Capitol beside the username and password form."} rounded />
 
-### the design system rebuild
+### The design system rebuild
 
 This was the systems-thinking spine of the last two years. The starting point was that v1.4 Figma library, which now had to bend around a second product with a different brand, a higher accessibility bar, and a faster pace of new screens. Forking it would have been the easy call. I drove a rebuild instead.
 
@@ -126,7 +126,7 @@ We ran it as tight iteration cycles between designers and engineers. Frequent sy
 
 <Carousel slides={[{ src: designSystem1, alt: "Figma file for the design system: a page per component for the WCAG AA library updates, and a page per screen for the Money Market Services accessibility refactor.", caption: "Figma from inside during the WCAG work" }, { src: designSystem2, alt: "Figma board from WCAG retesting: rounds of automated, keyboard, modal, validation, screen reader and responsive checks, with issues marked in red.", caption: "WCAG audit during the accessibility roll out" }]} />
 
-### multi-trading and the scoping tradeoff
+### Multi-trading and the scoping tradeoff
 
 Money Market Services' bulk order screen is an inline form inside a table, where operators enter large batches of trades in a single pass, choosing participants and accounts, trade types, entry basis, settlement methods, and cutoff windows on every row. It's the one surface where we accepted a tradeoff on WCAG AA.
 
@@ -136,7 +136,7 @@ Keyboard navigation, ARIA on non-table interactive elements, colour contrast, an
 
 </Section>
 
-<Section title="what shipped">
+<Section title="What shipped">
 
 - Global Custodian's 2025 ETF servicing survey put HSBC at 5.92 overall, ahead of both its own 2024 score and the global average. ETF Workflow Process gained 62 basis points, reporting to authorised participants gained 70. The survey credited the bank's own focus alongside the new digital ETF servicing platform it runs on.
 - Clients in that survey singled out order capture and data delivery. Those are the screens I own.

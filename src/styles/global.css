@@ -245,3 +245,16 @@ a {
   height: 100%;
   pointer-events: none;
 }
+
+/* Warm shade along the bottom edge of the window (Home and About): #714600 at 10% fading to 0%.
+   Under the page content (main is z-index 2), so it only tints the background. */
+.bottom-shade {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  height: 40vh;
+  background: linear-gradient(to top, rgb(113 70 0 / 0.1), rgb(113 70 0 / 0));
+  pointer-events: none;
+}

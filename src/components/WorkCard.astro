@@ -21,15 +21,16 @@ interface Props {
   heading?: 'h2' | 'h3'; // title level: h2 on Home, h3 under "other projects"
   fit?: 'cover' | 'contain'; // cover fills the frame (cropped), contain shows the whole image
   dim?: boolean;    // fade the image to 25%, the "soon" look (on by default for soon cards)
+  sizes?: string;   // image sizes attribute, when the card isn't in the usual two-column grid
 }
 
-const { title, meta, image, alt, href, palette = 'neutral', soon = false, tint = false, eager = false, heading = 'h2', fit = 'cover', dim = soon } = Astro.props;
+const { title, meta, image, alt, href, palette = 'neutral', soon = false, tint = false, eager = false, heading = 'h2', fit = 'cover', dim = soon, sizes: sizesProp } = Astro.props;
 const Tagname = href ? 'a' : 'div';
 const Heading = heading;
 const ramp = palettes[palette];
 
-const img = await getImage({ src: image, widths: [320, 480, 640, 800, 1120], format: 'webp' });
-const sizes = '(max-width: 799.98px) calc(100vw - 80px), (max-width: 1279.98px) calc(50vw - 82px), 558px';
+const img = await getImage({ src: image, widths: [320, 480, 640, 800, 1120, 1600], format: 'webp' });
+const sizes = sizesProp ?? '(max-width: 799.98px) calc(100vw - 80px), (max-width: 1279.98px) calc(50vw - 82px), 558px';
 
 // Ramp colours as CSS variables, for the title glitch
 const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
@@ -67,7 +68,7 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
           </>
         )}
       </Heading>
-      {soon && <Tag tone="soon">soon</Tag>}
+      {soon && <Tag tone="soon">Soon</Tag>}
     </div>
     <p class="meta">
       <span class="scramble-source">{meta}</span>
@@ -330,7 +331,7 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
     font-size: var(--text-card-meta);
     line-height: var(--leading-card-meta);
     letter-spacing: var(--tracking-card-meta);
-    color: var(--color-text-muted);
+    color: var(--color-text);
   }
 
   /*
