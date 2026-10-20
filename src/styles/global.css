@@ -180,8 +180,8 @@ a {
   cursor: pointer;
 }
 .icon-button svg {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -206,7 +206,7 @@ a {
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
 }
-/* 44px round buttons with white 18px icons (Lucide) */
+/* 44px round buttons with white 14px icons (Lucide) */
 .pill-button {
   display: grid;
   place-items: center;
@@ -221,8 +221,8 @@ a {
   transition: background-color var(--dur-fast) var(--ease-out);
 }
 .pill-button svg {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
