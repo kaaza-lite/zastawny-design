@@ -148,10 +148,17 @@ const menu = [
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Put the pill exactly behind a link
+    // Where the indicator sits for a link: right behind it, or a 44px circle centred on the Z
+    const ROUND = 44;
+    const box = (link: HTMLElement) =>
+      link.classList.contains('home')
+        ? { left: link.offsetLeft + (link.offsetWidth - ROUND) / 2, width: ROUND }
+        : { left: link.offsetLeft, width: link.offsetWidth };
     const placeOn = (link: HTMLElement) => {
-      pill.style.left = `${link.offsetLeft}px`;
-      pill.style.width = `${link.offsetWidth}px`;
+      const b = box(link);
+      pill.style.left = `${b.left}px`;
+      pill.style.width = `${b.width}px`;
+      pill.classList.toggle('is-round', link.classList.contains('home'));
     };
 
     let previous: HTMLElement | null = null;
@@ -168,8 +175,10 @@ const menu = [
 
     // Slide: start transformed onto the previous link, then animate to no transform
     if (previous && !reduceMotion) {
-      const dx = previous.offsetLeft - current.offsetLeft;
-      const sx = previous.offsetWidth / current.offsetWidth;
+      const from = box(previous);
+      const to = box(current);
+      const dx = from.left - to.left;
+      const sx = from.width / to.width;
       pill.style.transform = `translateX(${dx}px) scaleX(${sx})`;
       pill.getBoundingClientRect(); // commit the start position
       pill.classList.add('is-animated');
@@ -405,7 +414,7 @@ const menu = [
   @media (max-width: 359.98px) {
     .links a,
     .links button {
-      padding: 0 10px;
+      padding: 0 8px;
     }
   }
 
@@ -415,14 +424,14 @@ const menu = [
     text-underline-position: from-font;
   }
 
-  /* Home: a bold Z on a black circle; the Z brightens on hover like the other items */
+  /* Home: a bold Z on a 40px #121212 circle; the Z brightens on hover like the other items */
   .z-mark {
     display: grid;
     place-items: center;
-    width: 28px;
-    height: 28px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: #000000;
+    background: #121212;
     font-weight: 700;
     line-height: 1;
   }
@@ -466,6 +475,14 @@ const menu = [
     background: var(--glass-active);
     transform-origin: left center;
     opacity: 0;
+  }
+
+  /* On Home: a 44px circle around the 40px Z */
+  .highlight.is-round {
+    top: calc(50% - 22px);
+    bottom: auto;
+    height: 44px;
+    border-radius: 50%;
   }
 
   .links.js-ready .highlight {
