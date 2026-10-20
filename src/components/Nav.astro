@@ -10,6 +10,7 @@
 import { getEntry } from 'astro:content';
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
+import Tag from './Tag.astro';
 import finxThumb from '../assets/work/finx-thumb.png';
 
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
@@ -82,7 +83,7 @@ const menu = [
         <div class="menu-item menu-item--soon" aria-disabled="true">
           <img src={m.thumb} alt="" width="56" height="36" loading="lazy" />
           <span class="menu-text"><span class="menu-title">{m.title}</span><span class="menu-meta">{m.meta}</span></span>
-          <span class="menu-soon">Soon</span>
+          <span class="menu-soon"><Tag tone="soon">Soon</Tag></span>
         </div>
       ) : (
         <a class="menu-item" href={m.href} aria-current={path === m.href ? 'page' : undefined}>
@@ -522,15 +523,9 @@ const menu = [
     color: inherit;
   }
 
-  /* Case study links in white (FinX, not a link yet, stays grey) */
-  a.menu-item {
-    color: var(--color-accent-2);
-  }
-
   /* The case study you're on: the same fill as the active nav item */
   .menu-item[aria-current='page'] {
     background: var(--glass-active);
-    color: var(--color-accent-2);
   }
   .menu-dot {
     flex: none;
@@ -558,13 +553,8 @@ const menu = [
   }
   .menu-soon {
     display: flex;
-    align-items: center;
-    height: 20px;
+    flex: none;
     margin: 0 8px 0 auto;
-    font-family: var(--font-body);
-    font-size: 12px;
-    line-height: 1;
-    color: var(--color-text);
   }
 
   @media (prefers-reduced-motion: reduce) {
