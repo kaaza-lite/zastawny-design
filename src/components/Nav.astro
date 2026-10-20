@@ -198,7 +198,6 @@ const menu = [
     if (!header || !works || !menu) return;
 
     let closeTimer = 0;
-    let quiet = false; // Escape hands focus back to Works without reopening the menu
     // Centred under "Works", kept 16px inside the window
     const place = () => {
       const h = header.getBoundingClientRect();
@@ -240,37 +239,53 @@ const menu = [
       if (menu.classList.contains('is-open')) close();
       else open();
     });
-    // Keyboard: open when "Works" is focused, close when focus leaves the menu
-    works.addEventListener('focus', () => {
-      if (!quiet && works.matches(':focus-visible')) open();
-      quiet = false;
+    // Keyboard: Tab moves along the nav as usual. On "Works", Enter or Space opens the menu,
+    // the arrow keys move through it, Escape closes it, and Tab leaves it for the next nav item.
+    const items = [...menu.querySelectorAll<HTMLElement>('a.menu-item')];
+    for (const item of items) item.tabIndex = -1; // reached with the arrow keys, not Tab
+    const after = works.nextElementSibling as HTMLElement | null;
+    const isOpen = () => menu.classList.contains('is-open');
+    const focusItem = (i: number) => items[(i + items.length) % items.length]?.focus();
+    const openWithKeys = () => {
+      open();
+      const current = items.findIndex((item) => item.getAttribute('aria-current') === 'page');
+      focusItem(Math.max(current, 0));
+    };
+
+    works.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (isOpen() && e.key !== 'ArrowDown') close();
+        else openWithKeys();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        open();
+        focusItem(items.length - 1);
+      }
+    });
+    menu.addEventListener('keydown', (e) => {
+      const at = items.indexOf(document.activeElement as HTMLElement);
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        focusItem(at + (e.key === 'ArrowDown' ? 1 : -1));
+      } else if (e.key === 'Home' || e.key === 'End') {
+        e.preventDefault();
+        focusItem(e.key === 'Home' ? 0 : items.length - 1);
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        close();
+        (e.shiftKey ? works : (after ?? works)).focus();
+      }
+    });
+    header.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen()) {
+        close();
+        works.focus();
+      }
     });
     header.addEventListener('focusout', (e) => {
       const next = e.relatedTarget as Node | null;
-      if (!next || !(works.contains(next) || menu.contains(next))) close();
-    });
-    // The menu comes after the nav in the page, so Tab is steered: Works → the menu → About
-    const items = [...menu.querySelectorAll<HTMLElement>('a.menu-item')];
-    const after = works.nextElementSibling as HTMLElement | null;
-    header.addEventListener('keydown', (e) => {
-      if (!menu.classList.contains('is-open')) return;
-      if (e.key === 'Escape') {
-        close();
-        quiet = document.activeElement !== works;
-        works.focus();
-      } else if (e.key === 'Tab') {
-        const at = document.activeElement;
-        if (at === works && !e.shiftKey && items[0]) {
-          e.preventDefault();
-          items[0].focus();
-        } else if (at === items[0] && e.shiftKey) {
-          e.preventDefault();
-          works.focus();
-        } else if (at === items[items.length - 1] && !e.shiftKey && after) {
-          e.preventDefault();
-          after.focus();
-        }
-      }
+      if (next && !(works.contains(next) || menu.contains(next))) close();
     });
     // A tap or click anywhere else closes it
     document.addEventListener('pointerdown', (e) => {
@@ -319,7 +334,7 @@ const menu = [
     /* heavy blur plus a slight darkening of whatever is behind keeps the labels readable */
     -webkit-backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
     backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     font-size: var(--text-nav);
     line-height: normal;
     letter-spacing: 0;
@@ -502,7 +517,7 @@ const menu = [
     min-width: 0;
   }
   .menu-title {
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     font-size: 14px;
     line-height: 1.2;
   }
