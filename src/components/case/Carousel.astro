@@ -57,9 +57,10 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
 
   <div class="controls">
     <p class="caption" aria-live="polite">{slides[0]?.caption ?? ''}</p>
-    <div class="pill">
-      <button type="button" class="pill-button" data-step="-1" aria-label="Previous image">
+    <div class="glass-pill pill">
+      <button type="button" class="pill-button tip-host" data-step="-1" aria-label="Previous image">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+        <span class="tip" aria-hidden="true">Previous</span>
       </button>
       <div class="dots">
         {Array.from({ length: count }, (_, i) => (
@@ -68,14 +69,16 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
           </button>
         ))}
       </div>
-      <button type="button" class="pill-button" data-step="1" aria-label="Next image">
+      <button type="button" class="pill-button tip-host" data-step="1" aria-label="Next image">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+        <span class="tip" aria-hidden="true">Next</span>
       </button>
       {slides.length > 0 && (
         <>
           <span class="divider" aria-hidden="true"></span>
-          <button type="button" class="pill-button" data-expand aria-label="View full screen" aria-haspopup="dialog">
+          <button type="button" class="pill-button tip-host" data-expand aria-label="View full screen" aria-haspopup="dialog">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6" /><path d="M9 21H3v-6" /><path d="M21 3l-7 7" /><path d="M3 21l7-7" /></svg>
+            <span class="tip tip--end" aria-hidden="true">Full screen</span>
           </button>
         </>
       )}
@@ -84,16 +87,18 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
 
   {slides.length > 0 && (
     <dialog class="viewer" aria-label="Image viewer">
-      <button type="button" class="pill-button viewer-close" data-close aria-label="Close full screen">
+      <button type="button" class="icon-button tip-host viewer-close" data-close aria-label="Close full screen">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+        <span class="tip tip--left" aria-hidden="true">Close</span>
       </button>
       <div class="viewer-body">
         <img class="viewer-image" alt="" />
         <div class="controls viewer-controls">
           <p class="caption" aria-live="polite"></p>
-          <div class="pill">
-            <button type="button" class="pill-button" data-step="-1" aria-label="Previous image">
+          <div class="glass-pill pill">
+            <button type="button" class="pill-button tip-host" data-step="-1" aria-label="Previous image">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+              <span class="tip" aria-hidden="true">Previous</span>
             </button>
             <div class="dots">
               {Array.from({ length: count }, (_, i) => (
@@ -102,8 +107,9 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
                 </button>
               ))}
             </div>
-            <button type="button" class="pill-button" data-step="1" aria-label="Next image">
+            <button type="button" class="pill-button tip-host" data-step="1" aria-label="Next image">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+              <span class="tip tip--end" aria-hidden="true">Next</span>
             </button>
           </div>
         </div>
@@ -290,57 +296,10 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
     color: var(--color-text);
   }
 
-  /* ---------- Control pill: the nav's glass ---------- */
+  /* The control pill (.glass-pill and .pill-button are in global.css) */
   .pill {
-    display: flex;
-    flex: none;
-    align-items: center;
-    padding: 3px;
     margin-left: auto;
-    background:
-      linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
-      var(--glass-tint);
-    border: 1px solid var(--glass-rim);
-    border-radius: var(--radius-pill);
-    box-shadow:
-      inset 0 1px 0 var(--glass-highlight),
-      inset 0 -1px 0 rgb(255 255 255 / 0.05);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
   }
-
-  /* 44px round buttons, white 18px icons */
-  .pill-button {
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--color-accent-2);
-    cursor: pointer;
-    transition: background-color var(--dur-fast) var(--ease-out);
-  }
-  .pill-button svg {
-    width: 18px;
-    height: 18px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .pill-button:hover {
-      background: var(--glass-active);
-    }
-  }
-  .pill-button:active {
-    background: rgb(255 255 255 / 0.16);
-  }
-  .pill-button:focus-visible,
   .dot:focus-visible {
     outline-offset: -2px;
     box-shadow: none;
@@ -389,7 +348,7 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
     width: 1px;
     height: 24px;
     margin: 0 6px;
-    background: var(--glass-rim);
+    background: rgb(255 255 255 / 0.18);
   }
 
   /* ---------- Full screen ---------- */
@@ -436,13 +395,6 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
     position: fixed;
     top: 24px;
     right: 24px;
-    background:
-      linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
-      var(--glass-tint);
-    border: 1px solid var(--glass-rim);
-    box-shadow: inset 0 1px 0 var(--glass-highlight);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
   }
   .viewer[open]::backdrop {
     animation: viewer-fade var(--dur-base) var(--ease-out);

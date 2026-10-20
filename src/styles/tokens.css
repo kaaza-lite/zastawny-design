@@ -36,7 +36,7 @@
   --glass-tint: rgb(18 18 18 / 0.55);   /* see-through; the backdrop darkening keeps labels legible */
   --glass-sheen-top: rgb(255 255 255 / 0.14);
   --glass-sheen-bottom: rgb(255 255 255 / 0.03);
-  --glass-rim: rgb(255 255 255 / 0.18);
+  --glass-rim: transparent; /* no visible border on glass */
   --glass-highlight: rgb(255 255 255 / 0.35);
   --glass-filter: blur(20px) saturate(200%) brightness(0.7);
   --glass-active: rgb(255 255 255 / 0.1); /* active nav item fill */

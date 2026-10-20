@@ -1,16 +1,14 @@
 ---
-// Full-size image preview, opened by the enlarge buttons on case study images.
+// Full screen image, opened by the full screen buttons under case study images.
 // A native <dialog>: keeps keyboard focus inside while open, closes on Escape,
 // and returns focus to the button that opened it. Clicking the dark scrim also closes it.
 ---
 
-<dialog class="lightbox" aria-label="image preview">
+<dialog class="lightbox" aria-label="Image viewer">
   <img class="lightbox-image" alt="" />
-  <button type="button" class="icon-button tip-host lightbox-close" aria-label="close">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-      <path d="M6 6l12 12M18 6 6 18"></path>
-    </svg>
-    <span class="tip tip--left" aria-hidden="true">close</span>
+  <button type="button" class="icon-button tip-host lightbox-close" aria-label="Close full screen">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+    <span class="tip tip--left" aria-hidden="true">Close</span>
   </button>
 </dialog>
 

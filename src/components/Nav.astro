@@ -1,12 +1,12 @@
 ---
 // Floating glass pill at the top of the screen.
-// Same items and labels as the Figma nav. "works" is the Home page.
+// "Z" is Home; "Works" only opens the case study menu; About; LinkedIn.
 //
 // The active item sits on a light fill that slides from the previous page's item
 // to the current one on page load (transform only).
 //
-// "Works" opens a menu of the case studies (hover or keyboard on desktop, tap on touch),
-// with the current one highlighted. Clicking it on desktop still goes to Home.
+// "Works" opens a menu of the case studies (click, tap, Enter or Space) on every screen size,
+// with the current one highlighted.
 import { getEntry } from 'astro:content';
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
@@ -15,8 +15,8 @@ import finxThumb from '../assets/work/finx-thumb.png';
 
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 const caseStudies = ['/calastone', '/bamboo', '/juicyway'];
-// Home and the case studies highlight "works"; About highlights "about"
-const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '/about' ? 'about' : null;
+// Home highlights "Z", the case studies "Works", About "About"
+const active = path === '/' ? 'home' : caseStudies.includes(path) ? 'works' : path === '/about' ? 'about' : null;
 // The keyhole leads to the experimental page (placeholder name for now)
 const peekPath = '/lorem-ipsum';
 const peeking = path === peekPath;
@@ -37,7 +37,7 @@ const menu = [
 <header class="site-nav">
   <nav class="nav">
     <!-- Keyhole: a worn 20px icon whose eye follows the pointer -->
-    <a class="peek tip-host" href={peekPath} aria-label="lorem ipsum" aria-current={peeking ? 'page' : undefined}>
+    <a class="peek tip-host" href={peekPath} aria-label="Lorem ipsum" aria-current={peeking ? 'page' : undefined}>
       <svg class="keyhole" viewBox="0 0 32 32" width="20" height="20" aria-hidden="true">
         <defs>
           <filter id="keyhole-wear" x="-10%" y="-10%" width="120%" height="120%">
@@ -64,11 +64,12 @@ const menu = [
           </g>
         </g>
       </svg>
-      <span class="tip tip--below" aria-hidden="true">lorem ipsum</span>
+      <span class="tip tip--below" aria-hidden="true">Lorem ipsum</span>
     </a>
     <div class="links">
       <span class="highlight" aria-hidden="true"></span>
-      <a href="/" data-key="works" class="works" aria-haspopup="true" aria-expanded="false" aria-controls="works-menu" aria-current={active === 'works' ? 'page' : undefined}>Works<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></a>
+      <a href="/" data-key="home" class="home" aria-label="Home" aria-current={active === 'home' ? 'page' : undefined}>Z</a>
+      <button type="button" data-key="works" class="works" aria-haspopup="true" aria-expanded="false" aria-controls="works-menu" data-current={active === 'works' ? '' : undefined}>Works<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></button>
       <a href="/about" data-key="about" aria-current={active === 'about' ? 'page' : undefined}>About</a>
       <a href="https://www.linkedin.com/in/zastawny/" target="_blank" rel="noopener" class="external">
         <span class="external-label">LinkedIn</span><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></svg>
@@ -139,7 +140,7 @@ const menu = [
     const pill = links?.querySelector<HTMLElement>('.highlight');
     if (!links || !pill) return;
 
-    const current = links.querySelector<HTMLElement>('a[aria-current="page"]');
+    const current = links.querySelector<HTMLElement>('[aria-current="page"], [data-current]');
     if (!current) {
       pill.hidden = true;
       return;
@@ -157,7 +158,7 @@ const menu = [
     try {
       const key = sessionStorage.getItem(STORAGE_KEY);
       if (key && key !== current.dataset.key) {
-        previous = links.querySelector<HTMLElement>(`a[data-key="${key}"]`);
+        previous = links.querySelector<HTMLElement>(`[data-key="${key}"]`);
       }
       sessionStorage.setItem(STORAGE_KEY, current.dataset.key ?? '');
     } catch {}
@@ -184,16 +185,14 @@ const menu = [
   // On the first load and after every page change
   document.addEventListener('astro:page-load', setup);
 
-  // "Works" menu: opens on hover or keyboard focus on desktop, on tap on touch screens
-  const hoverable = window.matchMedia('(hover: hover) and (pointer: fine)');
+  // "Works" menu: a click or tap on "Works" opens and closes it, on every screen size
 
   function setupMenu() {
     const header = document.querySelector<HTMLElement>('.site-nav');
-    const works = header?.querySelector<HTMLAnchorElement>('.works');
+    const works = header?.querySelector<HTMLButtonElement>('.works');
     const menu = header?.querySelector<HTMLElement>('.works-menu');
     if (!header || !works || !menu) return;
 
-    let closeTimer = 0;
     // Exactly as wide as the nav pill, right under it
     const place = () => {
       const nav = header.querySelector<HTMLElement>('.nav')!;
@@ -201,35 +200,16 @@ const menu = [
       menu.style.width = `${nav.offsetWidth}px`;
     };
     const open = () => {
-      clearTimeout(closeTimer);
       if (menu.classList.contains('is-open')) return;
       place();
       menu.classList.add('is-open');
       works.setAttribute('aria-expanded', 'true');
     };
     const close = () => {
-      clearTimeout(closeTimer);
       menu.classList.remove('is-open');
       works.setAttribute('aria-expanded', 'false');
     };
-    // A short grace period, so the pointer can cross the gap between the nav and the menu
-    const closeSoon = () => {
-      clearTimeout(closeTimer);
-      closeTimer = window.setTimeout(close, 200);
-    };
-
-    for (const el of [works, menu]) {
-      el.addEventListener('pointerenter', (e) => {
-        if (e.pointerType === 'mouse' && hoverable.matches) open();
-      });
-      el.addEventListener('pointerleave', (e) => {
-        if (e.pointerType === 'mouse' && hoverable.matches) closeSoon();
-      });
-    }
-    // Touch: the first tap opens the menu, a second tap on "Works" closes it
-    works.addEventListener('click', (e) => {
-      if (hoverable.matches) return;
-      e.preventDefault();
+    works.addEventListener('click', () => {
       if (menu.classList.contains('is-open')) close();
       else open();
     });
@@ -335,7 +315,8 @@ const menu = [
     color: var(--color-text);
   }
 
-  .links a {
+  .links a,
+  .links button {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
@@ -376,19 +357,27 @@ const menu = [
   }
 
   /* 22px either side of each link and 8px inside the pill: 40px wider than the labels alone need */
-  .links a {
+  .links a,
+  .links button {
     position: relative;
     z-index: 1;
     padding: 0 22px;
   }
+  .links button {
+    border: 0;
+    background: none;
+    font: inherit;
+    cursor: pointer;
+  }
 
-  /* Very narrow phones (under 360px): the tighter spacing, so the pill still fits */
-  @media (max-width: 359.98px) {
+  /* Phones under 420px: tighter spacing, so the pill fits with Z, Works, About and LinkedIn */
+  @media (max-width: 419.98px) {
     .nav {
       padding: 0 6px;
     }
-    .links a {
-      padding: 0 16px;
+    .links a,
+    .links button {
+      padding: 0 12px;
     }
   }
 
@@ -412,12 +401,14 @@ const menu = [
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .links a:hover {
+    .links a:hover,
+    .links button:hover {
       color: var(--color-accent-2);
     }
   }
 
-  .links a:focus-visible {
+  .links a:focus-visible,
+  .links button:focus-visible {
     color: var(--color-accent-2);
     outline-offset: -2px;
     box-shadow: none;
@@ -446,7 +437,8 @@ const menu = [
   }
 
   /* Without JavaScript, mark the active link directly */
-  .links:not(.js-ready) a[aria-current='page'] {
+  .links:not(.js-ready) [aria-current='page'],
+  .links:not(.js-ready) [data-current] {
     background: var(--glass-active);
   }
 

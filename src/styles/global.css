@@ -86,11 +86,13 @@ a {
   left: 50%;
   z-index: 2;
   padding: 6px 12px;
-  background: var(--glass-tint);
+  /* Nearly opaque: inside a glass button the backdrop blur can't see the page, so the fill does the work */
+  background:
+    linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
+    rgb(24 24 24 / 0.92);
   border: 1px solid var(--glass-rim);
   border-radius: var(--radius-pill);
-  -webkit-backdrop-filter: var(--glass-filter);
-  backdrop-filter: var(--glass-filter);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
   font-family: var(--font-body);
   font-style: normal;
   font-weight: 300;
@@ -178,8 +180,66 @@ a {
   cursor: pointer;
 }
 .icon-button svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Glass control pill (slider controls, image full screen button): the nav's glass, 3px around 44px buttons */
+.glass-pill {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding: 3px;
+  background:
+    linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
+    var(--glass-tint);
+  border: 1px solid var(--glass-rim);
+  border-radius: var(--radius-pill);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    inset 0 -1px 0 rgb(255 255 255 / 0.05);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+/* 44px round buttons with white 18px icons (Lucide) */
+.pill-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-accent-2);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.pill-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pill-button:hover {
+    background: var(--glass-active);
+  }
+}
+.pill-button:active {
+  background: rgb(255 255 255 / 0.16);
+}
+.pill-button:focus-visible {
+  outline-offset: -2px;
+  box-shadow: none;
 }
 @media (hover: hover) and (pointer: fine) {
   .icon-button:hover {
@@ -285,14 +345,14 @@ a {
   pointer-events: none;
 }
 
-/* The same shade along the top edge, at half the strength (5% to 0%) */
+/* The same shade along the top edge, at half the strength (5% to 0%), 15% of the window high */
 .top-shade {
   position: fixed;
   top: 0;
   right: 0;
   left: 0;
   z-index: 1;
-  height: 40vh;
+  height: 15vh;
   background: linear-gradient(to bottom, rgb(113 70 0 / 0.05), rgb(113 70 0 / 0));
   pointer-events: none;
 }
@@ -309,8 +369,20 @@ a {
   opacity: 0;
   transition: opacity 600ms ease;
 }
-.bottom-shade.is-glowing::after {
+.top-shade::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 480px 100% at var(--glow-x, 50%) 0%, rgb(113 70 0 / 0.3), rgb(113 70 0 / 0));
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+.bottom-shade.is-glowing::after,
+.top-shade.is-glowing::after {
   opacity: 1;
+}
+.top-shade--dark::after {
+  display: none;
 }
 
 /* Case studies: the same shade in black */
