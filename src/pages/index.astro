@@ -29,6 +29,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
         <p class="summary">
           12 years in design, working across UX, UI and systems. From trading infrastructure to consumer apps in
           emerging markets, I’ve spent that time where the rules matter and small UI decisions carry real weight.
+          AI-native in how I work, accessible by default in what I ship.
         </p>
         <span class="status-pill" data-pill-group><span data-pill><Tag dot>Open to work</Tag></span></span>
       </div>
@@ -81,6 +82,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
       <p>zastawny ©2026</p>
     </footer>
   </main>
+  <div class="top-shade" aria-hidden="true"></div>
   <div class="bottom-shade" aria-hidden="true"></div>
 </BaseLayout>
 
@@ -117,6 +119,8 @@ import finxThumb from '../assets/work/finx-thumb.png';
   }
 
   .role {
+    font-family: var(--font-display);
+    font-size: 20px;
     color: var(--color-text);
   }
 
@@ -128,7 +132,8 @@ import finxThumb from '../assets/work/finx-thumb.png';
   }
 
   .summary {
-    max-width: 524px;
+    max-width: 820px;
+    font-size: 20px;
     color: var(--color-text);
   }
 
@@ -172,10 +177,6 @@ import finxThumb from '../assets/work/finx-thumb.png';
 
   /* ---------- Tablet ---------- */
   @media (max-width: 1279.98px) {
-    .summary {
-      max-width: 488px;
-    }
-
     /* Figma: a 560px column, 120px in from each side at 800px. Centred at wider tablet widths. */
     .experience {
       width: min(560px, calc(100% - 2 * var(--content-gutter)));
@@ -184,6 +185,13 @@ import finxThumb from '../assets/work/finx-thumb.png';
 
     .experience :global(.jobs) {
       padding: 0;
+    }
+  }
+
+  /* Tablet only: the name stays on one line (about 600px at 68px) */
+  @media (min-width: 800px) and (max-width: 1279.98px) {
+    h1 {
+      white-space: nowrap;
     }
   }
 

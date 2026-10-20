@@ -126,13 +126,11 @@ const menu = [
     if (!header || !works || !menu) return;
 
     let closeTimer = 0;
-    // Centred under "Works", kept 16px inside the window
+    // Exactly as wide as the nav pill, right under it
     const place = () => {
-      const h = header.getBoundingClientRect();
-      const w = works.getBoundingClientRect();
-      const width = menu.offsetWidth;
-      const left = Math.min(Math.max(w.left + w.width / 2 - width / 2, 16), window.innerWidth - 16 - width);
-      menu.style.left = `${left - h.left}px`;
+      const nav = header.querySelector<HTMLElement>('.nav')!;
+      menu.style.left = `${nav.offsetLeft}px`;
+      menu.style.width = `${nav.offsetWidth}px`;
     };
     const open = () => {
       clearTimeout(closeTimer);
@@ -455,10 +453,8 @@ const menu = [
     align-items: center;
     height: 20px;
     margin: 0 8px 0 auto;
-    padding-bottom: 2px; /* Cormorant sits low in its box */
-    font-family: var(--font-tag);
-    font-style: italic;
-    font-size: 13px;
+    font-family: var(--font-body);
+    font-size: 12px;
     line-height: 1;
     color: var(--color-text);
   }
@@ -471,16 +467,4 @@ const menu = [
     }
   }
 
-  /* Mobile */
-  @media (max-width: 799.98px) {
-    .site-nav {
-      top: 16px;
-    }
-    .nav {
-      gap: 8px;
-    }
-    .links a {
-      padding: 0 10px;
-    }
-  }
 </style>

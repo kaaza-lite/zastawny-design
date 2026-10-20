@@ -58,6 +58,7 @@ const { count, class: className } = Astro.props;
 <style>
   .tiles {
     --gap: 20px;
+    --title-size: var(--text-card-title);
     --free: calc(100cqw - (var(--count) - 1) * var(--gap));
     --closed: calc(var(--free) / var(--count));
     /* Four tiles: three closed tiles and the two gaps between them. Two tiles: three quarters of the row. */
@@ -104,7 +105,7 @@ const { count, class: className } = Astro.props;
     right: 0;
     bottom: 0;
     left: 0;
-    height: 50%; /* the lower half of the card */
+    height: 260px; /* half a desktop tile, the same on phones so the title gets the same shade */
     background: linear-gradient(to top, rgb(0 0 0 / 1), rgb(0 0 0 / 0));
     pointer-events: none;
   }
@@ -116,6 +117,9 @@ const { count, class: className } = Astro.props;
     left: 20px;
     z-index: 1;
     width: calc(var(--closed) - 40px);
+    /* Room for the title and two lines of subtitle, so every title sits on the same line
+       whether its subtitle takes one line or two */
+    min-height: calc(1.3 * var(--title-size) + 4px + 2 * var(--leading-card-meta) * var(--text-card-meta));
     text-align: left;
     transition: opacity 300ms;
   }
@@ -134,6 +138,17 @@ const { count, class: className } = Astro.props;
       bottom: 16px;
       left: 16px;
       width: calc(var(--closed) - 32px);
+    }
+  }
+
+  /* Tablet only: smaller, tighter titles so they fit the closed tiles */
+  @media (min-width: 800px) and (max-width: 1279.98px) {
+    .tiles {
+      --title-size: 32px;
+    }
+    .tiles :global(.title) {
+      font-size: var(--title-size);
+      letter-spacing: -0.05em;
     }
   }
 
@@ -159,6 +174,7 @@ const { count, class: className } = Astro.props;
       bottom: 20px;
       left: 20px;
       width: auto;
+      min-height: 0;
     }
     .tiles :global(.card .text),
     .tiles :global(.card)::after {

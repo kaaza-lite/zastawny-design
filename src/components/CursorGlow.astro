@@ -164,8 +164,8 @@
     };
 
     const moveTo = (x: number, y: number) => {
-      // Over a case study tile its own datamosh plays, so the background one clears and waits
-      if (document.querySelector('[data-glitch-card]:hover')) {
+      // Over a case study tile (its own datamosh plays), the nav, a pill or the LinkedIn button, the background one clears and waits
+      if (document.querySelector('[data-glitch-card]:hover, .site-nav:hover, [data-pill]:hover, .more a:hover')) {
         cancelAnimationFrame(raf);
         raf = 0;
         pointer.inside = false;
