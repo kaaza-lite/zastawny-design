@@ -150,10 +150,12 @@ const menu = [
 
     // Where the indicator sits for a link: right behind it, or a 44px circle centred on the Z
     const ROUND = 44;
-    const box = (link: HTMLElement) =>
-      link.classList.contains('home')
-        ? { left: link.offsetLeft + (link.offsetWidth - ROUND) / 2, width: ROUND }
+    const box = (link: HTMLElement) => {
+      const mark = link.querySelector<HTMLElement>('.z-mark');
+      return mark
+        ? { left: link.offsetLeft + mark.offsetLeft + (mark.offsetWidth - ROUND) / 2, width: ROUND }
         : { left: link.offsetLeft, width: link.offsetWidth };
+    };
     const placeOn = (link: HTMLElement) => {
       const b = box(link);
       pill.style.left = `${b.left}px`;
@@ -416,6 +418,13 @@ const menu = [
     .links button {
       padding: 0 8px;
     }
+  }
+  /* Without the keyhole, Z sits as close to the left edge as its circle is to the top and bottom (5px) */
+  .nav:has(> .links:first-child) {
+    padding-left: 5px;
+  }
+  .links:first-child .home {
+    padding-left: 2px;
   }
 
   .external-label {
