@@ -10,6 +10,7 @@
 import { getEntry } from 'astro:content';
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
+import Tag from './Tag.astro';
 import finxThumb from '../assets/work/finx-thumb.png';
 
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
@@ -49,7 +50,7 @@ const menu = [
         <div class="menu-item menu-item--soon" aria-disabled="true">
           <img src={m.thumb} alt="" width="56" height="36" loading="lazy" />
           <span class="menu-text"><span class="menu-title">{m.title}</span><span class="menu-meta">{m.meta}</span></span>
-          <span class="menu-soon">Soon</span>
+          <span class="menu-soon"><Tag tone="soon">Soon</Tag></span>
         </div>
       ) : (
         <a class="menu-item" href={m.href} aria-current={path === m.href ? 'page' : undefined}>
@@ -245,7 +246,7 @@ const menu = [
     align-items: center;
     gap: 40px;
     height: 56px;
-    padding: 0 6px;
+    padding: 0 8px;
     background:
       linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
       var(--glass-tint);
@@ -263,7 +264,7 @@ const menu = [
     font-family: var(--font-body);
     font-size: var(--text-nav);
     line-height: normal;
-    letter-spacing: 0;
+    letter-spacing: normal;
     color: var(--color-text);
   }
 
@@ -283,10 +284,21 @@ const menu = [
     height: 100%;
   }
 
+  /* 22px either side of each link and 8px inside the pill: 40px wider than the labels alone need */
   .links a {
     position: relative;
     z-index: 1;
-    padding: 0 16px;
+    padding: 0 22px;
+  }
+
+  /* Very narrow phones (under 360px): the tighter spacing, so the pill still fits */
+  @media (max-width: 359.98px) {
+    .nav {
+      padding: 0 6px;
+    }
+    .links a {
+      padding: 0 16px;
+    }
   }
 
   .external-label {
@@ -416,13 +428,12 @@ const menu = [
     font-family: var(--font-body);
     font-size: 12px;
     line-height: 1.3;
-    color: var(--color-text);
+    color: inherit;
   }
 
   /* The case study you're on: the same fill as the active nav item */
   .menu-item[aria-current='page'] {
     background: var(--glass-active);
-    color: var(--color-text);
   }
   .menu-dot {
     flex: none;
@@ -450,13 +461,13 @@ const menu = [
   }
   .menu-soon {
     display: flex;
-    align-items: center;
-    height: 20px;
+    flex: none;
     margin: 0 8px 0 auto;
-    font-family: var(--font-body);
+  }
+  /* The tile pill scaled to 12px text (three quarters of the 16px one) */
+  .menu-soon :global(.tag) {
+    padding: 3px 9px;
     font-size: 12px;
-    line-height: 1;
-    color: var(--color-text);
   }
 
   @media (prefers-reduced-motion: reduce) {
