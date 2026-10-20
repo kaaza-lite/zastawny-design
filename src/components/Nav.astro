@@ -430,6 +430,12 @@ const menu = [
     box-shadow: none;
   }
 
+  /* Keyboard focus on the name: a pill fill like the active item, in the bottom shade orange (#714600), instead of the ring */
+  .logo:focus-visible {
+    outline: none;
+    background: rgb(113 70 0 / 0.05);
+  }
+
   /* Active item: a flat light fill, no outline or shadow (positioned by the script) */
   .highlight {
     position: absolute;
