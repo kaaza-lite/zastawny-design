@@ -44,6 +44,7 @@ const techSkills = [
         <p class="summary">
           12 years in design, working across UX, UI and systems. From trading infrastructure to consumer apps in
           emerging markets, I’ve spent that time where the rules matter and small UI decisions carry real weight.
+          AI-native in how I work, accessible by default in what I ship.
         </p>
         <span class="status-pill" data-pill-group><span data-pill><Tag dot>Open to work</Tag></span></span>
       </section>
@@ -178,8 +179,9 @@ const techSkills = [
     color: var(--color-text);
   }
 
+  /* 60px wider than the 760px column, centred on it */
   .summary {
-    width: 100%;
+    width: min(820px, calc(100vw - 2 * var(--content-gutter)));
     font-size: 20px;
     color: var(--color-text);
   }
@@ -266,17 +268,13 @@ const techSkills = [
     .page {
       padding-top: 174px;
     }
+    /* The sections are as wide as the intro text */
     .content,
     .footer {
-      width: min(496px, calc(100% - 2 * var(--content-gutter)));
+      width: min(820px, calc(100% - 2 * var(--content-gutter)));
     }
-  }
-
-  /* Tablet only: the summary keeps the desktop width (760px), wider than the 496px column */
-  @media (min-width: 800px) and (max-width: 1279.98px) {
     .summary {
-      width: min(760px, calc(100vw - 2 * var(--content-gutter)));
-      max-width: none;
+      width: 100%;
     }
   }
 
@@ -285,7 +283,7 @@ const techSkills = [
     .content {
       margin-top: 56px;
     }
-    /* Same 496px column as tablet, so wide phones keep side gutters */
+    /* A 496px column, so wide phones keep side gutters */
     .content,
     .footer {
       width: min(496px, calc(100% - 2 * var(--content-gutter)));

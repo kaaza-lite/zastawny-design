@@ -29,6 +29,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
         <p class="summary">
           12 years in design, working across UX, UI and systems. From trading infrastructure to consumer apps in
           emerging markets, I’ve spent that time where the rules matter and small UI decisions carry real weight.
+          AI-native in how I work, accessible by default in what I ship.
         </p>
         <span class="status-pill" data-pill-group><span data-pill><Tag dot>Open to work</Tag></span></span>
       </div>
@@ -130,7 +131,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
   }
 
   .summary {
-    max-width: 760px;
+    max-width: 820px;
     font-size: 20px;
     color: var(--color-text);
   }
@@ -183,6 +184,13 @@ import finxThumb from '../assets/work/finx-thumb.png';
 
     .experience :global(.jobs) {
       padding: 0;
+    }
+  }
+
+  /* Tablet only: the name stays on one line (about 600px at 68px) */
+  @media (min-width: 800px) and (max-width: 1279.98px) {
+    h1 {
+      white-space: nowrap;
     }
   }
 
