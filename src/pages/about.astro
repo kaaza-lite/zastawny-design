@@ -6,24 +6,24 @@ import Tag from '../components/Tag.astro';
 import Experience from '../components/Experience.astro';
 
 const howIWork = [
-  'AI-Native',
-  'Close to Engineering',
-  'Decisions That Survive',
-  'Scoping Out Loud',
-  'Design Critique into Plans',
-  'Systems over One-Offs',
-  'Accessibility as Default',
+  'AI-native',
+  'Close to engineering',
+  'Decisions that survive',
+  'Scoping out loud',
+  'Design critique into plans',
+  'Systems over one-offs',
+  'Accessibility as default',
 ];
 
 const techSkills = [
   'Claude',
   'Figma',
-  'Design Systems',
-  'Multi-Brand Theming',
+  'Design systems',
+  'Multi-brand theming',
   'BPMN',
   'WCAG 2.2 AA',
-  'Complex & Regulated Domains',
-  'Accessibility Testing',
+  'Complex & regulated domains',
+  'Accessibility testing',
 ];
 ---
 
@@ -32,24 +32,24 @@ const techSkills = [
   description="12 years in design, working across UX, UI and systems. From trading infrastructure to consumer apps in emerging markets, I’ve spent that time where the rules matter and small UI decisions carry real weight. Based in Poland, Schengen Area, EU."
 >
   <main class="page">
-    <h1 data-scramble>About Me</h1>
+    <h1 data-scramble>About me</h1>
 
     <div class="content">
       <!-- Intro -->
       <section class="intro">
         <div class="name">
           <p class="name-title">Tomasz Zastawny</p>
-          <p class="role">Senior Product Designer</p>
+          <p class="role">Senior product designer</p>
         </div>
         <p class="summary">
           12 years in design, working across UX, UI and systems. From trading infrastructure to consumer apps in
           emerging markets, I’ve spent that time where the rules matter and small UI decisions carry real weight.
         </p>
-        <span class="status-pill" data-pill-group><span data-pill><Tag dot>Open to Work</Tag></span></span>
+        <span class="status-pill" data-pill-group><span data-pill><Tag dot>Open to work</Tag></span></span>
       </section>
 
       <section class="block">
-        <h2>What I Do</h2>
+        <h2>What I do</h2>
         <div class="prose">
           <p>
             I’m at my best when the problem is genuinely complex, whatever the domain. Lately that’s meant
@@ -78,14 +78,14 @@ const techSkills = [
       </section>
 
       <section class="block">
-        <h2>How I Work</h2>
+        <h2>How I work</h2>
         <ul class="pills" data-pill-group>
           {howIWork.map((item) => <li data-pill><Tag tone="work">{item}</Tag></li>)}
         </ul>
       </section>
 
       <section class="block">
-        <h2>Tech Skills</h2>
+        <h2>Tech skills</h2>
         <ul class="pills skill-pills" data-pill-group>
           {techSkills.map((item) => <li data-pill><Tag tone="skill">{item}</Tag></li>)}
         </ul>
