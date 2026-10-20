@@ -149,7 +149,9 @@ import Job from './Job.astro';
     align-self: center;
     display: inline-flex;
     align-items: center;
-    padding: 8px 32px;
+    justify-content: center;
+    height: 56px;
+    padding: 0 32px 2px; /* the font sits low in its box: 2px at the bottom centres the letters */
     background:
       linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
       var(--glass-tint);
@@ -158,14 +160,12 @@ import Job from './Job.astro';
     box-shadow:
       inset 0 1px 0 var(--glass-highlight),
       inset 0 -1px 0 rgb(255 255 255 / 0.05),
-      inset 0 0 16px rgb(255 255 255 / 0.04),
-      0 14px 36px rgb(0 0 0 / 0.5),
-      0 2px 8px rgb(0 0 0 / 0.35);
+      inset 0 0 16px rgb(255 255 255 / 0.04);
     -webkit-backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
     backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
     font-family: var(--font-display);
-    font-size: var(--text-link-large);
-    line-height: 1.3;
+    font-size: 16px;
+    line-height: 1;
     letter-spacing: -0.01em;
     color: inherit;
     text-decoration: none;
