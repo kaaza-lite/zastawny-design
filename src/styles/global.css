@@ -236,22 +236,22 @@ a {
 [data-pill].is-touched .tag::before {
   opacity: 1;
 }
-/* "Open to work" wobbles now and then: a small rocking turn around the pill's centre */
+/* "Open to work" wobbles as the page loads and every 4s after: a small rocking turn around the pill's centre */
 .status-pill .tag {
   transform-origin: 50% 50%;
-  animation: pill-wobble 4s ease-in-out 1.5s infinite;
+  animation: pill-wobble 4s ease-in-out 0.6s infinite;
 }
 .status-pill [data-pill].is-held .tag,
 .status-pill [data-pill].is-touched .tag {
   animation: none;
 }
 @keyframes pill-wobble {
-  0%, 76%, 100% { transform: rotate(0deg); }
-  80% { transform: rotate(-4deg); }
-  84% { transform: rotate(3.5deg); }
-  88% { transform: rotate(-2.5deg); }
-  92% { transform: rotate(1.5deg); }
-  96% { transform: rotate(-0.5deg); }
+  0%, 20%, 100% { transform: rotate(0deg); }
+  4% { transform: rotate(-4deg); }
+  8% { transform: rotate(3.5deg); }
+  12% { transform: rotate(-2.5deg); }
+  16% { transform: rotate(1.5deg); }
+  18% { transform: rotate(-0.5deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   .status-pill .tag {
