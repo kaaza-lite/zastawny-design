@@ -65,10 +65,6 @@ const menu = [
       </svg>
       <span class="tip tip--below" aria-hidden="true">lorem ipsum</span>
     </a>
-    <a class="logo" href="/">
-      <span class="logo-full">Zastawny</span>
-      <span class="logo-short" aria-hidden="true">z</span>
-    </a>
     <div class="links">
       <span class="highlight" aria-hidden="true"></span>
       <a href="/" data-key="works" class="works" aria-haspopup="true" aria-expanded="false" aria-controls="works-menu" aria-current={active === 'works' ? 'page' : undefined}>Works<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></a>
@@ -319,7 +315,7 @@ const menu = [
     align-items: center;
     gap: 40px;
     height: 56px;
-    padding: 0 6px 0 8px;
+    padding: 0 6px;
     background:
       linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
       var(--glass-tint);
@@ -341,7 +337,6 @@ const menu = [
     color: var(--color-text);
   }
 
-  .logo,
   .links a {
     display: inline-flex;
     align-items: center;
@@ -373,15 +368,6 @@ const menu = [
   .peek:focus-visible {
     outline-offset: -2px;
     box-shadow: none;
-  }
-
-  /* 16px either side so the keyboard focus ring has room around the name */
-  .logo {
-    padding: 0 16px;
-  }
-
-  .logo-short {
-    display: none;
   }
 
   .links {
@@ -417,26 +403,17 @@ const menu = [
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .logo:hover,
     .links a:hover {
       color: var(--color-accent-2);
     }
   }
 
-  .logo:focus-visible,
   .links a:focus-visible {
     color: var(--color-accent-2);
     outline-offset: -2px;
     box-shadow: none;
   }
 
-  /* The name always sits on a pill fill like the active item, in the bottom shade orange (#714600) */
-  .logo {
-    background: rgb(113 70 0 / 0.05);
-  }
-  .logo:focus-visible {
-    outline: none;
-  }
 
   /* Active item: a flat light fill, no outline or shadow (positioned by the script) */
   .highlight {
@@ -586,34 +563,19 @@ const menu = [
     }
   }
 
-  /* Mobile: "z" as the logo, as in Figma */
+  /* Mobile */
   @media (max-width: 799.98px) {
     .site-nav {
       top: 16px;
     }
     .nav {
       gap: 8px;
-      padding-left: 4px;
     }
     .links a {
       padding: 0 10px;
     }
     .peek {
       margin-right: 0;
-    }
-    .logo {
-      padding: 0 8px 0 2px;
-    }
-    .logo-full {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip: rect(0 0 0 0);
-      white-space: nowrap;
-    }
-    .logo-short {
-      display: inline;
     }
   }
 </style>
