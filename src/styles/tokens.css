@@ -33,11 +33,12 @@
   --focus-ring: #e4e4e4;            /* keyboard focus, Home and About (neutral ramp) */
 
   /* Glass (nav dock) */
-  --glass-tint: rgb(18 18 18 / 0.86);   /* dark enough to stay legible over bright images */
-  --glass-sheen-top: rgb(255 255 255 / 0.08);
-  --glass-sheen-bottom: rgb(255 255 255 / 0.02);
-  --glass-rim: rgb(255 255 255 / 0.1);
-  --glass-highlight: rgb(255 255 255 / 0.22);
+  --glass-tint: rgb(18 18 18 / 0.55);   /* see-through; the backdrop darkening keeps labels legible */
+  --glass-sheen-top: rgb(255 255 255 / 0.14);
+  --glass-sheen-bottom: rgb(255 255 255 / 0.03);
+  --glass-rim: transparent; /* no visible border on glass */
+  --glass-highlight: rgb(255 255 255 / 0.35);
+  --glass-filter: blur(20px) saturate(200%) brightness(0.7);
   --glass-active: rgb(255 255 255 / 0.1); /* active nav item fill */
 
   /* Font families */
@@ -132,7 +133,7 @@
   --theme-surface-border: #181a2a;
   --theme-tile: #090a16;                   /* "other projects" cards */
   --theme-accent: #002dbf;                 /* carousel controls */
-  --glass-tint: rgb(14 15 26 / 0.86);
+  --glass-tint: rgb(14 15 26 / 0.55);
   --focus-ring: #8ab0fe;                   /* keyboard focus (navy ramp) */
 }
 [data-theme='bamboo'] {
@@ -142,7 +143,7 @@
   --theme-surface-border: #00240f;
   --theme-tile: #090f0b;
   --theme-accent: #026338;
-  --glass-tint: rgb(0 28 12 / 0.86);
+  --glass-tint: rgb(0 28 12 / 0.55);
   --focus-ring: #6bc891;                   /* keyboard focus (green ramp) */
 }
 [data-theme='juicyway'] {
@@ -152,6 +153,6 @@
   --theme-surface-border: #272727;
   --theme-tile: #100b0f;
   --theme-accent: #812872;
-  --glass-tint: rgb(28 0 23 / 0.86);
+  --glass-tint: rgb(28 0 23 / 0.55);
   --focus-ring: #e193cf;                   /* keyboard focus (purple ramp) */
 }

@@ -32,10 +32,11 @@ const bars = [0, 1, 3, 2, 0, 0, 0, 2, 4, 3, 1, 0, 0, 2, 3, 0];
   <span class="eq" aria-hidden="true">
     {bars.map((size, i) => <span class="bar" style={`--size:${size};--i:${i}`}></span>)}
   </span>
-  <button type="button" class="play tip-host" aria-label="play">
-    <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg>
-    <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"></path></svg>
-    <span class="tip" aria-hidden="true">play</span>
+  <button type="button" class="play tip-host" aria-label="Play">
+    <!-- Lucide play and pause -->
+    <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3" /></svg>
+    <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="14" y="4" width="4" height="16" rx="1" /><rect x="6" y="4" width="4" height="16" rx="1" /></svg>
+    <span class="tip" aria-hidden="true">Play</span>
   </button>
   <div class="spotify" aria-hidden="true"><div class="spotify-mount"></div></div>
 </div>
@@ -81,8 +82,8 @@ const bars = [0, 1, 3, 2, 0, 0, 0, 2, 4, 3, 1, 0, 0, 2, 3, 0];
 
     const show = (playing: boolean) => {
       root.classList.toggle('is-playing', playing);
-      button.setAttribute('aria-label', playing ? 'pause' : 'play');
-      tip.textContent = playing ? 'pause' : 'play';
+      button.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+      tip.textContent = playing ? 'Pause' : 'Play';
     };
 
     // Load Spotify's embed API once, then create the (invisible) player
@@ -232,8 +233,8 @@ const bars = [0, 1, 3, 2, 0, 0, 0, 2, 4, 3, 1, 0, 0, 2, 3, 0];
       inset 0 0 16px rgb(255 255 255 / 0.04),
       0 14px 36px rgb(0 0 0 / 0.5),
       0 2px 8px rgb(0 0 0 / 0.35);
-    -webkit-backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
-    backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     color: var(--color-text);
   }
 
@@ -248,8 +249,13 @@ const bars = [0, 1, 3, 2, 0, 0, 0, 2, 4, 3, 1, 0, 0, 2, 3, 0];
   }
   .play svg {
     grid-area: 1 / 1;
-    width: 22px;
-    height: 22px;
+    width: 14px;
+    height: 14px;
+    fill: currentColor; /* solid, the stroke rounds the corners */
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
     transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
   }
   .icon-pause,

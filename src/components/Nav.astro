@@ -1,12 +1,12 @@
 ---
 // Floating glass pill at the top of the screen.
-// Same items and labels as the Figma nav. "works" is the Home page.
+// "Z" is Home; "Works" only opens the case study menu; About; LinkedIn.
 //
 // The active item sits on a light fill that slides from the previous page's item
 // to the current one on page load (transform only).
 //
-// "Works" opens a menu of the case studies (hover or keyboard on desktop, tap on touch),
-// with the current one highlighted. Clicking it on desktop still goes to Home.
+// "Works" opens a menu of the case studies (click, tap, Enter or Space) on every screen size,
+// with the current one highlighted.
 import { getEntry } from 'astro:content';
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
@@ -15,8 +15,8 @@ import finxThumb from '../assets/work/finx-thumb.png';
 
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 const caseStudies = ['/calastone', '/bamboo', '/juicyway'];
-// Home and the case studies highlight "works"; About highlights "about"
-const active = path === '/' || caseStudies.includes(path) ? 'works' : path === '/about' ? 'about' : null;
+// Home highlights "Z", the case studies "Works", About "About"
+const active = path === '/' ? 'home' : caseStudies.includes(path) ? 'works' : path === '/about' ? 'about' : null;
 
 // The case study menu, in the Home order, with FinX last as "soon"
 const thumb = async (src: ImageMetadata) => (await getImage({ src, width: 112, format: 'webp' })).src;
@@ -35,7 +35,8 @@ const menu = [
   <nav class="nav">
     <div class="links">
       <span class="highlight" aria-hidden="true"></span>
-      <a href="/" data-key="works" class="works" aria-haspopup="true" aria-expanded="false" aria-controls="works-menu" aria-current={active === 'works' ? 'page' : undefined}>Works<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></a>
+      <a href="/" data-key="home" class="home" aria-label="Home" aria-current={active === 'home' ? 'page' : undefined}><span class="z-mark">Z</span></a>
+      <button type="button" data-key="works" class="works" aria-haspopup="true" aria-expanded="false" aria-controls="works-menu" data-current={active === 'works' ? '' : undefined}>Works<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></button>
       <a href="/about" data-key="about" aria-current={active === 'about' ? 'page' : undefined}>About</a>
       <a href="https://www.linkedin.com/in/zastawny/" target="_blank" rel="noopener" class="external">
         <span class="external-label">LinkedIn</span><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></svg>
@@ -56,7 +57,6 @@ const menu = [
         <a class="menu-item" href={m.href} aria-current={path === m.href ? 'page' : undefined}>
           <img src={m.thumb} alt="" width="56" height="36" loading="lazy" />
           <span class="menu-text"><span class="menu-title">{m.title}</span><span class="menu-meta">{m.meta}</span></span>
-          {path === m.href && <span class="menu-dot" aria-hidden="true"></span>}
         </a>
       ),
     )}
@@ -72,7 +72,7 @@ const menu = [
     const pill = links?.querySelector<HTMLElement>('.highlight');
     if (!links || !pill) return;
 
-    const current = links.querySelector<HTMLElement>('a[aria-current="page"]');
+    const current = links.querySelector<HTMLElement>('[aria-current="page"], [data-current]');
     if (!current) {
       pill.hidden = true;
       return;
@@ -80,17 +80,26 @@ const menu = [
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Put the pill exactly behind a link
+    // Where the indicator sits for a link: right behind it, or a 44px circle centred on the Z
+    const ROUND = 44;
+    const box = (link: HTMLElement) => {
+      const mark = link.querySelector<HTMLElement>('.z-mark');
+      return mark
+        ? { left: link.offsetLeft + mark.offsetLeft + (mark.offsetWidth - ROUND) / 2, width: ROUND }
+        : { left: link.offsetLeft, width: link.offsetWidth };
+    };
     const placeOn = (link: HTMLElement) => {
-      pill.style.left = `${link.offsetLeft}px`;
-      pill.style.width = `${link.offsetWidth}px`;
+      const b = box(link);
+      pill.style.left = `${b.left}px`;
+      pill.style.width = `${b.width}px`;
+      pill.classList.toggle('is-round', link.classList.contains('home'));
     };
 
     let previous: HTMLElement | null = null;
     try {
       const key = sessionStorage.getItem(STORAGE_KEY);
       if (key && key !== current.dataset.key) {
-        previous = links.querySelector<HTMLElement>(`a[data-key="${key}"]`);
+        previous = links.querySelector<HTMLElement>(`[data-key="${key}"]`);
       }
       sessionStorage.setItem(STORAGE_KEY, current.dataset.key ?? '');
     } catch {}
@@ -100,8 +109,10 @@ const menu = [
 
     // Slide: start transformed onto the previous link, then animate to no transform
     if (previous && !reduceMotion) {
-      const dx = previous.offsetLeft - current.offsetLeft;
-      const sx = previous.offsetWidth / current.offsetWidth;
+      const from = box(previous);
+      const to = box(current);
+      const dx = from.left - to.left;
+      const sx = from.width / to.width;
       pill.style.transform = `translateX(${dx}px) scaleX(${sx})`;
       pill.getBoundingClientRect(); // commit the start position
       pill.classList.add('is-animated');
@@ -117,22 +128,22 @@ const menu = [
   // On the first load and after every page change
   document.addEventListener('astro:page-load', setup);
 
-  // "Works" menu: opens on hover or keyboard focus on desktop, on tap on touch screens
+  // "Works" menu: opens while the mouse is over "Works" or the menu (desktop), a tap opens and closes it (touch)
   const hoverable = window.matchMedia('(hover: hover) and (pointer: fine)');
 
   function setupMenu() {
     const header = document.querySelector<HTMLElement>('.site-nav');
-    const works = header?.querySelector<HTMLAnchorElement>('.works');
+    const works = header?.querySelector<HTMLButtonElement>('.works');
     const menu = header?.querySelector<HTMLElement>('.works-menu');
     if (!header || !works || !menu) return;
 
-    let closeTimer = 0;
     // Exactly as wide as the nav pill, right under it
     const place = () => {
       const nav = header.querySelector<HTMLElement>('.nav')!;
       menu.style.left = `${nav.offsetLeft}px`;
       menu.style.width = `${nav.offsetWidth}px`;
     };
+    let closeTimer = 0;
     const open = () => {
       clearTimeout(closeTimer);
       if (menu.classList.contains('is-open')) return;
@@ -150,7 +161,6 @@ const menu = [
       clearTimeout(closeTimer);
       closeTimer = window.setTimeout(close, 200);
     };
-
     for (const el of [works, menu]) {
       el.addEventListener('pointerenter', (e) => {
         if (e.pointerType === 'mouse' && hoverable.matches) open();
@@ -159,10 +169,10 @@ const menu = [
         if (e.pointerType === 'mouse' && hoverable.matches) closeSoon();
       });
     }
-    // Touch: the first tap opens the menu, a second tap on "Works" closes it
+    // Touch: a tap opens and closes it. On desktop a click does nothing (hover opens it).
     works.addEventListener('click', (e) => {
+      if (e.detail === 0) return; // keyboard, handled below
       if (hoverable.matches) return;
-      e.preventDefault();
       if (menu.classList.contains('is-open')) close();
       else open();
     });
@@ -259,16 +269,18 @@ const menu = [
       0 14px 36px rgb(0 0 0 / 0.5),
       0 2px 8px rgb(0 0 0 / 0.35);
     /* heavy blur plus a slight darkening of whatever is behind keeps the labels readable */
-    -webkit-backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
-    backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     font-family: var(--font-body);
+    font-weight: 400;
     font-size: var(--text-nav);
     line-height: normal;
     letter-spacing: normal;
     color: var(--color-text);
   }
 
-  .links a {
+  .links a,
+  .links button {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
@@ -285,26 +297,62 @@ const menu = [
   }
 
   /* 22px either side of each link and 8px inside the pill: 40px wider than the labels alone need */
-  .links a {
+  .links a,
+  .links button {
     position: relative;
     z-index: 1;
     padding: 0 22px;
   }
+  .links button {
+    border: 0;
+    background: none;
+    font: inherit;
+    cursor: pointer;
+  }
 
-  /* Very narrow phones (under 360px): the tighter spacing, so the pill still fits */
-  @media (max-width: 359.98px) {
+  /* Phones under 420px: tighter spacing, so the pill fits with Z, Works, About and LinkedIn */
+  @media (max-width: 419.98px) {
     .nav {
       padding: 0 6px;
     }
-    .links a {
-      padding: 0 16px;
+    .links a,
+    .links button {
+      padding: 0 12px;
     }
+  }
+  /* Under 360px: a little tighter still */
+  @media (max-width: 359.98px) {
+    .links a,
+    .links button {
+      padding: 0 8px;
+    }
+  }
+  /* Without the keyhole, Z sits as close to the left edge as its circle is to the top and bottom (5px) */
+  .nav:has(> .links:first-child) {
+    padding-left: 5px;
+  }
+  .links:first-child .home {
+    padding-left: 2px;
   }
 
   .external-label {
     text-decoration: underline;
     text-decoration-thickness: from-font;
     text-underline-position: from-font;
+  }
+
+  /* Home: a halfpixel Z on a 40px #121212 circle; the Z brightens on hover like the other items */
+  .z-mark {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #121212;
+    font-family: var(--font-display); /* CS Pacify Halfpixel, which has one weight */
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1;
   }
 
   /* Icons from Lucide (lucide.dev, ISC licence): chevron-down on Works, arrow-up-right on LinkedIn */
@@ -321,12 +369,14 @@ const menu = [
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .links a:hover {
+    .links a:hover,
+    .links button:hover {
       color: var(--color-accent-2);
     }
   }
 
-  .links a:focus-visible {
+  .links a:focus-visible,
+  .links button:focus-visible {
     color: var(--color-accent-2);
     outline-offset: -2px;
     box-shadow: none;
@@ -346,6 +396,14 @@ const menu = [
     opacity: 0;
   }
 
+  /* On Home: a 44px circle around the 40px Z */
+  .highlight.is-round {
+    top: calc(50% - 22px);
+    bottom: auto;
+    height: 44px;
+    border-radius: 50%;
+  }
+
   .links.js-ready .highlight {
     opacity: 1;
   }
@@ -355,7 +413,8 @@ const menu = [
   }
 
   /* Without JavaScript, mark the active link directly */
-  .links:not(.js-ready) a[aria-current='page'] {
+  .links:not(.js-ready) [aria-current='page'],
+  .links:not(.js-ready) [data-current] {
     background: var(--glass-active);
   }
 
@@ -378,8 +437,8 @@ const menu = [
       inset 0 1px 0 var(--glass-highlight),
       0 14px 36px rgb(0 0 0 / 0.5),
       0 2px 8px rgb(0 0 0 / 0.35);
-    -webkit-backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
-    backdrop-filter: blur(24px) saturate(160%) brightness(0.7);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     opacity: 0;
     visibility: hidden;
     transform: translateY(-4px);
@@ -421,11 +480,13 @@ const menu = [
   }
   .menu-title {
     font-family: var(--font-body);
+    font-weight: 400;
     font-size: 14px;
     line-height: 1.2;
   }
   .menu-meta {
     font-family: var(--font-body);
+    font-weight: 400;
     font-size: 12px;
     line-height: 1.3;
     color: inherit;
@@ -434,14 +495,6 @@ const menu = [
   /* The case study you're on: the same fill as the active nav item */
   .menu-item[aria-current='page'] {
     background: var(--glass-active);
-  }
-  .menu-dot {
-    flex: none;
-    width: 6px;
-    height: 6px;
-    margin: 0 8px 0 auto;
-    border-radius: 50%;
-    background: var(--color-accent-2);
   }
 
   @media (hover: hover) and (pointer: fine) {
