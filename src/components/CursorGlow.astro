@@ -164,14 +164,13 @@
     };
 
     const moveTo = (x: number, y: number) => {
-      // Over the Redesigns grid: no new smearing, but what's there fades out by itself
-      if (document.querySelector('.peek-canvas[data-over-grid]')) {
+      // Over the nav or the Redesigns grid: no new smearing, but what's there fades out by itself
+      if (document.querySelector('.site-nav:hover, .peek-canvas[data-over-grid]')) {
         pointer.inside = false;
         return;
       }
-      // Over a case study tile (its own datamosh plays), the nav, a pill or the LinkedIn button,
-      // the background one clears and waits
-      if (document.querySelector('[data-glitch-card]:hover, .site-nav:hover, [data-pill]:hover, .more a:hover')) {
+      // Over a case study tile (its own datamosh plays), a pill or the LinkedIn button, the background one clears and waits
+      if (document.querySelector('[data-glitch-card]:hover, [data-pill]:hover, .more a:hover')) {
         cancelAnimationFrame(raf);
         raf = 0;
         pointer.inside = false;
