@@ -2,8 +2,9 @@
 // of a sphere, seen from behind the centre), on a solid grey background.
 //
 // Mouse: the wall follows the pointer, within what's on screen (pointer left = wall left);
-// the scroll wheel zooms in and out. The pointer is a VR-style laser: a beam from the bottom
-// right to a dot, which gets a ring over a tile. Touch: drag to move the wall, with momentum.
+// the scroll wheel zooms in and out. The pointer is a VR-style laser: a hand holding a controller
+// in the bottom right (src/scripts/vrhand.ts) aims at the pointer, and a beam runs from the
+// controller to a dot, which gets a ring over a tile. Touch: drag to move the wall, with momentum.
 // While the wall moves, a wave runs across its tiles in the direction it's going, stronger the
 // faster it goes. A click or tap on a tile calls onPick with its project.
 // The wall never leaves the view: each edge stops at the screen edge (below the page title at
@@ -11,6 +12,7 @@
 // Reduced motion: no wave and no momentum.
 
 import * as THREE from 'three';
+import { loadVrHand, type VrHand } from './vrhand';
 
 export type CurveProject = { images: string[] };
 
@@ -27,6 +29,7 @@ const ZOOM = { start: 17, min: 6, max: 26 }; // camera distance behind the centr
 const MAX_WAVE = 2.6;
 const MARGIN = { side: 24, top: 96, bottom: 24 }; // px; the top is raised to clear the page title
 const BEAM = { color: '95, 227, 255', dot: '#ff5c8a' };
+const HAND = { at: new THREE.Vector2(0.62, -0.92), depth: 7, scale: 0.8, reach: 30 }; // screen spot (-1..1), distance, size, aim distance
 
 const tileVertex = /* glsl */ `
   uniform float uAmp;
@@ -72,16 +75,36 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
   renderer.setSize(host.clientWidth, host.clientHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.setClearColor(0xe7e7e8); // solid background
+  renderer.autoClear = false; // the hand is drawn over the wall in a second pass
   host.appendChild(renderer.domElement);
 
   // The laser pointer is drawn on a 2D canvas on top (it ends exactly at the pointer)
   const beam = document.createElement('canvas');
-  Object.assign(beam.style, { position: 'absolute', inset: '0', pointerEvents: 'none' });
+  Object.assign(beam.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none' });
   host.appendChild(beam);
   const pen = beam.getContext('2d')!;
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(FOV, host.clientWidth / host.clientHeight, 0.1, 200);
+
+  // The hand with the controller: its own little scene and camera, drawn on top of the wall
+  const handScene = new THREE.Scene();
+  handScene.add(new THREE.HemisphereLight(0xffffff, 0x9a9a9e, 2.2));
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
+  keyLight.position.set(-2, 3, 4);
+  handScene.add(keyLight);
+  const handCam = new THREE.PerspectiveCamera(35, host.clientWidth / host.clientHeight, 0.05, 100);
+  let hand: VrHand | null = null;
+  let stopped = false;
+  const handHome = new THREE.Vector3();
+  const restAim = new THREE.Quaternion(); // the hand's turn when aiming at the middle of the screen
+  const placeHand = () => {
+    if (!hand) return;
+    handHome.set(HAND.at.x, HAND.at.y, 0.5).unproject(handCam).normalize().multiplyScalar(HAND.depth);
+    hand.rig.position.copy(handHome);
+    const middle = new THREE.Vector3(0, 0, -HAND.reach).sub(handHome).normalize();
+    restAim.setFromUnitVectors(hand.forward, middle);
+  };
 
   // ---------- The wall ----------
   const wave = { uAmp: { value: 0 }, uTime: { value: 0 }, uDir: { value: new THREE.Vector2(1, 0) } };
@@ -249,6 +272,18 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     return { yaw: y, pitch: p, stoppedX: y !== yaw, stoppedY: p !== pitch };
   };
   measure();
+  if (mouse.matches) {
+    loadVrHand()
+      .then((h) => {
+        if (stopped) return h.dispose();
+        hand = h;
+        hand.rig.scale.setScalar(HAND.scale);
+        handScene.add(hand.rig);
+        placeHand();
+      })
+      .catch(() => {}); // no hand: the beam starts from the corner instead
+  }
+
   // start in the middle of where it can go
   goal.yaw = wall.yaw = (box.yawMin + box.yawMax) / 2;
   goal.pitch = wall.pitch = (box.pitchMin + box.pitchMax) / 2;
@@ -311,6 +346,7 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
   const onUp = (e: PointerEvent) => {
     if (!down) return;
     if (reduce || e.pointerType === 'mouse' || performance.now() - last.t > 80) vel.x = vel.y = 0;
+    if (e.pointerType === 'mouse' && !reduce) recoil = 1;
     if (down.moved < 6) {
       const tile = tileAt(e.clientX, e.clientY);
       if (tile) onPick((tile.userData as { project: number }).project);
@@ -343,6 +379,9 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     renderer.setSize(host.clientWidth, host.clientHeight);
     camera.aspect = host.clientWidth / host.clientHeight;
     camera.updateProjectionMatrix();
+    handCam.aspect = host.clientWidth / host.clientHeight;
+    handCam.updateProjectionMatrix();
+    placeHand();
     sizeBeam();
     measure();
     if (mouse.matches) follow();
@@ -361,6 +400,11 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     if (!mouse.matches || !pointer.over) return;
     const end = { x: pointer.x * w, y: pointer.y * h };
     const start = { x: w * 0.86, y: h + 30 };
+    if (hand && hand.rig.visible) {
+      const tip = hand.rig.localToWorld(hand.tip.clone()).project(handCam);
+      start.x = ((tip.x + 1) / 2) * w;
+      start.y = ((1 - tip.y) / 2) * h;
+    }
     const dx = end.x - start.x;
     const dy = end.y - start.y;
     const len = Math.hypot(dx, dy) || 1;
@@ -394,6 +438,25 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     pen.beginPath();
     pen.arc(end.x, end.y, 1.3, 0, Math.PI * 2);
     pen.fill();
+  };
+
+  // The hand turns toward the pointer (smoothly), kicks up a little on a click, then draws over the wall
+  const aimQ = new THREE.Quaternion();
+  const aimTo = new THREE.Vector3();
+  const middle = new THREE.Vector3();
+  let recoil = 0;
+  const aimHand = () => {
+    if (!hand) return;
+    hand.rig.visible = mouse.matches;
+    if (!hand.rig.visible) return;
+    aimTo.set(pointer.x * 2 - 1, 1 - pointer.y * 2, 0.5).unproject(handCam).normalize().multiplyScalar(HAND.reach).sub(handHome).normalize();
+    middle.set(0, 0, -HAND.reach).sub(handHome).normalize();
+    aimQ.setFromUnitVectors(middle, aimTo).multiply(restAim);
+    hand.rig.quaternion.slerp(aimQ, reduce ? 1 : 0.18);
+    recoil *= 0.82;
+    if (recoil > 0.01) hand.rig.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), 0.12 * recoil);
+    renderer.clearDepth();
+    renderer.render(handScene, handCam);
   };
 
   // ---------- Every frame ----------
@@ -440,12 +503,16 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     if (speed > 0.2) wave.uDir.value.set(dYaw, dPitch).normalize();
     wave.uAmp.value = amp;
     wave.uTime.value += dt;
+    renderer.clear();
     renderer.render(scene, camera);
+    if (hand) aimHand();
     drawBeam();
   };
   raf = requestAnimationFrame(frame);
 
   return () => {
+    stopped = true;
+    hand?.dispose();
     cancelAnimationFrame(raf);
     window.removeEventListener('resize', onResize);
     canvas.removeEventListener('pointerdown', onDown);
