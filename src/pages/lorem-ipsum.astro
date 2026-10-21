@@ -35,11 +35,15 @@ const tileImages = await Promise.all(
     </div>
     <!-- Credit for the 3D hand and controller (CC BY 4.0): an info button that opens it -->
     <div class="peek-credit">
-      <button type="button" class="peek-info tip-host" aria-label="3D models info" aria-expanded="false" aria-controls="peek-credit-text">
+      <button type="button" class="peek-info" aria-label="3D models info" aria-expanded="false" aria-controls="peek-credit-text">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-        <span class="tip tip--start" aria-hidden="true">3D models info</span>
       </button>
-      <p class="peek-credit-text" id="peek-credit-text" hidden>3D models: <a href="https://sketchfab.com/3d-models/vr-hand-a647cce524254c9a96d4244c12811d7a" target="_blank" rel="noopener">VR Hand</a> by RockDutyFree_models, <a href="https://sketchfab.com/3d-models/quest-2-controller-low-mid-and-high-poly-9f02b77cc27148c986315674c7ed106d" target="_blank" rel="noopener">Quest 2 Controller</a> by BlackCube, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></p>
+      <div class="peek-credit-text" id="peek-credit-text" hidden>
+        <p>3D models: <a href="https://sketchfab.com/3d-models/vr-hand-a647cce524254c9a96d4244c12811d7a" target="_blank" rel="noopener">VR Hand</a> by RockDutyFree_models, <a href="https://sketchfab.com/3d-models/quest-2-controller-low-mid-and-high-poly-9f02b77cc27148c986315674c7ed106d" target="_blank" rel="noopener">Quest 2 Controller</a> by BlackCube, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></p>
+        <button type="button" class="peek-credit-close" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+        </button>
+      </div>
     </div>
   </main>
   <div class="top-shade top-shade--red" aria-hidden="true"></div>
@@ -161,17 +165,16 @@ const tileImages = await Promise.all(
       color: #121212;
     }
   }
-  /* no tooltip while the text is open */
-  .peek-info[aria-expanded='true'] > .tip {
-    opacity: 0 !important;
-  }
   .peek-credit-text {
     position: absolute;
     bottom: calc(100% + 8px);
     left: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
     width: max-content;
-    max-width: min(420px, calc(100vw - 40px));
-    padding: 8px 14px;
+    max-width: min(440px, calc(100vw - 40px));
+    padding: 8px 8px 8px 14px;
     border-radius: 14px;
     background:
       linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
@@ -180,6 +183,43 @@ const tileImages = await Promise.all(
     font-size: 12px;
     line-height: 16px;
     color: var(--color-text);
+  }
+  .peek-credit-text[hidden] {
+    display: none;
+  }
+  /* Close: Lucide "x", 14px in a 20px target */
+  .peek-credit-close {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+  .peek-credit-close svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .peek-credit-close:hover {
+      color: var(--color-accent-2);
+      background: var(--glass-active);
+    }
+  }
+  .peek-credit-close:focus-visible {
+    color: var(--color-accent-2);
+    outline-offset: -2px;
+    box-shadow: none;
   }
   .peek-credit-text a {
     color: var(--color-accent-2);

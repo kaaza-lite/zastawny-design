@@ -77,6 +77,10 @@ export function initPeek() {
       info.setAttribute('aria-expanded', String(open));
     };
     info.addEventListener('click', () => setCredit(credit.hidden), { signal });
+    credit.querySelector('.peek-credit-close')?.addEventListener('click', () => {
+      setCredit(false);
+      info.focus();
+    }, { signal });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !credit.hidden) {
         setCredit(false);

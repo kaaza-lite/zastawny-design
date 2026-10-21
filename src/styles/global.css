@@ -73,7 +73,7 @@ a {
 /*
   Tooltips: a small glass pill shown on mouse hover and keyboard focus.
   Put class="tip-host" on the button and <span class="tip" aria-hidden="true">label</span> inside it.
-  .tip--end anchors it to the button's right edge, .tip--start to its left edge; .tip--below shows it under the button.
+  .tip--end anchors it to the button's right edge; .tip--below shows it under the button.
   The pointer can move onto a tooltip without it closing, and Escape hides it
   (see src/scripts/tooltips.ts).
 */
@@ -110,10 +110,6 @@ a {
 .tip--end {
   left: auto;
   right: 0;
-  --tip-x: 0;
-}
-.tip--start {
-  left: 0;
   --tip-x: 0;
 }
 .tip--below {
