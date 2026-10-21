@@ -1,7 +1,7 @@
 ---
-// The experimental page (/lorem-ipsum, not linked from the nav for now). No visible title:
-// one curved 3D wall of projects inside a light grey dome, dragged across it
-// (src/scripts/curve.ts). Clicking a tile opens a glass modal with that project's images,
+// The experimental page (/lorem-ipsum, not linked from the nav for now). A title and a short
+// description at the top, and under them one curved 3D wall of projects on a solid grey
+// background that follows the mouse and zooms with the scroll wheel (src/scripts/curve.ts). Clicking a tile opens a glass modal with that project's images,
 // one per scroll. All the content is placeholder for now (src/data/peek.ts).
 import { Image, getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
@@ -17,7 +17,13 @@ const tileImages = await Promise.all(
 
 <BaseLayout title="Lorem ipsum | Tomasz Zastawny" description="Lorem ipsum dolor sit amet." page="peek">
   <main class="peek">
-    <h1 class="visually-hidden">lorem ipsum</h1>
+    <header class="peek-header">
+      <h1 data-scramble>Lorem ipsum</h1>
+      <p class="peek-intro">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
+        dolore magna aliqua.
+      </p>
+    </header>
     <div class="peek-stage" data-projects={JSON.stringify(tileImages)}>
       <div class="peek-canvas" aria-hidden="true"></div>
       <!-- The same projects for keyboard and screen readers; shown when one has focus -->
@@ -72,6 +78,33 @@ const tileImages = await Promise.all(
   :global(body[data-page='peek']) {
     overflow: hidden;
     background: #e7e7e8;
+  }
+
+  /* ---------- Title and description: the type of the other pages, dark for the light background ---------- */
+  .peek-header {
+    position: fixed;
+    top: 112px;
+    right: 0;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 0 var(--gutter);
+    text-align: center;
+    pointer-events: none; /* the mouse keeps moving the grid underneath */
+  }
+  .peek-header h1 {
+    font-family: var(--font-display);
+    font-size: var(--text-hero);
+    line-height: var(--leading-display-auto);
+    color: #121212;
+  }
+  .peek-intro {
+    max-width: 760px;
+    font-size: 20px;
+    color: rgb(18 18 18 / 0.75);
   }
 
   /* ---------- The grid (drawn by src/scripts/curve.ts) ---------- */

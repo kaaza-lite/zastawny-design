@@ -1,17 +1,20 @@
-// The experimental page's grid: one 8 × 3 wall of tiles on the inside of a light grey dome.
-// The camera stays put. Drag anywhere (mouse or touch) to slide the wall across the dome, only
-// within what's on screen: it stops when its edge reaches the edge of the view (a wall wider than
-// the screen can be moved until each of its edges comes into view). While it moves, a wave runs
-// across its tiles in the drag direction, stronger the faster it goes. A click or tap on a tile
-// (without dragging) calls onPick with its project. Reduced motion: no wave and no momentum.
+// The experimental page's grid: one 8 × 3 wall of tiles, gently curved (it sits on the inside
+// of a sphere, seen from behind the centre), on a solid grey background.
+//
+// Mouse: the wall follows the pointer, within what's on screen (pointer left = wall left);
+// the scroll wheel zooms in and out. The pointer is a VR-style laser: a beam from the bottom
+// right to a dot, which gets a ring over a tile. Touch: drag to move the wall, with momentum.
+// While the wall moves, a wave runs across its tiles in the direction it's going, stronger the
+// faster it goes. A click or tap on a tile calls onPick with its project.
+// The wall never leaves the view: each edge stops at the screen edge (below the page title at
+// the top). Zoomed in so far that it's bigger than the view, it moves until each edge comes in.
+// Reduced motion: no wave and no momentum.
 
 import * as THREE from 'three';
 
 export type CurveProject = { images: string[] };
 
-const DOME = 40;          // dome radius (world units)
-const R = 14;             // the wall sits on a sphere of this radius, inside the dome
-const CAMERA_BACK = 17;   // the camera sits this far behind the centre, so the wall is a gentle concave curve
+const R = 14;             // the wall sits on a sphere of this radius
 const FOV = 42;
 const COLS = 8;
 const ROWS = 3;
@@ -19,36 +22,12 @@ const W = 2.1;            // tile size
 const H = 2.6;
 const GAP = 0.22;
 const deg = Math.PI / 180;
-const REST_PITCH = 7 * deg;  // where the wall and the camera start
+const VIEW_PITCH = 7 * deg; // the camera looks at this height on the sphere
+const ZOOM = { start: 17, min: 6, max: 26 }; // camera distance behind the centre (smaller = closer)
 const MAX_WAVE = 2.6;
-// How close the wall can come to the edges of the screen (px); the top leaves room for the nav
-const MARGIN = { side: 24, top: 96, bottom: 24 };
+const MARGIN = { side: 24, top: 96, bottom: 24 }; // px; the top is raised to clear the page title
+const BEAM = { color: '95, 227, 255', dot: '#ff5c8a' };
 
-const domeVertex = /* glsl */ `
-  varying vec3 vDir;
-  void main() {
-    vDir = normalize(position);
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-// #E7E7E8, a little darker below the horizon and lighter up top, with faint meridians and parallels
-const domeFragment = /* glsl */ `
-  varying vec3 vDir;
-  float line(float v, float n, float w) {
-    float f = abs(fract(v * n) - 0.5);
-    return smoothstep(w, 0.0, 0.5 - f);
-  }
-  void main() {
-    vec3 base = vec3(0.906, 0.906, 0.910);
-    float lat = asin(clamp(vDir.y, -1.0, 1.0));
-    float lon = atan(vDir.x, -vDir.z);
-    float shade = 1.0 - 0.10 * smoothstep(0.1, -0.6, vDir.y) + 0.035 * smoothstep(0.3, 1.0, vDir.y);
-    float grid = max(line(lon / 6.2832, 24.0, 0.012), line(lat / 3.1416, 12.0, 0.012));
-    float horizon = smoothstep(0.006, 0.0, abs(vDir.y)) * 0.6;
-    gl_FragColor = vec4(base * shade - vec3(0.085) * grid - vec3(0.05) * horizon, 1.0);
-    #include <colorspace_fragment>
-  }
-`;
 const tileVertex = /* glsl */ `
   uniform float uAmp;
   uniform float uTime;
@@ -58,7 +37,7 @@ const tileVertex = /* glsl */ `
     vUv = uv;
     vec4 wp = modelMatrix * vec4(position, 1.0);
     vec4 vp = viewMatrix * wp;
-    // a wave travelling across the wall in the drag direction (in screen terms)
+    // a wave travelling across the wall in the direction it moves (in screen terms)
     float w = sin(dot(vp.xy, uDir) * 0.55 - uTime * 3.0) * 0.6 + sin(vp.x * 0.9 + vp.y * 0.7 - uTime * 2.2) * 0.4;
     vec3 n = normalize((modelMatrix * vec4(0.0, 0.0, 1.0, 0.0)).xyz);
     wp.xyz += n * w * uAmp;
@@ -82,22 +61,27 @@ const tileFragment = /* glsl */ `
 const dirOf = (yaw: number, pitch: number, out = new THREE.Vector3()) =>
   out.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
 
-export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: (project: number) => void): () => void {
+type Options = { topInset?: () => number }; // px from the top the wall must stay below
+
+export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: (project: number) => void, options: Options = {}): () => void {
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mouse = window.matchMedia('(hover: hover) and (pointer: fine)');
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(host.clientWidth, host.clientHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.setClearColor(0xe7e7e8);
+  renderer.setClearColor(0xe7e7e8); // solid background
   host.appendChild(renderer.domElement);
+
+  // The laser pointer is drawn on a 2D canvas on top (it ends exactly at the pointer)
+  const beam = document.createElement('canvas');
+  Object.assign(beam.style, { position: 'absolute', inset: '0', pointerEvents: 'none' });
+  host.appendChild(beam);
+  const pen = beam.getContext('2d')!;
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(FOV, host.clientWidth / host.clientHeight, 0.1, 200);
-
-  const domeGeometry = new THREE.SphereGeometry(DOME, 96, 64);
-  const domeMaterial = new THREE.ShaderMaterial({ side: THREE.BackSide, vertexShader: domeVertex, fragmentShader: domeFragment });
-  scene.add(new THREE.Mesh(domeGeometry, domeMaterial));
 
   // ---------- The wall ----------
   const wave = { uAmp: { value: 0 }, uTime: { value: 0 }, uDir: { value: new THREE.Vector2(1, 0) } };
@@ -149,10 +133,11 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     }
   }
 
-  // Where the wall is on the dome and where it's heading; the camera always looks at the start position
-  const wall = { yaw: 0, pitch: REST_PITCH };
-  const goal = { yaw: 0, pitch: REST_PITCH };
-  const vel = { x: 0, y: 0 }; // px per frame, for momentum
+  // Where the wall is on the sphere and where it's heading; how far back the camera is
+  const wall = { yaw: 0, pitch: VIEW_PITCH };
+  const goal = { yaw: 0, pitch: VIEW_PITCH };
+  const zoom = { now: ZOOM.start, goal: ZOOM.start };
+  const vel = { x: 0, y: 0 }; // touch momentum, px per frame
   let amp = 0;
 
   const v = new THREE.Vector3();
@@ -166,8 +151,8 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     }
   };
   const placeCamera = () => {
-    dirOf(0, REST_PITCH, v);
-    camera.position.copy(v).multiplyScalar(-CAMERA_BACK);
+    dirOf(0, VIEW_PITCH, v);
+    camera.position.copy(v).multiplyScalar(-zoom.now);
     camera.lookAt(v.multiplyScalar(R));
     camera.updateMatrixWorld();
   };
@@ -176,7 +161,7 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
   // ---------- Keeping the wall on screen ----------
   // The wall's outline on screen (px) if it were at (yaw, pitch), from its four outer corners
   const probe = new THREE.Object3D();
-  const corner = new THREE.Vector3();
+  const point = new THREE.Vector3();
   const outline = (yaw: number, pitch0: number) => {
     let left = Infinity, right = -Infinity, top = Infinity, bottom = -Infinity;
     for (const r of [0, ROWS - 1]) {
@@ -187,10 +172,10 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
         probe.lookAt(0, 0, 0);
         probe.updateMatrixWorld();
         for (const [x, yy] of [[-W / 2, -H / 2], [W / 2, -H / 2], [-W / 2, H / 2], [W / 2, H / 2]]) {
-          corner.set(x, yy, 0);
-          probe.localToWorld(corner).project(camera);
-          const px = ((corner.x + 1) / 2) * host.clientWidth;
-          const py = ((1 - corner.y) / 2) * host.clientHeight;
+          point.set(x, yy, 0);
+          probe.localToWorld(point).project(camera);
+          const px = ((point.x + 1) / 2) * host.clientWidth;
+          const py = ((1 - point.y) / 2) * host.clientHeight;
           left = Math.min(left, px); right = Math.max(right, px);
           top = Math.min(top, py); bottom = Math.max(bottom, py);
         }
@@ -203,42 +188,47 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
   let fitsX = true;
   let fitsY = true;
   let limited = true;
+  let topMargin = MARGIN.top;
   const allowedX = (o: ReturnType<typeof outline>) =>
     fitsX ? o.left >= MARGIN.side && o.right <= host.clientWidth - MARGIN.side : o.left <= MARGIN.side && o.right >= host.clientWidth - MARGIN.side;
   const allowedY = (o: ReturnType<typeof outline>) =>
-    fitsY ? o.top >= MARGIN.top && o.bottom <= host.clientHeight - MARGIN.bottom : o.top <= MARGIN.top && o.bottom >= host.clientHeight - MARGIN.bottom;
+    fitsY ? o.top >= topMargin && o.bottom <= host.clientHeight - MARGIN.bottom : o.top <= topMargin && o.bottom >= host.clientHeight - MARGIN.bottom;
   const allowed = (y: number, p: number) => {
     const o = outline(y, p);
     return allowedX(o) && allowedY(o);
   };
-  // How far the wall can go each way, worked out once (and again on resize). Moving up or down
-  // also changes how wide the curved wall looks, so the sideways limit is the tightest one over
-  // the whole vertical range, and the box is shrunk until all four of its corners are allowed.
-  const box = { yawMin: 0, yawMax: 0, pitchMin: REST_PITCH, pitchMax: REST_PITCH };
+  // How far the wall can go each way, worked out again whenever the zoom or the window changes.
+  // Moving up or down also changes how wide the curved wall looks, so the sideways limit is the
+  // tightest one over the vertical range, and the box is shrunk until all its corners are allowed.
+  const box = { yawMin: 0, yawMax: 0, pitchMin: VIEW_PITCH, pitchMax: VIEW_PITCH };
   const measure = () => {
-    const o = outline(0, REST_PITCH);
+    topMargin = Math.max(MARGIN.top, (options.topInset?.() ?? 0) + 24);
+    const o = outline(0, VIEW_PITCH);
     fitsX = o.right - o.left <= host.clientWidth - 2 * MARGIN.side;
-    fitsY = o.bottom - o.top <= host.clientHeight - MARGIN.top - MARGIN.bottom;
-    limited = allowedX(o) && allowedY(o);
+    fitsY = o.bottom - o.top <= host.clientHeight - topMargin - MARGIN.bottom;
+    // a starting height that's allowed: straight ahead, or a little lower if the title is in the way
+    let base = VIEW_PITCH;
+    while (!allowed(0, base) && base > VIEW_PITCH - 40 * deg) base -= 0.5 * deg;
+    limited = allowed(0, base);
     if (!limited) return; // a window too small for the wall to sit inside at all: no limits
     const far = (ok: (a: number) => boolean) => {
       let lo = 0, hi = 1.2; // radians
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 16; i++) {
         const mid = (lo + hi) / 2;
         if (ok(mid)) lo = mid;
         else hi = mid;
       }
       return lo;
     };
-    const up = far((a) => allowed(0, REST_PITCH + a));
-    const down = far((a) => allowed(0, REST_PITCH - a));
-    const side = far((a) => allowed(a, REST_PITCH)); // the most it could go sideways
+    const up = far((a) => allowed(0, base + a));
+    const below = far((a) => allowed(0, base - a));
+    const side = far((a) => allowed(a, base)); // the most it could go sideways
     // At the very top or bottom of its range the wall has no room to move sideways, so give up a
     // little of the vertical range: the most of it that still leaves 80% of the sideways range
     for (let scale = 1; scale >= 0.3; scale -= 0.05) {
-      box.pitchMax = REST_PITCH + up * scale;
-      box.pitchMin = REST_PITCH - down * scale;
-      const pitches = [box.pitchMin, REST_PITCH, box.pitchMax];
+      box.pitchMax = base + up * scale;
+      box.pitchMin = base - below * scale;
+      const pitches = [box.pitchMin, base, box.pitchMax];
       box.yawMax = Math.min(...pitches.map((p) => far((a) => allowed(a, p))));
       box.yawMin = -Math.min(...pitches.map((p) => far((a) => allowed(-a, p))));
       if (Math.min(box.yawMax, -box.yawMin) >= side * 0.8) break;
@@ -248,56 +238,68 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
       if (corners.every(([y, p]) => allowed(y, p))) break;
       box.yawMin *= 0.97;
       box.yawMax *= 0.97;
-      box.pitchMin = REST_PITCH + (box.pitchMin - REST_PITCH) * 0.97;
-      box.pitchMax = REST_PITCH + (box.pitchMax - REST_PITCH) * 0.97;
+      box.pitchMin = base + (box.pitchMin - base) * 0.97;
+      box.pitchMax = base + (box.pitchMax - base) * 0.97;
     }
   };
-  measure();
-  // Keep a position inside the box; says which way it was stopped
   const constrain = (yaw: number, pitch: number) => {
     if (!limited) return { yaw, pitch, stoppedX: false, stoppedY: false };
     const y = Math.max(box.yawMin, Math.min(box.yawMax, yaw));
     const p = Math.max(box.pitchMin, Math.min(box.pitchMax, pitch));
     return { yaw: y, pitch: p, stoppedX: y !== yaw, stoppedY: p !== pitch };
   };
+  measure();
+  // start in the middle of where it can go
+  goal.yaw = wall.yaw = (box.yawMin + box.yawMax) / 2;
+  goal.pitch = wall.pitch = (box.pitchMin + box.pitchMax) / 2;
 
-  // Radians per pixel: a drag across the screen moves the wall about a screen's width
-  const perPixel = () => (2 * (R + CAMERA_BACK) * Math.tan((FOV / 2) * deg) * camera.aspect) / R / host.clientWidth;
-
-  // ---------- Dragging and picking ----------
+  // ---------- Pointer ----------
   const canvas = renderer.domElement;
   canvas.style.touchAction = 'none';
-  canvas.style.cursor = 'grab';
-  let dragging = false;
-  let moved = 0;
-  let last = { x: 0, y: 0, t: 0 };
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
   const tileAt = (x: number, y: number) => {
-    const box = canvas.getBoundingClientRect();
-    ndc.set(((x - box.left) / box.width) * 2 - 1, -((y - box.top) / box.height) * 2 + 1);
+    const b = canvas.getBoundingClientRect();
+    ndc.set(((x - b.left) / b.width) * 2 - 1, -((y - b.top) / b.height) * 2 + 1);
     raycaster.setFromCamera(ndc, camera);
     return raycaster.intersectObjects(tiles, false)[0]?.object as THREE.Mesh | undefined;
   };
+  // Where the mouse is (share of the window), whether it's over the scene, and over a tile
+  const pointer = { x: 0.5, y: 0.5, over: false, onTile: false };
+  // Mouse position → wall position: the pointer's place across the window picks the wall's place within its range
+  const follow = () => {
+    goal.yaw = box.yawMin + (box.yawMax - box.yawMin) * pointer.x;
+    goal.pitch = box.pitchMax - (box.pitchMax - box.pitchMin) * pointer.y;
+  };
+
+  let down: { moved: number } | null = null;
+  let last = { x: 0, y: 0, t: 0 };
+  const perPixel = () => (2 * (R + zoom.now) * Math.tan((FOV / 2) * deg) * camera.aspect) / R / host.clientWidth;
 
   const onDown = (e: PointerEvent) => {
     if (e.button > 0) return;
-    dragging = true;
-    moved = 0;
-    vel.x = vel.y = 0;
+    down = { moved: 0 };
     last = { x: e.clientX, y: e.clientY, t: performance.now() };
-    canvas.setPointerCapture(e.pointerId);
-    canvas.style.cursor = 'grabbing';
+    vel.x = vel.y = 0;
+    if (e.pointerType !== 'mouse') canvas.setPointerCapture(e.pointerId);
   };
   const onMove = (e: PointerEvent) => {
-    if (!dragging) {
-      canvas.style.cursor = tileAt(e.clientX, e.clientY) ? 'pointer' : 'grab';
+    if (e.pointerType === 'mouse') {
+      pointer.x = e.clientX / host.clientWidth;
+      pointer.y = e.clientY / host.clientHeight;
+      pointer.over = e.target === canvas;
+      pointer.onTile = pointer.over && !!tileAt(e.clientX, e.clientY);
+      follow();
+      if (down) down.moved += Math.abs(e.clientX - last.x) + Math.abs(e.clientY - last.y);
+      last = { x: e.clientX, y: e.clientY, t: performance.now() };
       return;
     }
+    // touch and pen: drag the wall
+    if (!down) return;
     const dx = e.clientX - last.x;
     const dy = e.clientY - last.y;
     const dt = Math.max(1, performance.now() - last.t);
-    moved += Math.abs(dx) + Math.abs(dy);
+    down.moved += Math.abs(dx) + Math.abs(dy);
     const k = perPixel();
     const next = constrain(goal.yaw + dx * k, goal.pitch - dy * k);
     goal.yaw = next.yaw;
@@ -307,31 +309,92 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     last = { x: e.clientX, y: e.clientY, t: performance.now() };
   };
   const onUp = (e: PointerEvent) => {
-    if (!dragging) return;
-    dragging = false;
-    canvas.style.cursor = 'grab';
-    if (reduce || performance.now() - last.t > 80) vel.x = vel.y = 0; // a held-still release doesn't fling
-    if (moved < 6) {
+    if (!down) return;
+    if (reduce || e.pointerType === 'mouse' || performance.now() - last.t > 80) vel.x = vel.y = 0;
+    if (down.moved < 6) {
       const tile = tileAt(e.clientX, e.clientY);
       if (tile) onPick((tile.userData as { project: number }).project);
     }
+    down = null;
+  };
+  const onLeave = () => (pointer.over = false);
+  // Scroll wheel: zoom in and out
+  const onWheel = (e: WheelEvent) => {
+    if (document.querySelector('dialog[open]')) return;
+    e.preventDefault();
+    zoom.goal = Math.max(ZOOM.min, Math.min(ZOOM.max, zoom.goal * Math.exp(e.deltaY * 0.0012)));
   };
   canvas.addEventListener('pointerdown', onDown);
-  canvas.addEventListener('pointermove', onMove);
-  canvas.addEventListener('pointerup', onUp);
-  canvas.addEventListener('pointercancel', onUp);
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onUp);
+  document.documentElement.addEventListener('pointerleave', onLeave);
+  window.addEventListener('wheel', onWheel, { passive: false });
+  if (mouse.matches) canvas.style.cursor = 'none';
 
+  const sizeBeam = () => {
+    const dpr = Math.min(window.devicePixelRatio, 2);
+    beam.width = host.clientWidth * dpr;
+    beam.height = host.clientHeight * dpr;
+    pen.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  sizeBeam();
   const onResize = () => {
     renderer.setSize(host.clientWidth, host.clientHeight);
     camera.aspect = host.clientWidth / host.clientHeight;
     camera.updateProjectionMatrix();
+    sizeBeam();
     measure();
-    // back on screen if the resize pushed it off
+    if (mouse.matches) follow();
     const back = constrain(goal.yaw, goal.pitch);
     goal.yaw = back.yaw;
     goal.pitch = back.pitch;
   };
   window.addEventListener('resize', onResize);
+
+  // The laser: from just off the bottom right corner to the pointer, thinning and fading as it goes
+  let ring = 0;
+  const drawBeam = () => {
+    const w = host.clientWidth;
+    const h = host.clientHeight;
+    pen.clearRect(0, 0, w, h);
+    if (!mouse.matches || !pointer.over) return;
+    const end = { x: pointer.x * w, y: pointer.y * h };
+    const start = { x: w * 0.86, y: h + 30 };
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+    const grad = pen.createLinearGradient(start.x, start.y, end.x, end.y);
+    grad.addColorStop(0, `rgba(${BEAM.color}, 0.95)`);
+    grad.addColorStop(1, `rgba(${BEAM.color}, 0.35)`);
+    pen.fillStyle = grad;
+    pen.beginPath(); // a long, thin wedge: 3px wide at the hand, 1px at the dot
+    pen.moveTo(start.x + nx * 1.5, start.y + ny * 1.5);
+    pen.lineTo(end.x + nx * 0.5, end.y + ny * 0.5);
+    pen.lineTo(end.x - nx * 0.5, end.y - ny * 0.5);
+    pen.lineTo(start.x - nx * 1.5, start.y - ny * 1.5);
+    pen.closePath();
+    pen.fill();
+    // the dot, and a ring around it over a tile
+    ring += ((pointer.onTile ? 1 : 0) - ring) * 0.25;
+    if (ring > 0.02) {
+      pen.strokeStyle = `rgba(255, 255, 255, ${0.9 * ring})`;
+      pen.lineWidth = 1.5;
+      pen.beginPath();
+      pen.arc(end.x, end.y, 6 + 6 * ring, 0, Math.PI * 2);
+      pen.stroke();
+    }
+    pen.fillStyle = BEAM.dot;
+    pen.beginPath();
+    pen.arc(end.x, end.y, 3.5, 0, Math.PI * 2);
+    pen.fill();
+    pen.fillStyle = '#ffffff';
+    pen.beginPath();
+    pen.arc(end.x, end.y, 1.3, 0, Math.PI * 2);
+    pen.fill();
+  };
 
   // ---------- Every frame ----------
   let raf = 0;
@@ -340,21 +403,33 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     raf = requestAnimationFrame(frame);
     const dt = Math.min(0.05, (now - prev) / 1000);
     prev = now;
-    if (!dragging && (vel.x || vel.y)) {
+
+    // zoom eases in; the limits follow the new size
+    if (Math.abs(zoom.goal - zoom.now) > 0.01) {
+      zoom.now += (zoom.goal - zoom.now) * (reduce ? 1 : 0.15);
+      placeCamera();
+      measure();
+      if (mouse.matches) follow();
+      const back = constrain(goal.yaw, goal.pitch);
+      goal.yaw = back.yaw;
+      goal.pitch = back.pitch;
+    }
+    // touch momentum
+    if (!down && (vel.x || vel.y)) {
       const k = perPixel();
       const next = constrain(goal.yaw + vel.x * k, goal.pitch - vel.y * k);
       goal.yaw = next.yaw;
       goal.pitch = next.pitch;
-      if (next.stoppedX) vel.x = 0; // stop at the edge
+      if (next.stoppedX) vel.x = 0;
       if (next.stoppedY) vel.y = 0;
       vel.x *= 0.94;
       vel.y *= 0.94;
       if (Math.abs(vel.x) + Math.abs(vel.y) < 0.05) vel.x = vel.y = 0;
     }
-    // the wall eases toward where it's dragged
+    // the wall eases toward where it's heading
     const before = { yaw: wall.yaw, pitch: wall.pitch };
-    wall.yaw += (goal.yaw - wall.yaw) * (reduce ? 1 : 0.16);
-    wall.pitch += (goal.pitch - wall.pitch) * (reduce ? 1 : 0.16);
+    wall.yaw += (goal.yaw - wall.yaw) * (reduce ? 1 : 0.12);
+    wall.pitch += (goal.pitch - wall.pitch) * (reduce ? 1 : 0.12);
     placeWall();
 
     // the wave follows how fast the wall is actually moving
@@ -366,6 +441,7 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     wave.uAmp.value = amp;
     wave.uTime.value += dt;
     renderer.render(scene, camera);
+    drawBeam();
   };
   raf = requestAnimationFrame(frame);
 
@@ -373,15 +449,16 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     cancelAnimationFrame(raf);
     window.removeEventListener('resize', onResize);
     canvas.removeEventListener('pointerdown', onDown);
-    canvas.removeEventListener('pointermove', onMove);
-    canvas.removeEventListener('pointerup', onUp);
-    canvas.removeEventListener('pointercancel', onUp);
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onUp);
+    document.documentElement.removeEventListener('pointerleave', onLeave);
+    window.removeEventListener('wheel', onWheel);
     geometry.dispose();
-    domeGeometry.dispose();
-    domeMaterial.dispose();
     for (const m of materials) m.dispose();
     for (const t of textures) t.dispose();
     renderer.dispose();
     canvas.remove();
+    beam.remove();
   };
 }

@@ -1,4 +1,4 @@
-// The experimental page (/lorem-ipsum): one curved 3D wall of project tiles you drag across a dome
+// The experimental page (/lorem-ipsum): one curved 3D wall of project tiles that follows the mouse
 // (src/scripts/curve.ts), and a glass modal that shows one project's images one at a time.
 //
 // Grid: click or tap a tile to open its project. For keyboard and screen readers, the projects
@@ -57,7 +57,11 @@ export function initPeek() {
   // ---------- Grid ----------
   const projects = JSON.parse(stage.dataset.projects ?? '[]') as CurveProject[];
   host.tabIndex = -1; // so focus can come back here after closing a project opened by click
-  const stop = startCurve(host, projects, (n) => openProject(n, host));
+  // the wall stays below the title and description
+  const header = document.querySelector<HTMLElement>('.peek-header');
+  const stop = startCurve(host, projects, (n) => openProject(n, host), {
+    topInset: () => header?.getBoundingClientRect().bottom ?? 0,
+  });
   signal.addEventListener('abort', stop);
 
   for (const button of stage.querySelectorAll<HTMLButtonElement>('.peek-open')) {
