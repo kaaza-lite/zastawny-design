@@ -285,7 +285,7 @@ a {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: radial-gradient(64px circle at var(--mx, 50%) var(--my, 50%), var(--pill-glow), transparent 70%);
+  background: radial-gradient(64px circle at var(--glow-at, var(--mx, 50%) var(--my, 50%)), var(--pill-glow), transparent 70%);
   opacity: 0;
   transition: opacity var(--dur-fast) var(--ease-out);
   pointer-events: none;
@@ -299,25 +299,35 @@ a {
 [data-pill].is-touched .tag::before {
   opacity: 1;
 }
-/* "Open to work" wobbles as the page loads and every 4s after: a small rocking turn around the pill's centre */
-.status-pill .tag {
-  transform-origin: 50% 50%;
-  animation: pill-wobble 4s ease-in-out 0.6s infinite;
+/* "Open to work": the hover glow sweeps across the pill from left to right, like a skeleton
+   loader's shimmer, as the page loads and every 2.8s after; under the cursor, or held, it's the usual glow */
+@property --sweep {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: -48px;
 }
-.status-pill [data-pill].is-held .tag,
-.status-pill [data-pill].is-touched .tag {
+.status-pill .tag::before {
+  --glow-at: var(--sweep) 50%;
+  animation: pill-sweep 2.8s ease-in-out 0.6s infinite both;
+}
+.status-pill [data-pill].is-held .tag::before,
+.status-pill [data-pill].is-touched .tag::before {
+  --glow-at: var(--mx, 50%) var(--my, 50%);
   animation: none;
 }
-@keyframes pill-wobble {
-  0%, 20%, 100% { transform: rotate(0deg); }
-  4% { transform: rotate(-4deg); }
-  8% { transform: rotate(3.5deg); }
-  12% { transform: rotate(-2.5deg); }
-  16% { transform: rotate(1.5deg); }
-  18% { transform: rotate(-0.5deg); }
+@media (hover: hover) and (pointer: fine) {
+  .status-pill [data-pill]:hover .tag::before {
+    --glow-at: var(--mx, 50%) var(--my, 50%);
+    animation: none;
+  }
+}
+/* Starts and ends just outside the pill (the glow is about 48px across from its centre), so it slides in and out */
+@keyframes pill-sweep {
+  0% { --sweep: -48px; opacity: 1; }
+  60%, 100% { --sweep: calc(100% + 48px); opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .status-pill .tag {
+  .status-pill .tag::before {
     animation: none;
   }
 }
