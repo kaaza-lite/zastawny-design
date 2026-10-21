@@ -154,8 +154,9 @@ const heroVars = [
     --column: 760px;      /* text column */
     --media: 962px;       /* wide images and videos */
     --hero-gap: 104px;    /* title to details */
-    --section-gap: 80px;  /* content to other projects */
+    --section-gap: 80px;  /* other projects to footer */
     --body-gap: 120px;    /* details to content */
+    --others-gap: 128px;  /* each side of the other projects divider, as on Home */
   }
 
   .case-header {
@@ -238,6 +239,9 @@ const heroVars = [
     padding-top: 0;
     border-top: 0;
   }
+  .case-body :global(.case-section:last-child) {
+    padding-bottom: 0; /* the space above other projects is all in its margin */
+  }
 
   .case-body :global(h2),
   .others h2 {
@@ -316,8 +320,8 @@ const heroVars = [
     flex-direction: column;
     gap: 40px;
     width: min(1160px, calc(100% - 2 * var(--gutter)));
-    margin-top: var(--section-gap);
-    padding-top: 60px;
+    margin-top: var(--others-gap);
+    padding-top: var(--others-gap);
     border-top: 1px dashed var(--color-divider);
     text-align: center;
     --color-surface: var(--theme-tile);
@@ -372,6 +376,11 @@ const heroVars = [
       --media: 496px;
       --hero-gap: 60px;
       --body-gap: 60px;
+      --others-gap: 60px;
+    }
+    /* Mobile keeps 60px of section padding plus 60px of margin above other projects */
+    .case-body :global(.case-section:last-child) {
+      padding-bottom: 60px;
     }
     .details {
       width: min(496px, calc(100% - 2 * var(--content-gutter)));
