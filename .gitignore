@@ -14,6 +14,3 @@ dist/
 
 # review screenshots, local only
 /review/
-
-# Original downloads of the 3D models (the trimmed copies are in public/models)
-models-source/
