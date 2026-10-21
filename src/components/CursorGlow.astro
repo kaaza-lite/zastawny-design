@@ -164,9 +164,9 @@
     };
 
     const moveTo = (x: number, y: number) => {
-      if (document.body.dataset.page === 'peek') return; // the experimental page has its own background
-      // Over a case study tile (its own datamosh plays), the nav, a pill or the LinkedIn button, the background one clears and waits
-      if (document.querySelector('[data-glitch-card]:hover, .site-nav:hover, [data-pill]:hover, .more a:hover')) {
+      // Over a case study tile (its own datamosh plays), the nav, a pill, the LinkedIn button or the
+      // Redesigns grid, the background one clears and waits
+      if (document.querySelector('[data-glitch-card]:hover, .site-nav:hover, [data-pill]:hover, .more a:hover, .peek-canvas[data-over-grid]')) {
         cancelAnimationFrame(raf);
         raf = 0;
         pointer.inside = false;

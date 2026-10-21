@@ -68,6 +68,26 @@ export function initPeek() {
     button.addEventListener('click', () => openProject(Number(button.dataset.project), button), { signal });
   }
 
+  // Credit for the 3D models: the info button opens it; Escape, a second click or a click elsewhere closes it
+  const info = document.querySelector<HTMLButtonElement>('.peek-info');
+  const credit = document.querySelector<HTMLElement>('.peek-credit-text');
+  if (info && credit) {
+    const setCredit = (open: boolean) => {
+      credit.hidden = !open;
+      info.setAttribute('aria-expanded', String(open));
+    };
+    info.addEventListener('click', () => setCredit(credit.hidden), { signal });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !credit.hidden) {
+        setCredit(false);
+        info.focus();
+      }
+    }, { signal });
+    document.addEventListener('pointerdown', (e) => {
+      if (!credit.hidden && !(e.target as Element).closest('.peek-credit')) setCredit(false);
+    }, { signal });
+  }
+
   dialog.querySelector('.peek-close')?.addEventListener('click', () => dialog.close(), { signal });
   dialog.addEventListener('close', () => opener?.focus({ preventScroll: true }), { signal });
 

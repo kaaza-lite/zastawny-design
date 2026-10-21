@@ -70,11 +70,11 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const mouse = window.matchMedia('(hover: hover) and (pointer: fine)');
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(host.clientWidth, host.clientHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.setClearColor(0xe7e7e8); // solid background
+  renderer.setClearColor(0x000000, 0); // see-through: the page's grey, its shades and the background datamosh show behind
   renderer.autoClear = false; // the hand is drawn over the wall in a second pass
   host.appendChild(renderer.domElement);
 
@@ -503,6 +503,13 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     if (speed > 0.2) wave.uDir.value.set(dYaw, dPitch).normalize();
     wave.uAmp.value = amp;
     wave.uTime.value += dt;
+    // the background datamosh pauses while the pointer is over the wall
+    if (mouse.matches) {
+      const o = outline(wall.yaw, wall.pitch);
+      const x = pointer.x * host.clientWidth;
+      const y = pointer.y * host.clientHeight;
+      host.toggleAttribute('data-over-grid', pointer.over && x >= o.left && x <= o.right && y >= o.top && y <= o.bottom);
+    }
     renderer.clear();
     renderer.render(scene, camera);
     if (hand) aimHand();

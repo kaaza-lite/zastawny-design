@@ -33,9 +33,17 @@ const tileImages = await Promise.all(
         ))}
       </ul>
     </div>
-    <!-- Credit for the 3D hand and controller (CC BY 4.0) -->
-    <p class="peek-credit">3D models: <a href="https://sketchfab.com/3d-models/vr-hand-a647cce524254c9a96d4244c12811d7a" target="_blank" rel="noopener">VR Hand</a> by RockDutyFree_models, <a href="https://sketchfab.com/3d-models/quest-2-controller-low-mid-and-high-poly-9f02b77cc27148c986315674c7ed106d" target="_blank" rel="noopener">Quest 2 Controller</a> by BlackCube, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></p>
+    <!-- Credit for the 3D hand and controller (CC BY 4.0): an info button that opens it -->
+    <div class="peek-credit">
+      <button type="button" class="peek-info tip-host" aria-label="3D models info" aria-expanded="false" aria-controls="peek-credit-text">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+        <span class="tip tip--start" aria-hidden="true">3D models info</span>
+      </button>
+      <p class="peek-credit-text" id="peek-credit-text" hidden>3D models: <a href="https://sketchfab.com/3d-models/vr-hand-a647cce524254c9a96d4244c12811d7a" target="_blank" rel="noopener">VR Hand</a> by RockDutyFree_models, <a href="https://sketchfab.com/3d-models/quest-2-controller-low-mid-and-high-poly-9f02b77cc27148c986315674c7ed106d" target="_blank" rel="noopener">Quest 2 Controller</a> by BlackCube, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></p>
+    </div>
   </main>
+  <div class="top-shade top-shade--red" aria-hidden="true"></div>
+  <div class="bottom-shade bottom-shade--red" aria-hidden="true"></div>
 
   <dialog class="peek-modal" aria-label="project" tabindex="-1">
     <div class="peek-sheet" aria-hidden="true"></div>
@@ -110,17 +118,71 @@ const tileImages = await Promise.all(
     color: rgb(18 18 18 / 0.75);
   }
 
-  /* Small credit line, bottom left */
+  /* Credit: an info button at the bottom left (Lucide "info", 14px in a 24px target) that opens the text */
   .peek-credit {
     position: fixed;
     bottom: 16px;
-    left: 24px;
+    left: 20px;
     z-index: 2;
-    font-size: 12px;
-    color: rgb(18 18 18 / 0.55);
   }
-  .peek-credit a {
-    color: inherit;
+  .peek-info {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: rgb(18 18 18 / 0.55);
+    cursor: pointer;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .peek-info svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .peek-info[aria-expanded='true'],
+  .peek-info:focus-visible {
+    color: #121212;
+  }
+  .peek-info:focus-visible {
+    outline: 2px solid #121212;
+    outline-offset: 0;
+    box-shadow: none;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .peek-info:hover {
+      color: #121212;
+    }
+  }
+  /* no tooltip while the text is open */
+  .peek-info[aria-expanded='true'] > .tip {
+    opacity: 0 !important;
+  }
+  .peek-credit-text {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    width: max-content;
+    max-width: min(420px, calc(100vw - 40px));
+    padding: 8px 14px;
+    border-radius: 14px;
+    background:
+      linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
+      rgb(24 24 24 / 0.92);
+    box-shadow: inset 0 1px 0 var(--glass-highlight);
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--color-text);
+  }
+  .peek-credit-text a {
+    color: var(--color-accent-2);
     text-decoration: underline;
     text-underline-offset: 2px;
   }
@@ -128,11 +190,6 @@ const tileImages = await Promise.all(
   @media not ((hover: hover) and (pointer: fine)) {
     .peek-credit {
       display: none;
-    }
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .peek-credit a:hover {
-      color: #121212;
     }
   }
 
