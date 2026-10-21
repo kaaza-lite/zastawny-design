@@ -164,18 +164,10 @@
     };
 
     const moveTo = (x: number, y: number) => {
-      // Over the nav: no new smearing, but what's there fades out by itself
-      if (document.querySelector('.site-nav:hover')) {
+      // Over the nav, a case study tile (its own datamosh plays), a pill or the LinkedIn button:
+      // no new smearing, but what's there fades out by itself
+      if (document.querySelector('.site-nav:hover, [data-glitch-card]:hover, [data-pill]:hover, .more a:hover')) {
         pointer.inside = false;
-        return;
-      }
-      // Over a case study tile (its own datamosh plays), a pill or the LinkedIn button, the background one clears and waits
-      if (document.querySelector('[data-glitch-card]:hover, [data-pill]:hover, .more a:hover')) {
-        cancelAnimationFrame(raf);
-        raf = 0;
-        pointer.inside = false;
-        area.empty = true;
-        canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
         return;
       }
       if (pointer.inside) {
