@@ -11,14 +11,6 @@ import { swapFunctions } from 'astro:transitions/client';
 
 const KEEP = '.song-player, .cursor-glow, .page-mosh';
 
-// Remember which page's colours the visitor is leaving (the experimental page tints its background with them)
-document.addEventListener('astro:before-preparation', () => {
-  if (document.body.dataset.page === 'peek') return;
-  try {
-    sessionStorage.setItem('came-from', document.body.dataset.theme || 'neutral');
-  } catch {}
-});
-
 document.addEventListener('astro:before-swap', (e) => {
   e.swap = () => {
     const next = e.newDocument;

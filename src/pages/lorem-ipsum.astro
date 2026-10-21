@@ -1,57 +1,39 @@
 ---
-// The experimental page, reached through the keyhole in the nav. No visible title:
-// just a moving 3D grid of projects over a gradient dome.
-// Clicking a tile opens a glass modal with that project's images, one per scroll.
-// All the content is placeholder for now (src/data/peek.ts).
-import { Image } from 'astro:assets';
+// The experimental page (/lorem-ipsum, not linked from the nav for now). No visible title:
+// a curved 3D grid of projects on a plain grey background, dragged in any direction
+// (src/scripts/curve.ts). Clicking a tile opens a glass modal with that project's images,
+// one per scroll. All the content is placeholder for now (src/data/peek.ts).
+import { Image, getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { projects } from '../data/peek';
 
-// Where each tile sits on the plane: x and y (share of the plane), depth (px), tilt (deg)
-const slots = [
-  { x: 0.06, y: 0.08, z: -160, rz: -4, ry: 14 },
-  { x: 0.38, y: 0.05, z: 60, rz: 3, ry: 0 },
-  { x: 0.64, y: 0.1, z: -260, rz: 5, ry: -18 },
-  { x: 0.08, y: 0.48, z: 120, rz: 2, ry: 10 },
-  { x: 0.44, y: 0.44, z: -40, rz: -5, ry: 0 },
-  { x: 0.7, y: 0.52, z: 90, rz: -6, ry: -12 },
-  { x: 0.22, y: 0.78, z: -120, rz: 4, ry: 0 },
-  { x: 0.58, y: 0.8, z: 40, rz: 2, ry: 6 },
-];
+// Each project's images at tile size, for the grid's textures
+const tileImages = await Promise.all(
+  projects.map(async (p) => ({
+    images: await Promise.all(p.images.map(async (img) => (await getImage({ src: img.src, width: 640, format: 'webp' })).src)),
+  })),
+);
 ---
 
 <BaseLayout title="Lorem ipsum | Tomasz Zastawny" description="Lorem ipsum dolor sit amet." page="peek">
   <main class="peek">
     <h1 class="visually-hidden">lorem ipsum</h1>
-    <div class="peek-dome" aria-hidden="true"></div>
-
-    <div class="peek-stage">
-      <div class="peek-field">
-        {projects.map((p, i) => {
-          const s = slots[i % slots.length];
-          return (
-            <button
-              type="button"
-              class:list={['peek-tile', `peek-tile--${p.kind}`]}
-              data-project={i}
-              aria-label={`${p.title}, open project`}
-              style={`left:${s.x * 100}%;top:${s.y * 100}%;transform:translateZ(${s.z}px) rotateZ(${s.rz}deg) rotateY(${s.ry}deg)`}
-            >
-              <Image src={p.images[0].src} alt="" widths={[360, 720]} sizes="(max-width: 799.98px) 70vw, 34vw" loading={i < 4 ? 'eager' : 'lazy'} draggable="false" />
-            </button>
-          );
-        })}
-      </div>
+    <div class="peek-stage" data-projects={JSON.stringify(tileImages)}>
+      <div class="peek-canvas" aria-hidden="true"></div>
+      <!-- The same projects for keyboard and screen readers; shown when one has focus -->
+      <ul class="peek-list" aria-label="Projects">
+        {projects.map((p, i) => (
+          <li><button type="button" class="peek-open" data-project={i}>{p.title}, open project {i + 1}</button></li>
+        ))}
+      </ul>
     </div>
   </main>
 
   <dialog class="peek-modal" aria-label="project" tabindex="-1">
     <div class="peek-sheet" aria-hidden="true"></div>
-    <button type="button" class="icon-button tip-host peek-close" aria-label="close">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-        <path d="M6 6l12 12M18 6 6 18"></path>
-      </svg>
-      <span class="tip tip--left" aria-hidden="true">close</span>
+    <button type="button" class="icon-button tip-host peek-close" aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+      <span class="tip tip--left" aria-hidden="true">Close</span>
     </button>
 
     {projects.map((p, i) => (
@@ -89,105 +71,62 @@ const slots = [
   /* No page scrolling here: the plane moves instead */
   :global(body[data-page='peek']) {
     overflow: hidden;
-    background: var(--peek-bg, #0f0f11);
+    background: #e7e7e8;
   }
 
-  /*
-    A dome seen from inside, only gradients, top layer first:
-      grain     fine noise so the gradients don't band
-      rim       the edges curve away into darkness
-      horizon   a faint curved line where the dome meets the floor
-      shells    very faint rings around the opening, so the ceiling reads as curved
-      opening   the bright light at the top (follows the pointer a little)
-      vault     the ceiling itself, shading from the bright colour to the deep one
-  */
-  .peek-dome {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    --light-x: 50%;
-    --light-y: 18%;
-    background:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
-      radial-gradient(ellipse 80% 78% at 50% 40%, transparent 58%, color-mix(in srgb, var(--dome-base) 85%, transparent) 100%),
-      radial-gradient(ellipse 78% 64% at var(--light-x) calc(var(--light-y) + 4%), transparent 92%, color-mix(in srgb, var(--dome-bright) 22%, transparent) 95.5%, transparent 99%),
-      repeating-radial-gradient(ellipse 100% 80% at var(--light-x) var(--light-y), transparent 0 7%, rgb(255 255 255 / 0.018) 7.6%, transparent 8.6%),
-      radial-gradient(ellipse 15% 13% at var(--light-x) var(--light-y), color-mix(in srgb, var(--dome-bright) 55%, white 45%), color-mix(in srgb, var(--dome-bright) 45%, transparent) 55%, transparent 100%),
-      radial-gradient(ellipse 85% 82% at var(--light-x) var(--light-y),
-        color-mix(in srgb, var(--dome-bright) 75%, var(--dome-deep)) 0%,
-        color-mix(in srgb, var(--dome-bright) 25%, var(--dome-deep)) 22%,
-        var(--dome-deep) 45%,
-        color-mix(in srgb, var(--dome-deep) 45%, var(--dome-base)) 72%,
-        var(--dome-base) 100%);
-    background-color: var(--dome-base, #03040a);
-  }
-
-  /* ---------- The moving grid ---------- */
+  /* ---------- The grid (drawn by src/scripts/curve.ts) ---------- */
   .peek-stage {
     position: fixed;
     inset: 0;
     z-index: 1;
-    perspective: 1200px;
-    overflow: hidden;
-    touch-action: none;
-    cursor: grab;
   }
-  .peek-stage:active {
-    cursor: grabbing;
-  }
-  .peek-field {
+  .peek-canvas {
     position: absolute;
-    top: 0;
-    left: 0;
-    transform-style: preserve-3d;
-    will-change: transform;
+    inset: 0;
   }
-  .peek-tile {
-    position: absolute;
-    padding: 0;
-    border: 0;
-    background: #000;
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 40px 80px rgb(0 0 0 / 0.6);
-    cursor: pointer;
-    transition: box-shadow var(--dur-base) var(--ease-out), filter var(--dur-base) var(--ease-out);
-  }
-  .peek-tile :global(img) {
+  .peek-canvas :global(canvas) {
     display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: top;
-    pointer-events: none;
-    user-select: none;
   }
-  .peek-tile--web {
-    width: clamp(300px, 34vw, 560px);
-    aspect-ratio: 3 / 2;
+  .peek-canvas:focus {
+    outline: none;
   }
-  /* Mobile apps: a tall phone shape with a dark bezel */
-  .peek-tile--app {
-    width: clamp(170px, 15vw, 250px);
-    aspect-ratio: 9 / 19;
-    border: 6px solid #1b1b1b;
-    border-radius: 28px;
+
+  /* Hidden until a button in it has keyboard focus, then a glass list at the bottom left */
+  .peek-list {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    clip-path: inset(50%);
+    background:
+      linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
+      var(--glass-tint);
+    border-radius: 20px;
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
   }
-  @media (hover: hover) and (pointer: fine) {
-    .peek-tile:hover {
-      filter: brightness(1.08);
-      box-shadow: 0 50px 100px rgb(0 0 0 / 0.7);
-    }
+  .peek-list:focus-within {
+    clip-path: none;
   }
-  .peek-tile:focus-visible {
-    outline-offset: 6px;
+  .peek-open {
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 14px;
+    background: none;
+    font: inherit;
+    color: var(--color-text);
+    text-align: left;
+    cursor: pointer;
   }
-  /* While a project is open the grid dims, so the glass shows colour, not bright blobs */
-  .peek-stage {
-    transition: opacity var(--dur-base) var(--ease-out);
-  }
-  .peek-stage.is-behind {
-    opacity: 0.3;
+  .peek-open:focus-visible {
+    color: var(--color-accent-2);
+    outline-offset: -2px;
+    box-shadow: none;
   }
 
   /* ---------- Modal: iOS-like glass over the sheen ---------- */
@@ -204,7 +143,7 @@ const slots = [
     overflow: hidden;
   }
   .peek-modal::backdrop {
-    background: rgb(0 0 0 / 0.15);
+    background: rgb(18 18 18 / 0.6);
   }
   .peek-modal:focus {
     outline: none;
@@ -337,12 +276,6 @@ const slots = [
 
   /* ---------- Phones: the modal stacks, image on top ---------- */
   @media (max-width: 799.98px) {
-    .peek-tile--web {
-      width: 70vw;
-    }
-    .peek-tile--app {
-      width: 40vw;
-    }
     .peek-sheet,
     .peek-slides {
       inset: 12px;
