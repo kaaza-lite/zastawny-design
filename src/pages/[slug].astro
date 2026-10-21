@@ -154,7 +154,8 @@ const heroVars = [
     --column: 760px;      /* text column */
     --media: 962px;       /* wide images and videos */
     --hero-gap: 104px;    /* title to details */
-    --section-gap: 80px;  /* details to content, content to other projects */
+    --section-gap: 80px;  /* content to other projects */
+    --body-gap: 120px;    /* details to content */
   }
 
   .case-header {
@@ -223,7 +224,7 @@ const heroVars = [
     flex-direction: column;
     gap: 30px;
     width: min(var(--column), calc(100% - 2 * var(--content-gutter)));
-    margin-top: var(--section-gap);
+    margin-top: var(--body-gap);
   }
 
   .case-body :global(.case-section) {
@@ -370,6 +371,7 @@ const heroVars = [
       --column: 496px;
       --media: 496px;
       --hero-gap: 60px;
+      --body-gap: 60px;
     }
     .details {
       width: min(496px, calc(100% - 2 * var(--content-gutter)));

@@ -140,7 +140,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
   /* ---------- Case study tiles (src/components/Tiles.astro) ---------- */
   .page :global(.work) {
     margin-top: 60px;
-    margin-bottom: 64px;
+    margin-bottom: 128px;
     padding: 0 var(--gutter);
   }
 
@@ -150,7 +150,7 @@ import finxThumb from '../assets/work/finx-thumb.png';
     flex-direction: column;
     gap: 40px;
     margin: 0 var(--content-gutter);
-    padding-top: 64px;
+    padding-top: 128px;
     border-top: 1px dashed var(--color-divider);
   }
 
@@ -202,10 +202,12 @@ import finxThumb from '../assets/work/finx-thumb.png';
       max-width: calc(496px + 2 * var(--gutter));
       margin-left: auto;
       margin-right: auto;
+      margin-bottom: 64px;
     }
 
     .experience {
       width: min(496px, calc(100% - 2 * var(--content-gutter)));
+      padding-top: 64px;
     }
 
     .footer {
