@@ -15,13 +15,13 @@ const tileImages = await Promise.all(
 );
 ---
 
-<BaseLayout title="Lorem ipsum | Tomasz Zastawny" description="Lorem ipsum dolor sit amet." page="peek">
+<BaseLayout title="Redesigns | Tomasz Zastawny" description="Past projects, redesigned with today’s thinking. Fintech, health tech, transportation and more. Not shipped, just better." page="peek">
   <main class="peek">
     <header class="peek-header">
-      <h1 data-scramble>Lorem ipsum</h1>
+      <h1 data-scramble>Redesigns</h1>
       <p class="peek-intro">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
-        dolore magna aliqua.
+        Past projects, redesigned with today’s thinking. Fintech, health tech, transportation and more. Not shipped,
+        just better.
       </p>
     </header>
     <div class="peek-stage" data-projects={JSON.stringify(tileImages)}>
@@ -81,9 +81,10 @@ const tileImages = await Promise.all(
   }
 
   /* ---------- Title and description: the type of the other pages, dark for the light background ---------- */
+  /* the title sits as far from the top as on Home (--page-top) */
   .peek-header {
     position: fixed;
-    top: 112px;
+    top: var(--page-top);
     right: 0;
     left: 0;
     z-index: 2;
