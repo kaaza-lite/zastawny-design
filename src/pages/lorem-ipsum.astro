@@ -91,10 +91,11 @@ const tileImages = await Promise.all(
   /* No page scrolling here: the plane moves instead */
   :global(body[data-page='peek']) {
     overflow: hidden;
-    background: #e7e7e8;
+    --color-bg: #181a0f; /* dark olive, for this page only (pills, focus rings and the page picture use it too) */
+    background: var(--color-bg);
   }
 
-  /* ---------- Title and description: the type of the other pages, dark for the light background ---------- */
+  /* ---------- Title and description: the type and colours of the other pages ---------- */
   /* the title sits as far from the top as on Home (--page-top) */
   .peek-header {
     position: fixed;
@@ -114,12 +115,12 @@ const tileImages = await Promise.all(
     font-family: var(--font-display);
     font-size: var(--text-hero);
     line-height: var(--leading-display-auto);
-    color: #121212;
+    color: var(--color-text);
   }
   .peek-intro {
     max-width: 760px;
     font-size: 20px;
-    color: rgb(18 18 18 / 0.75);
+    color: var(--color-text);
   }
 
   /* Credit: an info button at the bottom left (Lucide "info", 14px in a 24px target) that opens the text */
@@ -138,7 +139,7 @@ const tileImages = await Promise.all(
     border: 0;
     border-radius: 50%;
     background: none;
-    color: rgb(18 18 18 / 0.55);
+    color: var(--color-text);
     cursor: pointer;
     transition: color var(--dur-fast) var(--ease-out);
   }
@@ -153,16 +154,15 @@ const tileImages = await Promise.all(
   }
   .peek-info[aria-expanded='true'],
   .peek-info:focus-visible {
-    color: #121212;
+    color: var(--color-accent-2);
   }
   .peek-info:focus-visible {
-    outline: 2px solid #121212;
     outline-offset: 0;
     box-shadow: none;
   }
   @media (hover: hover) and (pointer: fine) {
     .peek-info:hover {
-      color: #121212;
+      color: var(--color-accent-2);
     }
   }
   .peek-credit-text {
