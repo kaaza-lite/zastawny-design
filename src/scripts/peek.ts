@@ -1,5 +1,5 @@
-// The experimental page (/lorem-ipsum): a curved 3D grid of project tiles you can drag in any
-// direction (src/scripts/curve.ts), and a glass modal that shows one project's images one at a time.
+// The experimental page (/lorem-ipsum): one curved 3D wall of project tiles you drag across a dome
+// (src/scripts/curve.ts), and a glass modal that shows one project's images one at a time.
 //
 // Grid: click or tap a tile to open its project. For keyboard and screen readers, the projects
 // are also a list of buttons, shown when one of them has focus.
