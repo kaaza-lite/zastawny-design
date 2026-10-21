@@ -1,10 +1,9 @@
 // The experimental page's grid: one 8 × 3 wall of tiles on the inside of a light grey dome.
-// Drag anywhere (mouse or touch) to slide the wall across the dome; the camera follows it with
-// a slight lag, so the wall stays in front of you and the dome (its faint lines and horizon)
-// turns behind it. Left and right go all the way round; up and down only a little, so you never
-// end up looking up into the dome. While the wall moves, a wave runs across its tiles in the
-// drag direction, stronger the faster it goes. A click or tap on a tile (without dragging) calls
-// onPick with its project. Reduced motion: no wave, no momentum, the camera keeps up at once.
+// The camera stays put. Drag anywhere (mouse or touch) to slide the wall across the dome, only
+// within what's on screen: it stops when its edge reaches the edge of the view (a wall wider than
+// the screen can be moved until each of its edges comes into view). While it moves, a wave runs
+// across its tiles in the drag direction, stronger the faster it goes. A click or tap on a tile
+// (without dragging) calls onPick with its project. Reduced motion: no wave and no momentum.
 
 import * as THREE from 'three';
 
@@ -20,10 +19,10 @@ const W = 2.1;            // tile size
 const H = 2.6;
 const GAP = 0.22;
 const deg = Math.PI / 180;
-const REST_PITCH = 7 * deg;
-const MIN_PITCH = -5 * deg; // how far the wall can go down and up
-const MAX_PITCH = 19 * deg;
-const MAX_WAVE = 1.6;
+const REST_PITCH = 7 * deg;  // where the wall and the camera start
+const MAX_WAVE = 2.6;
+// How close the wall can come to the edges of the screen (px); the top leaves room for the nav
+const MARGIN = { side: 24, top: 96, bottom: 24 };
 
 const domeVertex = /* glsl */ `
   varying vec3 vDir;
@@ -150,10 +149,9 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     }
   }
 
-  // Where the wall is on the dome, where it's heading, and where the camera looks (it trails the wall)
+  // Where the wall is on the dome and where it's heading; the camera always looks at the start position
   const wall = { yaw: 0, pitch: REST_PITCH };
   const goal = { yaw: 0, pitch: REST_PITCH };
-  const view = { yaw: 0, pitch: REST_PITCH };
   const vel = { x: 0, y: 0 }; // px per frame, for momentum
   let amp = 0;
 
@@ -168,14 +166,103 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     }
   };
   const placeCamera = () => {
-    dirOf(view.yaw, view.pitch, v);
+    dirOf(0, REST_PITCH, v);
     camera.position.copy(v).multiplyScalar(-CAMERA_BACK);
     camera.lookAt(v.multiplyScalar(R));
+    camera.updateMatrixWorld();
+  };
+  placeCamera();
+
+  // ---------- Keeping the wall on screen ----------
+  // The wall's outline on screen (px) if it were at (yaw, pitch), from its four outer corners
+  const probe = new THREE.Object3D();
+  const corner = new THREE.Vector3();
+  const outline = (yaw: number, pitch0: number) => {
+    let left = Infinity, right = -Infinity, top = Infinity, bottom = -Infinity;
+    for (const r of [0, ROWS - 1]) {
+      for (const c of [0, COLS - 1]) {
+        const pitch = pitch0 + (((ROWS - 1) / 2 - r) * (H + GAP)) / R;
+        const y = yaw + ((c - (COLS - 1) / 2) * (W + GAP)) / (R * Math.cos(pitch));
+        probe.position.copy(dirOf(y, pitch, v).multiplyScalar(R));
+        probe.lookAt(0, 0, 0);
+        probe.updateMatrixWorld();
+        for (const [x, yy] of [[-W / 2, -H / 2], [W / 2, -H / 2], [-W / 2, H / 2], [W / 2, H / 2]]) {
+          corner.set(x, yy, 0);
+          probe.localToWorld(corner).project(camera);
+          const px = ((corner.x + 1) / 2) * host.clientWidth;
+          const py = ((1 - corner.y) / 2) * host.clientHeight;
+          left = Math.min(left, px); right = Math.max(right, px);
+          top = Math.min(top, py); bottom = Math.max(bottom, py);
+        }
+      }
+    }
+    return { left, right, top, bottom };
+  };
+  // Is the wall allowed at (yaw, pitch)? Each edge must stay inside the view (with the margins).
+  // A wall wider or taller than the view may instead move until its far edge comes in.
+  let fitsX = true;
+  let fitsY = true;
+  let limited = true;
+  const allowedX = (o: ReturnType<typeof outline>) =>
+    fitsX ? o.left >= MARGIN.side && o.right <= host.clientWidth - MARGIN.side : o.left <= MARGIN.side && o.right >= host.clientWidth - MARGIN.side;
+  const allowedY = (o: ReturnType<typeof outline>) =>
+    fitsY ? o.top >= MARGIN.top && o.bottom <= host.clientHeight - MARGIN.bottom : o.top <= MARGIN.top && o.bottom >= host.clientHeight - MARGIN.bottom;
+  const allowed = (y: number, p: number) => {
+    const o = outline(y, p);
+    return allowedX(o) && allowedY(o);
+  };
+  // How far the wall can go each way, worked out once (and again on resize). Moving up or down
+  // also changes how wide the curved wall looks, so the sideways limit is the tightest one over
+  // the whole vertical range, and the box is shrunk until all four of its corners are allowed.
+  const box = { yawMin: 0, yawMax: 0, pitchMin: REST_PITCH, pitchMax: REST_PITCH };
+  const measure = () => {
+    const o = outline(0, REST_PITCH);
+    fitsX = o.right - o.left <= host.clientWidth - 2 * MARGIN.side;
+    fitsY = o.bottom - o.top <= host.clientHeight - MARGIN.top - MARGIN.bottom;
+    limited = allowedX(o) && allowedY(o);
+    if (!limited) return; // a window too small for the wall to sit inside at all: no limits
+    const far = (ok: (a: number) => boolean) => {
+      let lo = 0, hi = 1.2; // radians
+      for (let i = 0; i < 20; i++) {
+        const mid = (lo + hi) / 2;
+        if (ok(mid)) lo = mid;
+        else hi = mid;
+      }
+      return lo;
+    };
+    const up = far((a) => allowed(0, REST_PITCH + a));
+    const down = far((a) => allowed(0, REST_PITCH - a));
+    const side = far((a) => allowed(a, REST_PITCH)); // the most it could go sideways
+    // At the very top or bottom of its range the wall has no room to move sideways, so give up a
+    // little of the vertical range: the most of it that still leaves 80% of the sideways range
+    for (let scale = 1; scale >= 0.3; scale -= 0.05) {
+      box.pitchMax = REST_PITCH + up * scale;
+      box.pitchMin = REST_PITCH - down * scale;
+      const pitches = [box.pitchMin, REST_PITCH, box.pitchMax];
+      box.yawMax = Math.min(...pitches.map((p) => far((a) => allowed(a, p))));
+      box.yawMin = -Math.min(...pitches.map((p) => far((a) => allowed(-a, p))));
+      if (Math.min(box.yawMax, -box.yawMin) >= side * 0.8) break;
+    }
+    for (let i = 0; i < 40; i++) {
+      const corners = [[box.yawMin, box.pitchMin], [box.yawMin, box.pitchMax], [box.yawMax, box.pitchMin], [box.yawMax, box.pitchMax]];
+      if (corners.every(([y, p]) => allowed(y, p))) break;
+      box.yawMin *= 0.97;
+      box.yawMax *= 0.97;
+      box.pitchMin = REST_PITCH + (box.pitchMin - REST_PITCH) * 0.97;
+      box.pitchMax = REST_PITCH + (box.pitchMax - REST_PITCH) * 0.97;
+    }
+  };
+  measure();
+  // Keep a position inside the box; says which way it was stopped
+  const constrain = (yaw: number, pitch: number) => {
+    if (!limited) return { yaw, pitch, stoppedX: false, stoppedY: false };
+    const y = Math.max(box.yawMin, Math.min(box.yawMax, yaw));
+    const p = Math.max(box.pitchMin, Math.min(box.pitchMax, pitch));
+    return { yaw: y, pitch: p, stoppedX: y !== yaw, stoppedY: p !== pitch };
   };
 
   // Radians per pixel: a drag across the screen moves the wall about a screen's width
   const perPixel = () => (2 * (R + CAMERA_BACK) * Math.tan((FOV / 2) * deg) * camera.aspect) / R / host.clientWidth;
-  const clampPitch = (p: number) => Math.max(MIN_PITCH, Math.min(MAX_PITCH, p));
 
   // ---------- Dragging and picking ----------
   const canvas = renderer.domElement;
@@ -212,8 +299,9 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     const dt = Math.max(1, performance.now() - last.t);
     moved += Math.abs(dx) + Math.abs(dy);
     const k = perPixel();
-    goal.yaw += dx * k;
-    goal.pitch = clampPitch(goal.pitch - dy * k);
+    const next = constrain(goal.yaw + dx * k, goal.pitch - dy * k);
+    goal.yaw = next.yaw;
+    goal.pitch = next.pitch;
     vel.x = (dx / dt) * 16;
     vel.y = (dy / dt) * 16;
     last = { x: e.clientX, y: e.clientY, t: performance.now() };
@@ -237,6 +325,11 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     renderer.setSize(host.clientWidth, host.clientHeight);
     camera.aspect = host.clientWidth / host.clientHeight;
     camera.updateProjectionMatrix();
+    measure();
+    // back on screen if the resize pushed it off
+    const back = constrain(goal.yaw, goal.pitch);
+    goal.yaw = back.yaw;
+    goal.pitch = back.pitch;
   };
   window.addEventListener('resize', onResize);
 
@@ -249,26 +342,26 @@ export function startCurve(host: HTMLElement, projects: CurveProject[], onPick: 
     prev = now;
     if (!dragging && (vel.x || vel.y)) {
       const k = perPixel();
-      goal.yaw += vel.x * k;
-      goal.pitch = clampPitch(goal.pitch - vel.y * k);
+      const next = constrain(goal.yaw + vel.x * k, goal.pitch - vel.y * k);
+      goal.yaw = next.yaw;
+      goal.pitch = next.pitch;
+      if (next.stoppedX) vel.x = 0; // stop at the edge
+      if (next.stoppedY) vel.y = 0;
       vel.x *= 0.94;
       vel.y *= 0.94;
       if (Math.abs(vel.x) + Math.abs(vel.y) < 0.05) vel.x = vel.y = 0;
     }
-    // the wall eases toward where it's dragged, the camera trails the wall
+    // the wall eases toward where it's dragged
     const before = { yaw: wall.yaw, pitch: wall.pitch };
     wall.yaw += (goal.yaw - wall.yaw) * (reduce ? 1 : 0.16);
     wall.pitch += (goal.pitch - wall.pitch) * (reduce ? 1 : 0.16);
-    view.yaw += (wall.yaw - view.yaw) * (reduce ? 1 : 0.06);
-    view.pitch += (wall.pitch - view.pitch) * (reduce ? 1 : 0.06);
     placeWall();
-    placeCamera();
 
     // the wave follows how fast the wall is actually moving
     const dYaw = wall.yaw - before.yaw;
     const dPitch = wall.pitch - before.pitch;
     const speed = Math.hypot(dYaw, dPitch) / perPixel(); // px this frame
-    amp += ((reduce ? 0 : Math.min(MAX_WAVE, speed * 0.09)) - amp) * 0.08;
+    amp += ((reduce ? 0 : Math.min(MAX_WAVE, speed * 0.16)) - amp) * 0.08;
     if (speed > 0.2) wave.uDir.value.set(dYaw, dPitch).normalize();
     wave.uAmp.value = amp;
     wave.uTime.value += dt;
