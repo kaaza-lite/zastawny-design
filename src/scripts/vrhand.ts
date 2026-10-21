@@ -1,4 +1,4 @@
-// The hand holding a Quest 2 controller, for the experimental page's VR pointer.
+// The right hand holding a Quest 2 (right) controller, for the experimental page's VR pointer.
 // Models (CC BY 4.0, trimmed to one hand / one controller and recoloured):
 //   VR Hand by RockDutyFree_models  https://sketchfab.com/3d-models/vr-hand-a647cce524254c9a96d4244c12811d7a
 //   Quest 2 Controller by BlackCube https://sketchfab.com/3d-models/quest-2-controller-low-mid-and-high-poly-9f02b77cc27148c986315674c7ed106d
@@ -25,6 +25,8 @@ export async function loadVrHand(): Promise<VrHand> {
 
   const rig = new THREE.Group();
   rig.add(hand.scene);
+  // The model's posed hand is a left hand; mirrored, it's the right hand that holds the right controller
+  hand.scene.scale.x *= -1;
 
   // Freeze the hand in its gripping pose, light grey
   const mixer = new THREE.AnimationMixer(hand.scene);
