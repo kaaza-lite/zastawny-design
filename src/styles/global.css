@@ -390,7 +390,7 @@ a {
   background: linear-gradient(to bottom, rgb(1 6 36 / 0.05), rgb(1 6 36 / 0));
 }
 .bottom-shade--navy {
-  background: linear-gradient(to top, rgb(1 6 36 / 0.1), rgb(1 6 36 / 0));
+  background: linear-gradient(to top, rgb(1 6 36 / 0.4), rgb(1 6 36 / 0));
 }
 .top-shade--navy::after {
   background: radial-gradient(ellipse 480px 100% at var(--glow-x, 50%) 0%, rgb(1 6 36 / 0.3), rgb(1 6 36 / 0));
