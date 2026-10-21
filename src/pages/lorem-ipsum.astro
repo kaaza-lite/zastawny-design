@@ -46,8 +46,8 @@ const tileImages = await Promise.all(
       </div>
     </div>
   </main>
-  <div class="top-shade top-shade--red" aria-hidden="true"></div>
-  <div class="bottom-shade bottom-shade--red" aria-hidden="true"></div>
+  <div class="top-shade top-shade--navy" aria-hidden="true"></div>
+  <div class="bottom-shade bottom-shade--navy" aria-hidden="true"></div>
 
   <dialog class="peek-modal" aria-label="project" tabindex="-1">
     <div class="peek-sheet" aria-hidden="true"></div>
@@ -91,7 +91,7 @@ const tileImages = await Promise.all(
   /* No page scrolling here: the plane moves instead */
   :global(body[data-page='peek']) {
     overflow: hidden;
-    --color-bg: #181a0f; /* dark olive, for this page only (pills, focus rings and the page picture use it too) */
+    --color-bg: #001168; /* deep blue, for this page only (pills, focus rings and the page picture use it too) */
     background: var(--color-bg);
   }
 
@@ -176,10 +176,15 @@ const tileImages = await Promise.all(
     max-width: min(440px, calc(100vw - 40px));
     padding: 8px 8px 8px 14px;
     border-radius: 14px;
+    /* the nav's glass */
     background:
       linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
-      rgb(24 24 24 / 0.92);
-    box-shadow: inset 0 1px 0 var(--glass-highlight);
+      var(--glass-tint);
+    box-shadow:
+      inset 0 1px 0 var(--glass-highlight),
+      inset 0 -1px 0 rgb(255 255 255 / 0.05);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     font-size: 12px;
     line-height: 16px;
     color: var(--color-text);

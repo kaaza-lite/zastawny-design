@@ -385,18 +385,18 @@ a {
   display: none;
 }
 
-/* The Redesigns page: the same shades and glow in red (#DF0004) */
-.top-shade--red {
-  background: linear-gradient(to bottom, rgb(223 0 4 / 0.05), rgb(223 0 4 / 0));
+/* The Redesigns page: the same shades and glow in navy (#010624) */
+.top-shade--navy {
+  background: linear-gradient(to bottom, rgb(1 6 36 / 0.05), rgb(1 6 36 / 0));
 }
-.bottom-shade--red {
-  background: linear-gradient(to top, rgb(223 0 4 / 0.1), rgb(223 0 4 / 0));
+.bottom-shade--navy {
+  background: linear-gradient(to top, rgb(1 6 36 / 0.1), rgb(1 6 36 / 0));
 }
-.top-shade--red::after {
-  background: radial-gradient(ellipse 480px 100% at var(--glow-x, 50%) 0%, rgb(223 0 4 / 0.3), rgb(223 0 4 / 0));
+.top-shade--navy::after {
+  background: radial-gradient(ellipse 480px 100% at var(--glow-x, 50%) 0%, rgb(1 6 36 / 0.3), rgb(1 6 36 / 0));
 }
-.bottom-shade--red::after {
-  background: radial-gradient(ellipse 480px 100% at var(--glow-x, 50%) 100%, rgb(223 0 4 / 0.3), rgb(223 0 4 / 0));
+.bottom-shade--navy::after {
+  background: radial-gradient(ellipse 480px 100% at var(--glow-x, 50%) 100%, rgb(1 6 36 / 0.3), rgb(1 6 36 / 0));
 }
 
 /* Case studies: the same shade in black */

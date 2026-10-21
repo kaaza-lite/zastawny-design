@@ -9,7 +9,10 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const GRIP_TIME = 16.5;     // s into the hand's animation: the gripping pose
-const CONTROLLER_SCALE = 0.8;
+// Where the controller sits in the grip, found by measuring how much of the hand ends up inside it
+// (from 82 overlapping surface points down to 25, the rest being fingers resting on the handle)
+const CONTROLLER_SCALE = 0.66;
+const GRIP = { depth: 1.1, side: 0.08, roll: 15 }; // into the finger curl (0 = knuckles, 1 = middle joints), across, turn (deg)
 const HAND_COLOUR = 0xd4d4d6;
 
 export type VrHand = {
@@ -73,8 +76,9 @@ export async function loadVrHand(): Promise<VrHand> {
   const from = new THREE.Matrix4().makeBasis(handleDir, forwardDir, new THREE.Vector3().crossVectors(handleDir, forwardDir));
   const to = new THREE.Matrix4().makeBasis(H, F, S);
   pivot.quaternion.setFromRotationMatrix(to.multiply(from.invert()));
+  pivot.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(H, (GRIP.roll * Math.PI) / 180));
   pivot.scale.setScalar(CONTROLLER_SCALE);
-  const centre = indexBase.clone().add(pinkBase).multiplyScalar(0.5).lerp(fingerMid, 0.5);
+  const centre = indexBase.clone().add(pinkBase).multiplyScalar(0.5).lerp(fingerMid, GRIP.depth).addScaledVector(S, GRIP.side);
   pivot.position.copy(centre).sub(handleMid.clone().multiplyScalar(CONTROLLER_SCALE).applyQuaternion(pivot.quaternion));
 
   // Put the rig's origin at the palm
