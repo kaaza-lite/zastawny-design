@@ -299,11 +299,16 @@ a {
 [data-pill].is-touched .tag::before {
   opacity: 1;
 }
-/* "Open to work": the hover glow breathes in and out at the pill's centre as the page loads
-   and every 4s after; under the cursor, or held, it's the usual glow */
+/* "Open to work": the hover glow sweeps across the pill from left to right, like a skeleton
+   loader's shimmer, as the page loads and every 2.8s after; under the cursor, or held, it's the usual glow */
+@property --sweep {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: -48px;
+}
 .status-pill .tag::before {
-  --glow-at: 50% 50%;
-  animation: pill-breathe 4s ease-in-out 0.6s infinite;
+  --glow-at: var(--sweep) 50%;
+  animation: pill-sweep 2.8s ease-in-out 0.6s infinite both;
 }
 .status-pill [data-pill].is-held .tag::before,
 .status-pill [data-pill].is-touched .tag::before {
@@ -316,10 +321,10 @@ a {
     animation: none;
   }
 }
-@keyframes pill-breathe {
-  0%, 100% { opacity: 0; }
-  20% { opacity: 1; }
-  50% { opacity: 0; }
+/* Starts and ends just outside the pill (the glow is about 48px across from its centre), so it slides in and out */
+@keyframes pill-sweep {
+  0% { --sweep: -48px; opacity: 1; }
+  60%, 100% { --sweep: calc(100% + 48px); opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
   .status-pill .tag::before {
