@@ -35,10 +35,14 @@ import role from './images/bamboo/role.webp';
 import redesign from './images/bamboo/redesign.webp';
 import trade from './images/bamboo/trade.webp';
 import portfolio from './images/bamboo/portfolio.webp';
+import newMarket from './images/bamboo/new-market.png';
+import newRole from './images/bamboo/new-role.webp';
+import newStock from './images/bamboo/new-stock.webp';
+import newTrade from './images/bamboo/new-trade.webp';
 
 <Section title="The project">
 
-<Media src={market} alt={"The Bamboo app on web and mobile: portfolio dashboard with buying power and returns, a stock page for Amazon, and buying a stock from a naira or dollar wallet."} rounded />
+<Carousel slides={[{ src: newMarket, alt: "A later redesign of the Bamboo web app: the portfolio dashboard with total value, a chart, holdings, watchlist and a trade panel, next to the stock page for Alphabet." }, { src: market, alt: "The Bamboo app on web and mobile: portfolio dashboard with buying power and returns, a stock page for Amazon, and buying a stock from a naira or dollar wallet." }]} />
 
 Bamboo lets Nigerians buy US stocks, mutual funds and fractional shares with dollars converted from naira inside the app. In a market where the naira kept losing value, it was both a hedge and a way to build wealth in a currency that held.
 
@@ -48,7 +52,7 @@ I was its sole product designer for twenty months, from the first sketches in Ja
 
 <Section title="My role">
 
-<Media src={role} alt={"Four Bamboo app screens: the portfolio home with its value and a Deposit Money button, holdings, top movers and stock of the month, and recent news."} rounded />
+<Carousel slides={[{ src: newRole, alt: "A later redesign of four Bamboo app screens: the portfolio home with its value and a Deposit button, holdings, featured themes and top movers, stock of the month and recent news." }, { src: role, alt: "Four Bamboo app screens: the portfolio home with its value and a Deposit Money button, holdings, top movers and stock of the month, and recent news." }]} />
 
 I came in at the beginning. The first two or three weeks were tight collaborative work with the founding team, establishing the shape of the app and testing ideas against what engineering could build under time pressure.
 
@@ -90,7 +94,7 @@ A year in, the problem had shifted. The app was live, users were on it, feedback
 
 ### Designing for the Nigerian market
 
-<Carousel slides={[{ src: trade, alt: "Buying Alphabet shares in four steps: choosing the amount and a naira or dollar wallet, reviewing the order, sending it, and the order placed confirmation.", caption: "New trade screen comprehensible for all users" }, { src: portfolio, alt: "The portfolio home next to the portfolio breakdown: total value, a chart over time, cost basis, portfolio return and current value.", caption: "Portfolio breakdown accessible for everyone" }]} />
+<Carousel slides={[{ src: newTrade, alt: "A later redesign of buying Alphabet shares in four steps: entering the amount on a keypad, reviewing the order, sending it, and the purchase confirmation." }, { src: trade, alt: "Buying Alphabet shares in four steps: choosing the amount and a naira or dollar wallet, reviewing the order, sending it, and the order placed confirmation.", caption: "New trade screen comprehensible for all users" }, { src: portfolio, alt: "The portfolio home next to the portfolio breakdown: total value, a chart over time, cost basis, portfolio return and current value.", caption: "Portfolio breakdown accessible for everyone" }]} />
 
 The concrete constraints shaped a lot of decisions. A large share of users were on low-end Android phones, which affected everything from screen density to how much a chart could carry.
 
@@ -100,7 +104,7 @@ So I redesigned onboarding with KYC as its spine rather than an obstacle laid on
 
 ### The redesign
 
-<Media src={redesign} alt={"Four screens of the Bamboo stock page for Alphabet: price, chart and Buy button, compare stocks and price alerts with an opinion summary, featured themes, and company details."} rounded />
+<Carousel slides={[{ src: newStock, alt: "A later redesign of four screens of the Bamboo stock page for Alphabet: price, chart and Buy Now button, price alerts and compare stocks with an opinion summary, featured themes, and company details." }, { src: redesign, alt: "Four screens of the Bamboo stock page for Alphabet: price, chart and Buy button, compare stocks and price alerts with an opinion summary, featured themes, and company details." }]} />
 
 The external UX audit surfaced the user-behavior side. My UI audit surfaced the craft side: colour contrast issues, information hierarchy that broke down when data got dense, voice and tone that hadn't kept up with the brand. Bamboo had just refreshed its identity, so the redesign brought in the new colour palette and introduced dark mode alongside it.
 
