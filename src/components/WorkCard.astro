@@ -29,7 +29,7 @@ const Tagname = href ? 'a' : 'div';
 const Heading = heading;
 const ramp = palettes[palette];
 
-const img = await getImage({ src: image, widths: [320, 480, 640, 800, 1120, 1600], format: 'webp' });
+const img = await getImage({ src: image, widths: [320, 480, 640, 800, 1120, 1600, 1820], format: 'webp' });
 const sizes = sizesProp ?? '(max-width: 799.98px) calc(100vw - 80px), (max-width: 1279.98px) calc(50vw - 82px), 558px';
 
 // Ramp colours as CSS variables, for the title glitch
