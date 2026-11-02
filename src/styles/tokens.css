@@ -63,13 +63,15 @@
   --leading-card-meta: 1.4;
   --tracking-card-meta: normal;
   --text-caption: 12px;
+  --leading-caption: 1.4;     /* 12px text: slider captions, footers */
+  --leading-intro: 1.4;       /* 20px text: role and summary */
 
   /* Type: case study body (16px at every size, unified from Bamboo and Juicyway) and sub-headings */
   --text-case-body: 16px;
-  --leading-case-body: 1.4;
+  --leading-case-body: 1.5;   /* 24px */
   --tracking-case-body: normal;
   --text-case-h3: 36px;
-  --leading-body: 1.4;
+  --leading-body: 1.5;        /* 24px at 16px */
   --tracking-body: normal;
 
   /* Type: pill tags (Cormorant Garamond Italic) */
