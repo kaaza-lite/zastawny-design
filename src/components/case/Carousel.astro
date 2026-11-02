@@ -62,11 +62,9 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
         <span class="tip" aria-hidden="true">Previous</span>
       </button>
-      <div class="dots">
+      <div class="dots" aria-hidden="true">
         {Array.from({ length: count }, (_, i) => (
-          <button type="button" class="dot" data-go={i} aria-label={`Image ${i + 1} of ${count}`} aria-current={i === 0 ? 'true' : undefined}>
-            <span aria-hidden="true"></span>
-          </button>
+          <span class:list={['dot', { 'is-current': i === 0 }]}><span></span></span>
         ))}
       </div>
       <button type="button" class="pill-button tip-host" data-step="1" aria-label="Next image">
@@ -100,11 +98,9 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
               <span class="tip" aria-hidden="true">Previous</span>
             </button>
-            <div class="dots">
+            <div class="dots" aria-hidden="true">
               {Array.from({ length: count }, (_, i) => (
-                <button type="button" class="dot" data-go={i} aria-label={`Image ${i + 1} of ${count}`} aria-current={i === 0 ? 'true' : undefined}>
-                  <span aria-hidden="true"></span>
-                </button>
+                <span class:list={['dot', { 'is-current': i === 0 }]}><span></span></span>
               ))}
             </div>
             <button type="button" class="pill-button tip-host" data-step="1" aria-label="Next image">
@@ -149,10 +145,7 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
           else slide.setAttribute('aria-hidden', 'true');
         });
         for (const dots of root.querySelectorAll<HTMLElement>('.dots')) {
-          dots.querySelectorAll<HTMLElement>('.dot').forEach((d, n) => {
-            if (n === index) d.setAttribute('aria-current', 'true');
-            else d.removeAttribute('aria-current');
-          });
+          dots.querySelectorAll<HTMLElement>('.dot').forEach((d, n) => d.classList.toggle('is-current', n === index));
         }
         const caption = slides[index]?.dataset.caption ?? '';
         for (const c of root.querySelectorAll<HTMLElement>('.caption')) c.textContent = caption;
@@ -176,7 +169,6 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
         const t = (e.target as Element).closest<HTMLElement>('button');
         if (!t || !root.contains(t)) return;
         if (t.dataset.step) show(index + Number(t.dataset.step));
-        else if (t.dataset.go) show(Number(t.dataset.go));
         else if ('expand' in t.dataset || t.classList.contains('slide-frame')) {
           if (!swiped) openViewer(t);
         } else if ('close' in t.dataset) viewer?.close();
@@ -302,13 +294,9 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
   .pill {
     margin-left: auto;
   }
-  .dot:focus-visible {
-    outline-offset: -2px;
-    box-shadow: none;
-  }
 
   /* Dots: 6px white, the current one a 24px bar in the case study's accent.
-     Each sits in a 24 × 44px button, so it's easy to tap. */
+     They only show the position; the arrows move the slider. */
   .dots {
     display: flex;
     align-items: center;
@@ -318,11 +306,6 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
     place-items: center;
     width: 24px;
     height: 44px;
-    padding: 0;
-    border: 0;
-    border-radius: var(--radius-pill);
-    background: none;
-    cursor: pointer;
   }
   .dot span {
     width: 6px;
@@ -333,17 +316,12 @@ const fulls = await Promise.all(slides.map((s) => getImage({ src: s.src, width: 
       width var(--dur-base) var(--ease-out),
       background-color var(--dur-base) var(--ease-out);
   }
-  .dot[aria-current='true'] {
+  .dot.is-current {
     width: 32px;
   }
-  .dot[aria-current='true'] span {
+  .dot.is-current span {
     width: 24px;
     background: var(--theme-accent, var(--color-accent-3));
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .dot:not([aria-current='true']):hover span {
-      background: rgb(255 255 255 / 0.6);
-    }
   }
 
   .divider {
