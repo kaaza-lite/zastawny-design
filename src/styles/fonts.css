@@ -3,6 +3,15 @@
   Files live in public/fonts/.
 */
 
+/* CS Pacify Halfpixel: "Tomasz Zastawny" on Home and About. Licensed file, not modified. */
+@font-face {
+  font-family: 'CS Pacify Halfpixel';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/cs-pacify-halfpixel.woff2') format('woff2');
+}
+
 /* Google Sans Flex Light (300): body copy. Google's own latin subsets. */
 @font-face {
   font-family: 'Google Sans Flex';

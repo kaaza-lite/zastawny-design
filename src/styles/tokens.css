@@ -65,6 +65,7 @@
 
   /* Font families */
   --font-display: 'Google Sans Flex', system-ui, sans-serif;
+  --font-name: 'CS Pacify Halfpixel', 'Google Sans Flex', system-ui, sans-serif; /* "Tomasz Zastawny" */
   --font-body: 'Google Sans Flex', system-ui, sans-serif;
   --font-tag: 'Cormorant Garamond', Georgia, serif;
 
