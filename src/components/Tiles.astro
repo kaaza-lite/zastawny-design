@@ -83,18 +83,9 @@ const { count, class: className } = Astro.props;
     flex: 0 0 var(--open);
   }
 
-  /* FinX (soon) sits on its own dark background */
+  /* FinX (soon) sits on the background of its own picture */
   .tiles :global(.card--soon) {
-    background: #0d0d0d;
-  }
-  /* Its picture is dark, so it keeps the dark colours in light mode too */
-  :global([data-mode='light']) .tiles :global(.card--soon) {
-    --color-bg: #121212;
-    --color-text: #bfbfbf;
-    --color-text-muted: #808080;
-    --color-border-tag: #353535;
-    --shade-tile: 0 0 0;
-    --shade-tile-mid: 0.5;
+    background: var(--color-finx-bg);
   }
 
   .tiles :global(.thumb) {

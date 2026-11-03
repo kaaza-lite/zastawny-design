@@ -12,6 +12,7 @@ import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import Tag from './Tag.astro';
 import finxThumb from '../assets/work/finx-thumb.png';
+import finxThumbLight from '../assets/work/finx-thumb-light.png';
 
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 const caseStudies = ['/calastone', '/bamboo', '/juicyway'];
@@ -27,7 +28,7 @@ const menu = [
       return { href: `/${id}`, title: e.data.title, meta: e.data.meta, thumb: await thumb(e.data.thumbnail), soon: false };
     }),
   )),
-  { href: '', title: 'FinX', meta: 'Complex design system for fintech', thumb: await thumb(finxThumb), soon: true },
+  { href: '', title: 'FinX', meta: 'Complex design system for fintech', thumb: await thumb(finxThumb), thumbLight: await thumb(finxThumbLight), soon: true },
 ];
 ---
 
@@ -53,7 +54,8 @@ const menu = [
     {menu.map((m) =>
       m.soon ? (
         <div class="menu-item menu-item--soon" aria-disabled="true">
-          <img src={m.thumb} alt="" width="56" height="36" loading="lazy" />
+          <img class="menu-thumb--dark" src={m.thumb} alt="" width="56" height="36" loading="lazy" />
+          <img class="menu-thumb--light" src={m.thumbLight} alt="" width="56" height="36" loading="lazy" />
           <span class="menu-text"><span class="menu-title">{m.title}</span><span class="menu-meta">{m.meta}</span></span>
           <span class="menu-soon"><Tag tone="soon">Soon</Tag></span>
         </div>
@@ -543,6 +545,16 @@ const menu = [
     height: 36px;
     object-fit: cover;
     border-radius: 6px;
+  }
+  /* FinX has its own picture for each mode */
+  .menu-item .menu-thumb--light {
+    display: none;
+  }
+  :global([data-mode='light']) .menu-item .menu-thumb--dark {
+    display: none;
+  }
+  :global([data-mode='light']) .menu-item .menu-thumb--light {
+    display: block;
   }
   .menu-text {
     display: flex;
