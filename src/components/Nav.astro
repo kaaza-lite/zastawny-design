@@ -10,26 +10,20 @@
 import { getEntry } from 'astro:content';
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
-import Tag from './Tag.astro';
-import finxThumb from '../assets/work/finx-thumb.png';
-import finxThumbLight from '../assets/work/finx-thumb-light.png';
 
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 const caseStudies = ['/calastone', '/bamboo', '/juicyway'];
 // Home highlights "Z", the case studies "Works", About "About"
 const active = path === '/' ? 'home' : caseStudies.includes(path) ? 'works' : path === '/about' ? 'about' : null;
 
-// The case study menu, in the Home order, with FinX last as "soon"
+// The case study menu
 const thumb = async (src: ImageMetadata) => (await getImage({ src, width: 112, format: 'webp' })).src;
-const menu = [
-  ...(await Promise.all(
-    ['calastone', 'bamboo', 'juicyway'].map(async (id) => {
-      const e = (await getEntry('work', id))!;
-      return { href: `/${id}`, title: e.data.title, meta: e.data.meta, thumb: await thumb(e.data.thumbnail), soon: false };
-    }),
-  )),
-  { href: '', title: 'FinX', meta: 'Complex design system for fintech', thumb: await thumb(finxThumb), thumbLight: await thumb(finxThumbLight), soon: true },
-];
+const menu = await Promise.all(
+  ['calastone', 'bamboo', 'juicyway'].map(async (id) => {
+    const e = (await getEntry('work', id))!;
+    return { href: `/${id}`, title: e.data.title, meta: e.data.meta, thumb: await thumb(e.data.thumbnail) };
+  }),
+);
 ---
 
 <header class="site-nav">
@@ -51,21 +45,12 @@ const menu = [
 
   <!-- Case study menu under "Works" -->
   <div class="works-menu" id="works-menu">
-    {menu.map((m) =>
-      m.soon ? (
-        <div class="menu-item menu-item--soon" aria-disabled="true">
-          <img class="menu-thumb--dark" src={m.thumb} alt="" width="56" height="36" loading="lazy" />
-          <img class="menu-thumb--light" src={m.thumbLight} alt="" width="56" height="36" loading="lazy" />
-          <span class="menu-text"><span class="menu-title">{m.title}</span><span class="menu-meta">{m.meta}</span></span>
-          <span class="menu-soon"><Tag tone="soon">Soon</Tag></span>
-        </div>
-      ) : (
-        <a class="menu-item" href={m.href} aria-current={path === m.href ? 'page' : undefined}>
-          <img src={m.thumb} alt="" width="56" height="36" loading="lazy" />
-          <span class="menu-text"><span class="menu-title">{m.title}</span><span class="menu-meta">{m.meta}</span></span>
-        </a>
-      ),
-    )}
+    {menu.map((m) => (
+      <a class="menu-item" href={m.href} aria-current={path === m.href ? 'page' : undefined}>
+        <img src={m.thumb} alt="" width="56" height="36" loading="lazy" />
+        <span class="menu-text"><span class="menu-title">{m.title}</span><span class="menu-meta">{m.meta}</span></span>
+      </a>
+    ))}
   </div>
 </header>
 
@@ -556,16 +541,6 @@ const menu = [
     object-fit: cover;
     border-radius: 6px;
   }
-  /* FinX has its own picture for each mode */
-  .menu-item .menu-thumb--light {
-    display: none;
-  }
-  :global([data-mode='light']) .menu-item .menu-thumb--dark {
-    display: none;
-  }
-  :global([data-mode='light']) .menu-item .menu-thumb--light {
-    display: block;
-  }
   .menu-text {
     display: flex;
     flex-direction: column;
@@ -599,21 +574,6 @@ const menu = [
   a.menu-item:focus-visible {
     outline-offset: -2px;
     box-shadow: none;
-  }
-
-  .menu-item--soon {
-    opacity: 0.45;
-    cursor: default;
-  }
-  .menu-soon {
-    display: flex;
-    flex: none;
-    margin: 0 8px 0 auto;
-  }
-  /* The tile pill scaled to 12px text (three quarters of the 16px one) */
-  .menu-soon :global(.tag) {
-    padding: 3px 9px;
-    font-size: 12px;
   }
 
   @media (prefers-reduced-motion: reduce) {
