@@ -145,11 +145,10 @@ const { count, class: className } = Astro.props;
     }
   }
 
-  /* Tablet only: smaller titles so they fit the closed tiles. 32px until the longest title,
-     Calastone at about 5.2 times its font size, would run out of room in a closed tile. */
+  /* Tablet only: smaller titles so they fit the closed tiles */
   @media (min-width: 800px) and (max-width: 1279.98px) {
     .tiles {
-      --title-size: min(32px, calc((var(--closed) - 40px) / 5.2));
+      --title-size: 32px;
     }
     .tiles :global(.title) {
       font-size: var(--title-size);

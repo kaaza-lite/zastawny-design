@@ -64,14 +64,14 @@
   --slider-divider: rgb(255 255 255 / 0.18);
 
   /* Font families */
-  --font-display: 'CS Pacify Halfpixel', 'Google Sans Flex', system-ui, sans-serif;
+  --font-display: 'Google Sans Flex', system-ui, sans-serif;
   --font-body: 'Google Sans Flex', system-ui, sans-serif;
   --font-tag: 'Cormorant Garamond', Georgia, serif;
 
-  /* Figma's "auto" line height for CS Pacify Halfpixel */
+  /* Display line height, from Figma's "auto" */
   --leading-display-auto: 1.11; /* (790 ascent + 220 descent + 100 gap) / 1000 */
 
-  /* Type: display (CS Pacify Halfpixel, weight 400) */
+  /* Type: display (Google Sans Flex, weight 400) */
   --text-hero: 96px;          /* home name */
   --text-section: 60px;       /* "experience" */
   --text-card-title: 44px;    /* case study card titles */
