@@ -15,6 +15,9 @@ document.addEventListener('astro:before-swap', (e) => {
   e.swap = () => {
     const next = e.newDocument;
     swapFunctions.deselectScripts(next);
+    // Light mode lives on <html>, so it has to survive the swap of its attributes
+    const mode = document.documentElement.dataset.mode;
+    if (mode) next.documentElement.dataset.mode = mode;
     swapFunctions.swapRootAttributes(next);
     swapFunctions.swapHeadElements(next);
     const restoreFocus = swapFunctions.saveFocus();

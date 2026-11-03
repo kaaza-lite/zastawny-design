@@ -83,9 +83,9 @@ const { count, class: className } = Astro.props;
     flex: 0 0 var(--open);
   }
 
-  /* FinX (soon) sits on its own dark background */
+  /* FinX (soon) sits on the background of its own picture */
   .tiles :global(.card--soon) {
-    background: #0d0d0d;
+    background: var(--color-finx-bg);
   }
 
   .tiles :global(.thumb) {
@@ -106,7 +106,7 @@ const { count, class: className } = Astro.props;
     bottom: 0;
     left: 0;
     height: 260px; /* half a desktop tile, the same on phones so the title gets the same shade */
-    background: linear-gradient(to top, rgb(0 0 0 / 1), rgb(0 0 0 / 0));
+    background: linear-gradient(to top, rgb(var(--shade-tile) / 1), rgb(var(--shade-tile) / var(--shade-tile-mid)) 50%, rgb(var(--shade-tile) / 0));
     pointer-events: none;
   }
 

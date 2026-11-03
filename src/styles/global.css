@@ -89,7 +89,7 @@ a {
   /* Nearly opaque: inside a glass button the backdrop blur can't see the page, so the fill does the work */
   background:
     linear-gradient(180deg, var(--glass-sheen-top), var(--glass-sheen-bottom)),
-    rgb(24 24 24 / 0.92);
+    var(--color-tip-bg);
   border: 1px solid var(--glass-rim);
   border-radius: var(--radius-pill);
   box-shadow: inset 0 1px 0 var(--glass-highlight);
@@ -202,7 +202,7 @@ a {
   border-radius: var(--radius-pill);
   box-shadow:
     inset 0 1px 0 var(--glass-highlight),
-    inset 0 -1px 0 rgb(255 255 255 / 0.05);
+    inset 0 -1px 0 var(--glass-edge-bottom);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
 }
@@ -235,7 +235,7 @@ a {
   }
 }
 .pill-button:active {
-  background: rgb(255 255 255 / 0.16);
+  background: var(--glass-pressed);
 }
 .pill-button:focus-visible {
   outline-offset: -2px;
@@ -253,7 +253,7 @@ a {
   --pill-glow sets the glow colour.
 */
 [data-pill-group] {
-  --pill-glow: rgb(228 228 228 / 0.22); /* grey, for grey pills like "open to work" */
+  --pill-glow: var(--pill-glow-neutral); /* grey, for grey pills like "open to work" */
 }
 [data-pill] {
   position: relative;
@@ -351,7 +351,7 @@ a {
   left: 0;
   z-index: 1;
   height: 40vh;
-  background: linear-gradient(to top, rgb(113 70 0 / 0.1), rgb(113 70 0 / 0));
+  background: linear-gradient(to top, rgb(var(--shade-warm) / 0.1), rgb(var(--shade-warm) / 0));
   pointer-events: none;
 }
 
@@ -363,7 +363,7 @@ a {
   left: 0;
   z-index: 1;
   height: 15vh;
-  background: linear-gradient(to bottom, rgb(113 70 0 / 0.05), rgb(113 70 0 / 0));
+  background: linear-gradient(to bottom, rgb(var(--shade-warm) / 0.05), rgb(var(--shade-warm) / 0));
   pointer-events: none;
 }
 .top-shade--dark {
@@ -375,7 +375,7 @@ a {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 480px 100% at var(--glow-x, 50%) 100%, rgb(113 70 0 / 0.3), rgb(113 70 0 / 0));
+  background: radial-gradient(ellipse 480px 100% at var(--glow-x, 50%) 100%, rgb(var(--shade-warm) / 0.3), rgb(var(--shade-warm) / 0));
   opacity: 0;
   transition: opacity 600ms ease;
 }
@@ -383,7 +383,7 @@ a {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 480px 100% at var(--glow-x, 50%) 0%, rgb(113 70 0 / 0.3), rgb(113 70 0 / 0));
+  background: radial-gradient(ellipse 480px 100% at var(--glow-x, 50%) 0%, rgb(var(--shade-warm) / 0.3), rgb(var(--shade-warm) / 0));
   opacity: 0;
   transition: opacity 600ms ease;
 }

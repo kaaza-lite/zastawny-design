@@ -12,6 +12,7 @@ interface Props {
   title: string;
   meta: string;
   image: ImageMetadata;
+  imageLight?: ImageMetadata; // a separate picture for light mode
   alt: string;
   href?: string;
   palette?: PaletteName;
@@ -24,12 +25,13 @@ interface Props {
   sizes?: string;   // image sizes attribute, when the card isn't in the usual two-column grid
 }
 
-const { title, meta, image, alt, href, palette = 'neutral', soon = false, tint = false, eager = false, heading = 'h2', fit = 'cover', dim = soon, sizes: sizesProp } = Astro.props;
+const { title, meta, image, imageLight, alt, href, palette = 'neutral', soon = false, tint = false, eager = false, heading = 'h2', fit = 'cover', dim = soon, sizes: sizesProp } = Astro.props;
 const Tagname = href ? 'a' : 'div';
 const Heading = heading;
 const ramp = palettes[palette];
 
 const img = await getImage({ src: image, widths: [320, 480, 640, 800, 1120, 1600, 1820], format: 'webp' });
+const imgLight = imageLight && (await getImage({ src: imageLight, widths: [320, 480, 640, 800, 1120, 1600, 1820], format: 'webp' }));
 const sizes = sizesProp ?? '(max-width: 799.98px) calc(100vw - 80px), (max-width: 1279.98px) calc(50vw - 82px), 558px';
 
 // Ramp colours as CSS variables, for the title glitch
@@ -44,7 +46,7 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
 >
   <div class:list={['thumb', { 'thumb--tint': tint, 'thumb--dim': dim }]}>
     <img
-      class:list={['thumb-img', { 'thumb-img--contain': fit === 'contain' }]}
+      class:list={['thumb-img', { 'thumb-img--contain': fit === 'contain', 'thumb-img--dark': imageLight }]}
       src={img.src}
       srcset={img.srcSet.attribute}
       sizes={sizes}
@@ -54,6 +56,19 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
       decoding="async"
       loading={eager ? 'eager' : 'lazy'}
     />
+    {imgLight && imageLight && (
+      <img
+        class:list={['thumb-img', 'thumb-img--light', { 'thumb-img--contain': fit === 'contain' }]}
+        src={imgLight.src}
+        srcset={imgLight.srcSet.attribute}
+        sizes={sizes}
+        width={imageLight.width}
+        height={imageLight.height}
+        alt={alt}
+        decoding="async"
+        loading={eager ? 'eager' : 'lazy'}
+      />
+    )}
   </div>
   <div class="text">
     <div class="title-row">
@@ -167,7 +182,7 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
     content: '';
     position: absolute;
     inset: 0;
-    background: rgb(0 0 0 / 0.2);
+    background: var(--thumb-tint);
     pointer-events: none;
   }
 
@@ -177,6 +192,17 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
 
   .thumb--dim {
     opacity: 0.25;
+  }
+
+  /* A card with its own light mode picture shows one or the other */
+  .thumb-img--light {
+    display: none;
+  }
+  :global([data-mode='light']) .thumb-img--dark {
+    display: none;
+  }
+  :global([data-mode='light']) .thumb-img--light {
+    display: block;
   }
 
   .text {
@@ -267,6 +293,17 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
   }
   .scramble--meta {
     color: var(--g5);
+  }
+  /* Light mode: the dark end of the ramp, so the glitch shows on a light tile */
+  :global([data-mode='light']) .scramble--title,
+  :global([data-mode='light']) .scramble--meta {
+    color: var(--g1);
+  }
+  :global([data-mode='light']) .ghost--a {
+    color: var(--g2);
+  }
+  :global([data-mode='light']) .ghost--b {
+    color: var(--g3);
   }
   .card.is-scrambling .scramble {
     opacity: 1;

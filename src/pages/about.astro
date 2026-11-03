@@ -222,11 +222,11 @@ const techSkills = [
     margin: 0;
     padding: 0;
     list-style: none;
-    --pill-glow: rgb(196 160 235 / 0.4); /* how i work: purple */
+    --pill-glow: var(--pill-glow-work); /* how i work: purple */
   }
   .block:has(.skill-pills) .pills,
   .skill-pills {
-    --pill-glow: rgb(120 214 182 / 0.35); /* tech skills: green */
+    --pill-glow: var(--pill-glow-skill); /* tech skills: green */
   }
 
   /* Desktop: a 272px column for the job title, the text takes the rest */
