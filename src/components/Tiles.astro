@@ -24,6 +24,15 @@ const { count, class: className } = Astro.props;
   document.addEventListener('astro:page-load', () => {
     for (const row of document.querySelectorAll<HTMLElement>('.tiles')) {
       const cards = [...row.querySelectorAll<HTMLElement>('.card')];
+      // The tallest text in the row sets the height of them all. Phones stack the tiles, so each keeps its own.
+      const texts = [...row.querySelectorAll<HTMLElement>('.text')];
+      const fitText = () => {
+        row.style.removeProperty('--text-h');
+        if (!stacked.matches) row.style.setProperty('--text-h', `${Math.max(...texts.map((t) => t.offsetHeight))}px`);
+      };
+      fitText();
+      document.fonts?.ready.then(fitText);
+      new ResizeObserver(fitText).observe(row);
       const open = (card: HTMLElement | null) => {
         for (const c of cards) c.classList.toggle('is-open', c === card);
         row.classList.toggle('has-open', !!card);
@@ -117,9 +126,9 @@ const { count, class: className } = Astro.props;
     left: 20px;
     z-index: 1;
     width: calc(var(--closed) - 40px);
-    /* Room for the title and two lines of subtitle, so every title sits on the same line
-       whether its subtitle takes one line or two */
-    min-height: calc(1.3 * var(--title-size) + 4px + 2 * var(--leading-card-meta) * var(--text-card-meta));
+    /* As tall as the tallest text in the row (measured by the script), so the text sits at the bottom
+       and every title stays on the same line when some subtitles take two lines */
+    min-height: var(--text-h, 0);
     text-align: left;
     transition: opacity 300ms;
   }
@@ -130,21 +139,17 @@ const { count, class: className } = Astro.props;
 
   /* ---------- Tablet ---------- */
   @media (max-width: 1279.98px) {
-    /* A tighter gap and inset, so the longest titles fit a closed tile down to 800px */
+    /* A tighter gap, so the longest titles fit a closed tile down to 800px */
     .tiles {
       --gap: 12px;
     }
-    .tiles :global(.text) {
-      bottom: 16px;
-      left: 16px;
-      width: calc(var(--closed) - 32px);
-    }
   }
 
-  /* Tablet only: smaller titles so they fit the closed tiles */
+  /* Tablet only: smaller titles so they fit the closed tiles. 32px until the longest title,
+     Calastone at about 5.2 times its font size, would run out of room in a closed tile. */
   @media (min-width: 800px) and (max-width: 1279.98px) {
     .tiles {
-      --title-size: 32px;
+      --title-size: min(32px, calc((var(--closed) - 40px) / 5.2));
     }
     .tiles :global(.title) {
       font-size: var(--title-size);
