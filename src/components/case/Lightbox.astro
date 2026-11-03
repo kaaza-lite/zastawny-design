@@ -69,11 +69,15 @@
     place-items: center;
   }
 
-  /* Dark scrim under the preview */
+  /* Scrim under the preview */
   .lightbox::backdrop {
     background: rgb(0 0 0 / 0.82);
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
+  }
+
+  :global([data-mode='light']) .lightbox::backdrop {
+    background: rgb(245 245 245 / 0.9);
   }
 
   .lightbox-image {

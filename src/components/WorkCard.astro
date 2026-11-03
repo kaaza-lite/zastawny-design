@@ -167,7 +167,7 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
     content: '';
     position: absolute;
     inset: 0;
-    background: rgb(0 0 0 / 0.2);
+    background: var(--thumb-tint);
     pointer-events: none;
   }
 
@@ -267,6 +267,17 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
   }
   .scramble--meta {
     color: var(--g5);
+  }
+  /* Light mode: the dark end of the ramp, so the glitch shows on a light tile */
+  :global([data-mode='light']) .scramble--title,
+  :global([data-mode='light']) .scramble--meta {
+    color: var(--g1);
+  }
+  :global([data-mode='light']) .ghost--a {
+    color: var(--g2);
+  }
+  :global([data-mode='light']) .ghost--b {
+    color: var(--g3);
   }
   .card.is-scrambling .scramble {
     opacity: 1;

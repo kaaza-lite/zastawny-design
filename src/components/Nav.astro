@@ -1,6 +1,6 @@
 ---
 // Floating glass pill at the top of the screen.
-// "Z" is Home; "Works" only opens the case study menu; About; LinkedIn.
+// "Z" is Home; "Works" only opens the case study menu; About; LinkedIn; the light and dark mode switcher.
 //
 // The active item sits on a light fill that slides from the previous page's item
 // to the current one on page load (transform only).
@@ -41,6 +41,10 @@ const menu = [
       <a href="https://www.linkedin.com/in/zastawny/" target="_blank" rel="noopener" class="external">
         <span class="external-label">LinkedIn</span><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></svg>
       </a>
+      <button type="button" class="mode-switch" aria-label="Switch to light mode">
+        <svg class="mode-icon mode-icon--sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></svg>
+        <svg class="mode-icon mode-icon--moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
+      </button>
     </div>
   </nav>
 
@@ -233,6 +237,28 @@ const menu = [
   }
 
   document.addEventListener('astro:page-load', setupMenu);
+
+  // Light and dark mode: remembered between visits. BaseLayout applies it before the first paint,
+  // navigation.ts carries it across page changes, and the effects listen for 'mode-change'.
+  function setupModeSwitch() {
+    const button = document.querySelector<HTMLButtonElement>('.mode-switch');
+    if (!button) return;
+    const html = document.documentElement;
+    const label = () => button.setAttribute('aria-label', `Switch to ${html.dataset.mode === 'light' ? 'dark' : 'light'} mode`);
+    label();
+    button.addEventListener('click', () => {
+      const next = html.dataset.mode === 'light' ? 'dark' : 'light';
+      if (next === 'light') html.dataset.mode = 'light';
+      else delete html.dataset.mode;
+      try {
+        localStorage.setItem('mode', next);
+      } catch {}
+      label();
+      document.dispatchEvent(new CustomEvent('mode-change'));
+    });
+  }
+
+  document.addEventListener('astro:page-load', setupModeSwitch);
 </script>
 
 <style>
@@ -264,10 +290,10 @@ const menu = [
     border-radius: var(--radius-pill);
     box-shadow:
       inset 0 1px 0 var(--glass-highlight),
-      inset 0 -1px 0 rgb(255 255 255 / 0.05),
-      inset 0 0 16px rgb(255 255 255 / 0.04),
-      0 14px 36px rgb(0 0 0 / 0.5),
-      0 2px 8px rgb(0 0 0 / 0.35);
+      inset 0 -1px 0 var(--glass-edge-bottom),
+      inset 0 0 16px var(--glass-inner-glow),
+      0 14px 36px var(--glass-shadow-large),
+      0 2px 8px var(--glass-shadow-small);
     /* heavy blur plus a slight darkening of whatever is behind keeps the labels readable */
     -webkit-backdrop-filter: var(--glass-filter);
     backdrop-filter: var(--glass-filter);
@@ -310,8 +336,8 @@ const menu = [
     cursor: pointer;
   }
 
-  /* Phones under 420px: tighter spacing, so the pill fits with Z, Works, About and LinkedIn */
-  @media (max-width: 419.98px) {
+  /* Phones under 460px: tighter spacing, so the pill fits with Z, Works, About, LinkedIn and the mode switcher */
+  @media (max-width: 459.98px) {
     .nav {
       padding: 0 6px;
     }
@@ -320,11 +346,18 @@ const menu = [
       padding: 0 12px;
     }
   }
-  /* Under 360px: a little tighter still */
-  @media (max-width: 359.98px) {
+  /* Under 390px: a little tighter still */
+  @media (max-width: 389.98px) {
     .links a,
     .links button {
       padding: 0 8px;
+    }
+  }
+  /* Under 350px: as tight as it goes */
+  @media (max-width: 349.98px) {
+    .links a,
+    .links button {
+      padding: 0 4px;
     }
   }
   /* Without the keyhole, Z sits as close to the left edge as its circle is to the top and bottom (5px) */
@@ -341,14 +374,14 @@ const menu = [
     text-underline-position: from-font;
   }
 
-  /* Home: a halfpixel Z on a 40px #121212 circle; the Z brightens on hover like the other items */
+  /* Home: a halfpixel Z on a 40px circle; the Z brightens on hover like the other items */
   .z-mark {
     display: grid;
     place-items: center;
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: #121212;
+    background: var(--color-nav-mark);
     font-family: var(--font-display); /* CS Pacify Halfpixel, which has one weight */
     font-weight: 400;
     font-size: 20px;
@@ -366,6 +399,44 @@ const menu = [
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
+  }
+
+  /* Light and dark mode: the sun in dark mode, the moon in light mode. Icons from Lucide. */
+  .links .mode-switch {
+    justify-content: center;
+    min-width: 44px;
+    padding: 0 14px;
+  }
+  @media (max-width: 389.98px) {
+    .links .mode-switch {
+      min-width: 36px;
+      padding: 0 10px;
+    }
+  }
+  @media (max-width: 349.98px) {
+    .links .mode-switch {
+      min-width: 32px;
+      padding: 0 8px;
+    }
+  }
+  .mode-icon {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .mode-icon--moon {
+    display: none;
+  }
+  :global([data-mode='light']) .mode-icon--sun {
+    display: none;
+  }
+  :global([data-mode='light']) .mode-icon--moon {
+    display: block;
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -435,8 +506,8 @@ const menu = [
     border-radius: 20px;
     box-shadow:
       inset 0 1px 0 var(--glass-highlight),
-      0 14px 36px rgb(0 0 0 / 0.5),
-      0 2px 8px rgb(0 0 0 / 0.35);
+      0 14px 36px var(--glass-shadow-large),
+      0 2px 8px var(--glass-shadow-small);
     -webkit-backdrop-filter: var(--glass-filter);
     backdrop-filter: var(--glass-filter);
     opacity: 0;
@@ -499,7 +570,7 @@ const menu = [
 
   @media (hover: hover) and (pointer: fine) {
     a.menu-item:not([aria-current='page']):hover {
-      background: rgb(255 255 255 / 0.05);
+      background: var(--glass-hover);
       color: var(--color-accent-2);
     }
   }

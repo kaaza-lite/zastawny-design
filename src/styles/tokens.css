@@ -40,6 +40,26 @@
   --glass-highlight: rgb(255 255 255 / 0.35);
   --glass-filter: blur(20px) saturate(200%) brightness(0.7);
   --glass-active: rgb(255 255 255 / 0.1); /* active nav item fill */
+  --glass-hover: rgb(255 255 255 / 0.05); /* Works menu item under the mouse */
+  --glass-pressed: rgb(255 255 255 / 0.16); /* pressed slider button */
+  --glass-edge-bottom: rgb(255 255 255 / 0.05);
+  --glass-inner-glow: rgb(255 255 255 / 0.04);
+  --glass-shadow-large: rgb(0 0 0 / 0.5);
+  --glass-shadow-small: rgb(0 0 0 / 0.35);
+  --color-tip-bg: rgb(24 24 24 / 0.92); /* tooltips */
+  --color-nav-mark: #121212;            /* the circle behind the Z */
+
+  /* Pills under the cursor */
+  --pill-glow-neutral: rgb(228 228 228 / 0.22); /* open to work */
+  --pill-glow-work: rgb(196 160 235 / 0.4);     /* how i work */
+  --pill-glow-skill: rgb(120 214 182 / 0.35);   /* tech skills */
+
+  /* Shades and overlays. Shades are colour channels, each use sets its own strength. */
+  --shade-warm: 113 70 0;                /* top and bottom of Home and About */
+  --shade-tile: 0 0 0;                   /* behind the titles on case study tiles */
+  --shade-tile-mid: 0.5;                 /* its strength halfway up, where the title sits */
+  --thumb-tint: rgb(0 0 0 / 0.2);        /* over the Bamboo thumbnail */
+  --slider-divider: rgb(255 255 255 / 0.18);
 
   /* Font families */
   --font-display: 'CS Pacify Halfpixel', 'Google Sans Flex', system-ui, sans-serif;
@@ -95,6 +115,55 @@
   --dur-base: 240ms;
   --dur-page: 350ms;
   --dur-hero: 1200ms;
+}
+
+/*
+  Light mode: data-mode="light" on <html>, set by the switcher in the nav (src/components/Nav.astro).
+  Dark is the default. Each case study keeps its own tint, set further down.
+*/
+:root[data-mode='light'] {
+  color-scheme: light;
+
+  --color-bg: #f5f5f5;
+  --color-surface: #ebebeb;
+  --color-text: #3d3d3d;
+  --color-text-muted: #666666;
+  --color-text-paragraph: #2e2e2e;
+  --color-divider: #c6c6c6;
+  --color-border-tag: #cfcfcf;
+  --color-status: #007323;
+  --color-pill-work-bg: #f5ecff;
+  --color-pill-work-border: #9580ad;
+  --color-pill-skill-bg: #e6f5f1;
+  --color-pill-skill-border: #5d9587;
+  --color-accent-2: #000000;
+  --focus-ring: #2e2e2e;
+
+  --glass-tint: rgb(245 245 245 / 0.6);
+  --glass-sheen-top: rgb(255 255 255 / 0.5);
+  --glass-sheen-bottom: rgb(255 255 255 / 0.1);
+  --glass-rim: rgb(0 0 0 / 0.08); /* a light pane needs an edge on a light page */
+  --glass-highlight: rgb(255 255 255 / 0.9);
+  --glass-filter: blur(20px) saturate(180%) brightness(1.1);
+  --glass-active: rgb(0 0 0 / 0.08);
+  --glass-hover: rgb(0 0 0 / 0.05);
+  --glass-pressed: rgb(0 0 0 / 0.14);
+  --glass-edge-bottom: rgb(0 0 0 / 0.04);
+  --glass-inner-glow: rgb(255 255 255 / 0.25);
+  --glass-shadow-large: rgb(0 0 0 / 0.12);
+  --glass-shadow-small: rgb(0 0 0 / 0.08);
+  --color-tip-bg: rgb(250 250 250 / 0.94);
+  --color-nav-mark: #ffffff;
+
+  --pill-glow-neutral: rgb(60 60 60 / 0.16);
+  --pill-glow-work: rgb(120 70 180 / 0.25);
+  --pill-glow-skill: rgb(30 140 110 / 0.25);
+
+  --shade-warm: 190 120 20;
+  --shade-tile: 255 255 255;
+  --shade-tile-mid: 0.9;
+  --thumb-tint: rgb(0 0 0 / 0);
+  --slider-divider: rgb(0 0 0 / 0.14);
 }
 
 /* Tablet */
@@ -157,4 +226,30 @@
   --theme-accent: #812872;
   --glass-tint: rgb(28 0 23 / 0.55);
   --focus-ring: #e193cf;                   /* keyboard focus (purple ramp) */
+}
+
+/* Case study themes in light mode: #f5f5f5 with a little of each page's colour */
+[data-mode='light'] [data-theme='calastone'] {
+  --color-bg: #eff0f6;
+  --theme-hero-fade: rgb(239 240 246 / 0.6);
+  --theme-tile: #e6e8f1;
+  --theme-accent: #254ba4;
+  --glass-tint: rgb(239 240 246 / 0.6);
+  --focus-ring: #254ba4;
+}
+[data-mode='light'] [data-theme='bamboo'] {
+  --color-bg: #eff4f0;
+  --theme-hero-fade: rgb(239 244 240 / 0.6);
+  --theme-tile: #e5ece7;
+  --theme-accent: #026338;
+  --glass-tint: rgb(239 244 240 / 0.6);
+  --focus-ring: #026338;
+}
+[data-mode='light'] [data-theme='juicyway'] {
+  --color-bg: #f5eff4;
+  --theme-hero-fade: rgb(245 239 244 / 0.6);
+  --theme-tile: #ede5ec;
+  --theme-accent: #812872;
+  --glass-tint: rgb(245 239 244 / 0.6);
+  --focus-ring: #812872;
 }

@@ -197,6 +197,7 @@
       canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
     };
     document.addEventListener('astro:after-swap', reset);
+    document.addEventListener('mode-change', reset); // the page's colours changed too
 
     // Scrolling: the blocks and the picture travel with the page; a fresh picture once it stops
     let lastScroll = window.scrollY;
