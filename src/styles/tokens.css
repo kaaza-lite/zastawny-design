@@ -49,6 +49,7 @@
   --glass-shadow-small: rgb(0 0 0 / 0.35);
   --color-tip-bg: rgb(24 24 24 / 0.92); /* tooltips */
   --color-nav-mark: #121212;            /* the circle behind the Z */
+  --color-nav-mark-text: #bfbfbf;       /* the Z */
 
   /* Pills under the cursor */
   --pill-glow-neutral: rgb(228 228 228 / 0.22); /* open to work */
@@ -141,21 +142,22 @@
   --color-accent-2: #000000;
   --focus-ring: #2e2e2e;
 
-  --glass-tint: rgb(245 245 245 / 0.6);
-  --glass-sheen-top: rgb(255 255 255 / 0.5);
-  --glass-sheen-bottom: rgb(255 255 255 / 0.1);
-  --glass-rim: rgb(0 0 0 / 0.08); /* a light pane needs an edge on a light page */
-  --glass-highlight: rgb(255 255 255 / 0.9);
-  --glass-filter: blur(20px) saturate(180%) brightness(1.1);
-  --glass-active: rgb(0 0 0 / 0.08);
+  --glass-tint: rgb(222 222 222 / 0.3);
+  --glass-sheen-top: rgb(255 255 255 / 0.35);
+  --glass-sheen-bottom: rgb(0 0 0 / 0.07);
+  --glass-rim: rgb(0 0 0 / 0.06); /* a light pane needs an edge on a light page */
+  --glass-highlight: rgb(255 255 255 / 0.95);
+  --glass-filter: blur(20px) saturate(180%) contrast(0.6) brightness(1.3); /* lifts dark pictures behind the glass, so labels stay readable */
+  --glass-active: rgb(0 0 0 / 0.1);
   --glass-hover: rgb(0 0 0 / 0.05);
   --glass-pressed: rgb(0 0 0 / 0.14);
-  --glass-edge-bottom: rgb(0 0 0 / 0.04);
-  --glass-inner-glow: rgb(255 255 255 / 0.25);
-  --glass-shadow-large: rgb(0 0 0 / 0.12);
-  --glass-shadow-small: rgb(0 0 0 / 0.08);
+  --glass-edge-bottom: rgb(0 0 0 / 0.08);
+  --glass-inner-glow: rgb(255 255 255 / 0.3);
+  --glass-shadow-large: rgb(0 0 0 / 0.2);
+  --glass-shadow-small: rgb(0 0 0 / 0.12);
   --color-tip-bg: rgb(250 250 250 / 0.94);
   --color-nav-mark: #ffffff;
+  --color-nav-mark-text: #6b6b6b;
 
   --pill-glow-neutral: rgb(60 60 60 / 0.16);
   --pill-glow-work: rgb(120 70 180 / 0.25);
@@ -236,7 +238,7 @@
   --theme-hero-fade: rgb(239 240 246 / 0.6);
   --theme-tile: #e6e8f1;
   --theme-accent: #254ba4;
-  --glass-tint: rgb(239 240 246 / 0.6);
+  --glass-tint: rgb(216 219 233 / 0.3);
   --focus-ring: #254ba4;
 }
 [data-mode='light'] [data-theme='bamboo'] {
@@ -244,7 +246,7 @@
   --theme-hero-fade: rgb(239 244 240 / 0.6);
   --theme-tile: #e5ece7;
   --theme-accent: #026338;
-  --glass-tint: rgb(239 244 240 / 0.6);
+  --glass-tint: rgb(214 227 218 / 0.3);
   --focus-ring: #026338;
 }
 [data-mode='light'] [data-theme='juicyway'] {
@@ -252,6 +254,6 @@
   --theme-hero-fade: rgb(245 239 244 / 0.6);
   --theme-tile: #ede5ec;
   --theme-accent: #812872;
-  --glass-tint: rgb(245 239 244 / 0.6);
+  --glass-tint: rgb(230 216 227 / 0.3);
   --focus-ring: #812872;
 }
