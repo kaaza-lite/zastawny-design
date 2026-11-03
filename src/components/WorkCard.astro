@@ -1,12 +1,10 @@
 ---
 // Case study card on Home: thumbnail, title, one-line description.
-// With `href` the whole card is a link and gets the title glitch on hover;
-// the title glitch is coloured with that case study's monochrome ramp (src/data/palettes.ts).
-// Without it (FinX), the card is static.
+// With `href` the whole card is a link. Without it, the card is static.
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import Tag from './Tag.astro';
-import { palettes, type PaletteName } from '../data/palettes';
+import type { PaletteName } from '../data/palettes';
 
 interface Props {
   title: string;
@@ -28,21 +26,16 @@ interface Props {
 const { title, meta, image, imageLight, alt, href, palette = 'neutral', soon = false, tint = false, eager = false, heading = 'h2', fit = 'cover', dim = soon, sizes: sizesProp } = Astro.props;
 const Tagname = href ? 'a' : 'div';
 const Heading = heading;
-const ramp = palettes[palette];
 
 const img = await getImage({ src: image, widths: [320, 480, 640, 800, 1120, 1600, 1820], format: 'webp' });
 const imgLight = imageLight && (await getImage({ src: imageLight, widths: [320, 480, 640, 800, 1120, 1600, 1820], format: 'webp' }));
 const sizes = sizesProp ?? '(max-width: 799.98px) calc(100vw - 80px), (max-width: 1279.98px) calc(50vw - 82px), 558px';
-
-// Ramp colours as CSS variables, for the title glitch
-const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
 ---
 
 <Tagname
   class:list={['card', { 'card--link': href, 'card--soon': soon }]}
   href={href}
   data-glitch-card={href ? palette : undefined}
-  style={href ? rampVars : undefined}
 >
   <div class:list={['thumb', { 'thumb--tint': tint, 'thumb--dim': dim }]}>
     <img
@@ -72,85 +65,12 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
   </div>
   <div class="text">
     <div class="title-row">
-      <Heading class="title">
-        <span class="title-text scramble-source">{title}</span>
-        {href && (
-          <>
-            <span class="scramble scramble--title" aria-hidden="true"></span>
-            <span class="ghost ghost--a" aria-hidden="true">{title}</span>
-            <span class="ghost ghost--b" aria-hidden="true">{title}</span>
-          </>
-        )}
-      </Heading>
+      <Heading class="title">{title}</Heading>
       {soon && <Tag tone="soon">Soon</Tag>}
     </div>
-    <p class="meta">
-      <span class="scramble-source">{meta}</span>
-      {href && (
-        <>
-          <span class="scramble scramble--meta" aria-hidden="true"></span>
-          <span class="ghost ghost--a" aria-hidden="true">{meta}</span>
-          <span class="ghost ghost--b" aria-hidden="true">{meta}</span>
-        </>
-      )}
-    </p>
+    <p class="meta">{meta}</p>
   </div>
 </Tagname>
-
-<script>
-  import { scrambled, SCRAMBLE_CHARS, TITLE_CHARS } from '../scripts/glitch';
-
-  const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-  const BURST = 650;    // ms: the title glitch when the pointer arrives
-  const FPS = 24;
-
-  // Set up the cards on the first load and after every page change
-  document.addEventListener('astro:page-load', () => {
-    for (const card of document.querySelectorAll<HTMLElement>('[data-glitch-card]')) {
-      // Scramble layers for the title and the category line, each with its real text
-      const scrambles = [...card.querySelectorAll<HTMLElement>('.scramble')].map((el) => ({
-        el,
-        text: el.parentElement?.querySelector('.scramble-source')?.textContent ?? '',
-        // the title is in CS Pacify Halfpixel, which only has letters
-        chars: el.classList.contains('scramble--title') ? TITLE_CHARS : SCRAMBLE_CHARS,
-      }));
-
-      let raf = 0;
-      let burstAt = 0;
-      let lastFrame = 0;
-
-      const frame = (now: number) => {
-        raf = requestAnimationFrame(frame);
-        if (now - lastFrame < 1000 / FPS) return;
-        lastFrame = now;
-
-        const burst = Math.max(0, 1 - (now - burstAt) / BURST);
-        for (const s of scrambles) s.el.textContent = burst > 0 ? scrambled(s.text, 1 - burst, true, s.chars) : '';
-        if (burst <= 0) {
-          card.classList.remove('is-glitching', 'is-scrambling');
-          cancelAnimationFrame(raf);
-          raf = 0;
-        }
-      };
-
-      const enter = () => {
-        if (reduce.matches) return;
-        burstAt = performance.now();
-        card.classList.add('is-glitching', 'is-scrambling');
-        if (!raf) raf = requestAnimationFrame(frame);
-      };
-
-      card.addEventListener('pointerenter', (e) => {
-        if (e.pointerType === 'mouse' && fine.matches) enter();
-      });
-      card.addEventListener('focus', () => {
-        if (card.matches(':focus-visible')) enter();
-      });
-    }
-  });
-</script>
 
 <style>
   .card {
@@ -218,7 +138,6 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
   }
 
   .title {
-    position: relative;
     font-family: var(--font-display);
     font-size: var(--text-card-title);
     line-height: 1.3;
@@ -227,98 +146,9 @@ const rampVars = ramp.map((c, i) => `--g${i}:${c}`).join(';');
   }
 
   .meta {
-    position: relative;
     font-size: var(--text-card-meta);
     line-height: var(--leading-card-meta);
     letter-spacing: normal;
     color: var(--color-text);
-  }
-
-  /*
-    Text glitch on the title and the category line: two ghost copies in the
-    ramp colours jump around for a moment on hover.
-  */
-  .ghost {
-    position: absolute;
-    top: 0;
-    left: 0;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-  }
-  .ghost--a {
-    color: var(--g4);
-    clip-path: inset(0 0 52% 0);
-  }
-  .ghost--b {
-    color: var(--g3);
-    clip-path: inset(48% 0 0 0);
-  }
-  .card.is-glitching .ghost--a {
-    animation: ghost-a 280ms steps(1, end) infinite;
-  }
-  .card.is-glitching .ghost--b {
-    animation: ghost-b 280ms steps(1, end) infinite;
-  }
-  /* The category line is small, so its ghosts move less */
-  .meta .ghost {
-    --shift: 0.5;
-  }
-
-  @keyframes ghost-a {
-    0% { opacity: 1; transform: translateX(calc(-6px * var(--shift, 1))); }
-    25% { transform: translateX(calc(4px * var(--shift, 1))); }
-    50% { opacity: 0; }
-    75% { opacity: 1; transform: translateX(calc(-2px * var(--shift, 1))); }
-  }
-  @keyframes ghost-b {
-    0% { opacity: 1; transform: translateX(calc(5px * var(--shift, 1))); }
-    25% { opacity: 0; }
-    50% { opacity: 1; transform: translateX(calc(-4px * var(--shift, 1))); }
-    75% { transform: translateX(calc(2px * var(--shift, 1))); }
-  }
-
-  /* Scramble on the title and the category line: random characters that resolve
-     back to the real text. The real text stays in place (transparent) for screen readers. */
-  .scramble {
-    position: absolute;
-    top: 0;
-    left: 0;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-  }
-  .scramble--title {
-    color: var(--g5);
-  }
-  .scramble--meta {
-    color: var(--g5);
-  }
-  /* Light mode: the dark end of the ramp, so the glitch shows on a light tile */
-  :global([data-mode='light']) .scramble--title,
-  :global([data-mode='light']) .scramble--meta {
-    color: var(--g1);
-  }
-  :global([data-mode='light']) .ghost--a {
-    color: var(--g2);
-  }
-  :global([data-mode='light']) .ghost--b {
-    color: var(--g3);
-  }
-  .card.is-scrambling .scramble {
-    opacity: 1;
-  }
-  .card.is-scrambling .scramble-source {
-    opacity: 0;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .ghost,
-    .scramble {
-      display: none;
-    }
-    .scramble-source {
-      opacity: 1 !important;
-    }
   }
 </style>

@@ -11,8 +11,6 @@ import Experience from '../components/Experience.astro';
 import calastoneThumb from '../assets/work/calastone-thumb.webp';
 import bambooThumb from '../assets/work/bamboo-thumb.webp';
 import juicywayThumb from '../assets/work/juicyway-thumb.webp';
-import finxThumb from '../assets/work/finx-thumb.png';
-import finxThumbLight from '../assets/work/finx-thumb-light.png';
 ---
 
 <BaseLayout
@@ -37,7 +35,7 @@ import finxThumbLight from '../assets/work/finx-thumb-light.png';
     </section>
 
     <!-- Case studies -->
-    <Tiles count={4} class="work">
+    <Tiles count={3} class="work">
       <WorkCard
         href="/bamboo"
         palette="bamboo"
@@ -68,8 +66,6 @@ import finxThumbLight from '../assets/work/finx-thumb-light.png';
         sizes="(max-width: 799.98px) calc(100vw - 40px), (max-width: 1279.98px) 75vw, 925px"
         alt=""
       />
-      <!-- The FinX images have the card's background, so they're shown whole and not faded -->
-      <WorkCard title="FinX" meta="Complex design system for fintech" image={finxThumb} imageLight={finxThumbLight} alt="" soon fit="contain" dim={false} sizes="(max-width: 799.98px) calc(100vw - 40px), (max-width: 1279.98px) 75vw, 925px" />
     </Tiles>
 
     <!-- Experience -->
@@ -112,7 +108,7 @@ import finxThumbLight from '../assets/work/finx-thumb-light.png';
   }
 
   h1 {
-    font-family: var(--font-display);
+    font-family: var(--font-name);
     font-size: var(--text-hero);
     line-height: var(--leading-display-auto);
     letter-spacing: normal;
