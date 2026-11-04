@@ -165,7 +165,6 @@
   --pill-glow-skill: rgb(30 140 110 / 0.25);
 
   --shade-warm: 190 120 20;
-  --page-gradient: linear-gradient(to top, #b3e2ff, #dddddd); /* Home and About: bottom to top of the window */
   --shade-tile: 255 255 255;
   --shade-tile-mid: 0.9;
   --thumb-tint: rgb(0 0 0 / 0);

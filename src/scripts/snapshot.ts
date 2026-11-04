@@ -161,12 +161,6 @@ export function snapshot(scale = 1): HTMLCanvasElement {
   ctx.scale(scale, scale);
   ctx.fillStyle = getComputedStyle(document.body).backgroundColor;
   ctx.fillRect(0, 0, vw, vh);
-  // The window gradient behind Home and About in light mode
-  const pageGradient = gradient(ctx, getComputedStyle(document.body, '::before').backgroundImage, new DOMRect(0, 0, vw, vh));
-  if (pageGradient) {
-    ctx.fillStyle = pageGradient;
-    ctx.fillRect(0, 0, vw, vh);
-  }
 
   const cache = new Map<Element, number>();
   const opacity = (el: Element) => opacityOf(el, cache);
