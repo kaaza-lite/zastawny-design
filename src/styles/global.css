@@ -342,6 +342,20 @@ a {
   pointer-events: none;
 }
 
+/* Light mode, Home and About: a gradient filling the window, behind everything, instead of the warm shades */
+[data-mode='light'] body:not([data-theme])::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--page-gradient);
+  pointer-events: none;
+}
+[data-mode='light'] body:not([data-theme]) > .bottom-shade,
+[data-mode='light'] body:not([data-theme]) > .top-shade {
+  display: none;
+}
+
 /* Warm shade along the bottom edge of the window (Home and About): #714600 at 10% fading to 0%.
    Under the page content (main is z-index 2), so it only tints the background. */
 .bottom-shade {
