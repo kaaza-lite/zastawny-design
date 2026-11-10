@@ -178,7 +178,7 @@
     --text-card-title: 40px;
     --text-card-meta: 15px;
     --leading-card-meta: 1.35;
-    --page-top: 154px;
+    --page-top: 150px;
   }
 }
 
@@ -189,7 +189,7 @@
     --text-job-title: 32px;
     --tracking-card-meta: normal;
     --text-case-h3: 32px;
-    --page-top: 176px;
+    --page-top: 150px;
     --gutter: 20px;
     --content-gutter: 12px;
   }
