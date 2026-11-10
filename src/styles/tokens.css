@@ -102,7 +102,7 @@
 
   /* Layout */
   --page-width: 1280px;
-  --page-top: 196px;          /* space above the hero, under the floating nav */
+  --page-top: 172px;          /* space above the hero, under the floating nav */
   --gutter: 32px;             /* hero and cards side padding */
   --content-gutter: 32px;     /* experience side padding */
 
@@ -178,7 +178,7 @@
     --text-card-title: 40px;
     --text-card-meta: 15px;
     --leading-card-meta: 1.35;
-    --page-top: 178px;
+    --page-top: 154px;
   }
 }
 
@@ -189,7 +189,7 @@
     --text-job-title: 32px;
     --tracking-card-meta: normal;
     --text-case-h3: 32px;
-    --page-top: 200px;
+    --page-top: 176px;
     --gutter: 20px;
     --content-gutter: 12px;
   }
