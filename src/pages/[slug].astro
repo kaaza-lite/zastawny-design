@@ -23,6 +23,14 @@ const heroVars = [
   `--hero-pos-t: ${d.heroPosition.tablet}`,
   `--hero-pos-m: ${d.heroPosition.mobile}`,
 ].join(';');
+// "My role" with two lines is split into two columns, one line each. On tablets it spans the
+// whole row only when the details before it fill their rows; otherwise its lines stack.
+const others = d.details.filter((item) => item.label !== 'My role').length;
+const details = d.details.map((item) => {
+  const split = item.label === 'My role' && item.lines.length > 1;
+  return { ...item, split, splitTablet: split && others % 2 === 0 };
+});
+const columns = details.reduce((n, item) => n + (item.split ? 2 : 1), 0);
 ---
 
 <BaseLayout title={d.pageTitle} description={d.description} theme={d.palette}>
@@ -37,10 +45,10 @@ const heroVars = [
       <p class="case-meta">{d.meta}</p>
     </header>
 
-    <!-- Project details: a spec sheet, one column per detail -->
-    <dl class="details" style={`--count: ${d.details.length}`}>
-      {d.details.map((item) => (
-        <div class="detail" data-label={item.label}>
+    <!-- Project details: a spec sheet, one column per detail; "My role" with two lines takes two -->
+    <dl class="details" style={`--count: ${columns}`}>
+      {details.map((item) => (
+        <div class:list={['detail', { 'detail--split': item.split, 'detail--split-tablet': item.splitTablet }]} data-label={item.label}>
           <dt class="detail-label">{item.label}</dt>
           <dd>
             <ul class="detail-lines">
@@ -218,6 +226,16 @@ const heroVars = [
     list-style: none;
     color: var(--color-text); /* lighter than body text: these lines sit over the hero image */
   }
+  /* "My role" in two columns: the second line starts where the next column's text would */
+  .detail--split {
+    --split-gap: 40px; /* the padding on both sides of a column divider */
+    grid-column: span 2;
+  }
+  .detail--split .detail-lines {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--split-gap);
+  }
 
   /* ---------- Content ---------- */
   .case-body {
@@ -359,8 +377,18 @@ const heroVars = [
       border-left: 0;
       border-top: 1px dashed var(--color-divider);
     }
-    .detail[data-label='my role'] {
+    .detail--split {
+      grid-column: auto;
+    }
+    .detail--split .detail-lines {
+      display: flex;
+    }
+    .detail--split-tablet {
+      --split-gap: 24px;
       grid-column: 1 / -1;
+    }
+    .detail--split-tablet .detail-lines {
+      display: grid;
     }
   }
 
@@ -386,6 +414,10 @@ const heroVars = [
     }
     .details {
       width: min(496px, calc(100% - 2 * var(--content-gutter)));
+    }
+    /* Phones: "My role" lines stack again */
+    .detail--split-tablet .detail-lines {
+      display: flex;
     }
     .others {
       width: min(496px, calc(100% - 2 * var(--content-gutter)));
