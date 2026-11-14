@@ -226,9 +226,9 @@ const columns = details.reduce((n, item) => n + (item.split ? 2 : 1), 0);
     list-style: none;
     color: var(--color-text); /* lighter than body text: these lines sit over the hero image */
   }
-  /* "My role" in two columns: the second line starts where the next column's text would */
+  /* "My role" in two columns, one line each */
   .detail--split {
-    --split-gap: 40px; /* the padding on both sides of a column divider */
+    --split-gap: 20px; /* half the 40px between columns, so the two lines read as one detail */
     grid-column: span 2;
   }
   .detail--split .detail-lines {
